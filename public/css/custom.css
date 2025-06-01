@@ -1,0 +1,260 @@
+/* Animasi custom untuk halaman login SIM-PTK */
+
+/* Logo pulsasi */
+.logo-pulse {
+    animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.03);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Efek hover untuk tombol */
+.btn-hover-effect {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-hover-effect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-hover-effect:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.btn-hover-effect:hover:before {
+    transform: translateX(0);
+}
+
+/* Animasi gelembung medis */
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    animation: float 8s ease-in-out infinite;
+    z-index: 0;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-20px) rotate(5deg);
+    }
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+/* Ukuran dan posisi gelembung */
+.bubble-1 {
+    width: 120px;
+    height: 120px;
+    left: 5%;
+    top: 15%;
+    animation-delay: 0s;
+    opacity: 0.5;
+}
+
+.bubble-2 {
+    width: 80px;
+    height: 80px;
+    left: 15%;
+    top: 70%;
+    animation-delay: 1s;
+    opacity: 0.3;
+}
+
+.bubble-3 {
+    width: 100px;
+    height: 100px;
+    right: 10%;
+    top: 20%;
+    animation-delay: 2s;
+    opacity: 0.4;
+}
+
+.bubble-4 {
+    width: 60px;
+    height: 60px;
+    right: 5%;
+    bottom: 5%;
+    animation-delay: 3s;
+    opacity: 0.2;
+}
+
+.bubble-5 {
+    width: 90px;
+    height: 90px;
+    left: 25%;
+    bottom: 25%;
+    animation-delay: 4s;
+    opacity: 0.3;
+}
+
+.bubble-6 {
+    width: 70px;
+    height: 70px;
+    right: 25%;
+    bottom: 50%;
+    animation-delay: 5s;
+    opacity: 0.2;
+}
+
+/* Placeholder untuk gambar animasi jika tidak tersedia */
+.animation-placeholder {
+    background: linear-gradient(45deg, #e6f7ff, #bae7ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.animation-placeholder:before {
+    content: '';
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    background: rgba(66, 153, 225, 0.1);
+    border-radius: 50%;
+}
+
+.animation-placeholder:after {
+    content: 'Ilustrasi Medis';
+    position: relative;
+    font-size: 1.25rem;
+    color: #2c5282;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Animasi untuk elemen form */
+.form-fade-in {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.form-fade-in:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.form-fade-in:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.form-fade-in:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efek focus untuk input */
+.focus-effect {
+    transition: all 0.3s ease;
+}
+
+.focus-effect:focus {
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
+}
+
+/* Animasi untuk ikon checklist */
+@keyframes checkScale {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Subtle hover effect for links */
+a {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+a:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: currentColor;
+    transition: width 0.3s ease;
+}
+
+a:hover:after {
+    width: 100%;
+}
+
+/* Modern inputs with subtle transition */
+input {
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    transform: translateY(-1px);
+}
+
+/* Card shadow effect */
+.card-shadow {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.card-shadow:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* Soft shadow untuk kontainer utama */
+.soft-shadow {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Animasi lembut untuk gambar/ilustrasi */
+.image-shadow {
+    box-shadow: 0 15px 35px rgba(37, 99, 235, 0.1);
+}
+
+/* Clean separation lines */
+.separator {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.05), transparent);
+    margin: 1.5rem 0;
+} 
