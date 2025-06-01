@@ -179,67 +179,69 @@ class MahasiswaPageController extends Controller
 
     public function riwayatIndex()
     {
-        // Membuat data dummy untuk riwayat konsultasi
-        $riwayatKonsultasi = [
-            [
-                'id' => 1,
-                'pasien_nama' => 'Budi Santoso',
-                'pasien_gender' => 'Laki-laki',
-                'pasien_usia' => 45,
-                'tanggal' => '2023-05-15',
-                'jam_mulai' => '09:00',
-                'jam_selesai' => '10:00',
-                'keluhan' => 'Nyeri dada dan sesak napas',
-                'diagnosa' => 'Acid Reflux',
-                'catatan' => 'Pasien disarankan untuk menghindari makanan pedas dan asam',
-                'nilai' => 90,
-                'status' => 'Selesai'
-            ],
-            [
-                'id' => 2,
-                'pasien_nama' => 'Siti Rahayu',
-                'pasien_gender' => 'Perempuan',
-                'pasien_usia' => 38,
-                'tanggal' => '2023-05-10',
-                'jam_mulai' => '13:00',
-                'jam_selesai' => '14:00',
-                'keluhan' => 'Sakit kepala berulang',
-                'diagnosa' => 'Tension Headache',
-                'catatan' => 'Pasien disarankan untuk mengurangi stres dan istirahat cukup',
-                'nilai' => 85,
-                'status' => 'Selesai'
-            ],
-            [
-                'id' => 3,
-                'pasien_nama' => 'Ahmad Hidayat',
-                'pasien_gender' => 'Laki-laki',
-                'pasien_usia' => 52,
-                'tanggal' => '2023-05-05',
-                'jam_mulai' => '10:30',
-                'jam_selesai' => '11:30',
-                'keluhan' => 'Kontrol diabetes',
-                'diagnosa' => 'Diabetes Mellitus Tipe 2',
-                'catatan' => 'Gula darah terkontrol, tetap lanjutkan pengobatan',
-                'nilai' => 95,
-                'status' => 'Selesai'
-            ]
-        ];
-
-        // Menambahkan tampilan tanggal dalam format Indonesia
-        foreach ($riwayatKonsultasi as &$item) {
-            $tanggal_obj = Carbon::createFromFormat('Y-m-d', $item['tanggal']);
-            $item['tanggal_tampil'] = $tanggal_obj->translatedFormat('d F Y');
+        // Ambil mahasiswa berdasarkan user yang login
+        $user = Auth::user();
+        
+        // Jalankan update status konsultasi terlebih dahulu
+        $this->konsultasiService->updateStatus();
+        
+        // Ambil data riwayat konsultasi (selesai)
+        $riwayatKonsultasi = Konsultasi::where('mahasiswa_id', $user->id)
+            ->where('status', 'Selesai')
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('jam_mulai', 'desc')
+            ->with('pasien')
+            ->get();
+            
+        // Siapkan data untuk tampilan
+        $riwayatKonsultasiData = [];
+        foreach ($riwayatKonsultasi as $item) {
+            // Menghitung timestamp untuk jadwal konsultasi
+            $jadwalTimestamp = null;
+            if ($item->tanggal) {
+                $jadwalDateTime = Carbon::parse($item->tanggal->format('Y-m-d') . ' ' . $item->jam_mulai);
+                $jadwalTimestamp = $jadwalDateTime->timestamp * 1000; // Konversi ke milliseconds untuk JavaScript
+            }
+            
+            $riwayatKonsultasiData[] = [
+                'id' => $item->id,
+                'pasien_nama' => $item->pasien->nama ?? 'Pasien',
+                'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
+                'pasien_usia' => $item->pasien->usia ?? '-',
+                'tanggal_tampil' => $item->tanggal ? $item->tanggal->translatedFormat('d F Y') : '-',
+                'jam_mulai' => $item->jam_mulai,
+                'jam_selesai' => $item->jam_selesai,
+                'keluhan' => $item->keluhan,
+                'diagnosa' => $item->diagnosa,
+                'status' => $item->status,
+                'tanggal_timestamp' => $jadwalTimestamp,
+                'rating' => $item->rating,
+                'komentar_rating' => $item->komentar_rating
+            ];
         }
         
         // Statistik nilai
-        $nilaiRata = array_sum(array_column($riwayatKonsultasi, 'nilai')) / count($riwayatKonsultasi);
-        $nilaiTertinggi = max(array_column($riwayatKonsultasi, 'nilai'));
-        $nilaiTerendah = min(array_column($riwayatKonsultasi, 'nilai'));
+        $nilaiRata = 0;
+        $nilaiTertinggi = 0;
+        $nilaiTerendah = 0;
+        
+        if (count($riwayatKonsultasiData) > 0) {
+            // Ambil semua rating yang tidak null
+            $ratings = array_filter(array_column($riwayatKonsultasiData, 'rating'), function($value) {
+                return !is_null($value);
+            });
+            
+            if (count($ratings) > 0) {
+                $nilaiRata = array_sum($ratings) / count($ratings);
+                $nilaiTertinggi = max($ratings);
+                $nilaiTerendah = min($ratings);
+            }
+        }
         
         return view('mahasiswa.riwayat.index', [
-            'title' => 'Riwayat & Nilai Konsultasi',
-            'riwayatKonsultasi' => $riwayatKonsultasi,
-            'total' => count($riwayatKonsultasi),
+            'title' => 'Riwayat Konsultasi',
+            'riwayatKonsultasi' => $riwayatKonsultasiData,
+            'total' => count($riwayatKonsultasiData),
             'nilaiRata' => round($nilaiRata, 1),
             'nilaiTertinggi' => $nilaiTertinggi,
             'nilaiTerendah' => $nilaiTerendah

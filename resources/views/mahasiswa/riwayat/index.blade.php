@@ -1,22 +1,8 @@
 @extends('layouts.mahasiswa')
 @section('mahasiswa-content')
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Riwayat & Nilai Konsultasi</h1>
+    <h1 class="text-2xl font-bold text-gray-800">Riwayat Konsultasi</h1>
     <p class="text-sm text-gray-600">Lihat riwayat konsultasi pasien dan nilai yang diperoleh</p>
-</div>
-
-<!-- Tab Navigation -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-    <div class="bg-white border-b">
-        <nav class="flex">
-            <button class="px-6 py-4 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
-                Riwayat Konsultasi
-            </button>
-            <button class="px-6 py-4 text-sm font-medium text-gray-600 hover:text-gray-800">
-                Rekap Nilai
-            </button>
-        </nav>
-    </div>
 </div>
 
 <!-- Filter and Search -->
@@ -45,22 +31,35 @@
 </div>
 
 <!-- Riwayat Konsultasi List -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden">
+<div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+    <div class="p-6 border-b border-gray-200 bg-gray-50">
+        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Riwayat Konsultasi
+        </h2>
+        <p class="text-sm text-gray-500">Konsultasi dengan status Selesai</p>
+    </div>
+    
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tanggal
+                        Pasien
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Pasien
+                        Jadwal
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Keluhan
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nilai
+                        Diagnosa
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rating
                     </th>
                     <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Aksi
@@ -68,101 +67,67 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                <!-- Item 1 -->
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">5 Juni 2023</div>
-                        <div class="text-xs text-gray-500">10:30 - 11:30</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=Ahmad+Hidayat&background=4F46E5&color=fff" alt="">
+                @php
+                    $riwayatKonsultasiSelesai = array_filter($riwayatKonsultasi ?? [], function($item) {
+                        return $item['status'] === 'Selesai';
+                    });
+                @endphp
+                
+                @if(count($riwayatKonsultasiSelesai) > 0)
+                    @foreach($riwayatKonsultasiSelesai as $item)
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ str_replace(' ', '+', $item['pasien_nama']) }}&background=4F46E5&color=fff" alt="">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ $item['pasien_nama'] }}</div>
+                                    <div class="text-sm text-gray-500">{{ $item['pasien_gender'] }}, {{ $item['pasien_usia'] }} tahun</div>
+                                </div>
                             </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">Ahmad Hidayat</div>
-                                <div class="text-sm text-gray-500">Laki-laki, 52 tahun</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">Kontrol diabetes</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                                85/100
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <a href="#" class="text-blue-600 hover:text-blue-900">Detail</a>
-                    </td>
-                </tr>
-
-                <!-- Item 2 -->
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">1 Juni 2023</div>
-                        <div class="text-xs text-gray-500">14:00 - 15:00</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=Dewi+Lestari&background=4F46E5&color=fff" alt="">
-                            </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">Dewi Lestari</div>
-                                <div class="text-sm text-gray-500">Perempuan, 30 tahun</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">Konsultasi kehamilan</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="px-2.5 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                                75/100
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <a href="#" class="text-blue-600 hover:text-blue-900">Detail</a>
-                    </td>
-                </tr>
-
-                <!-- Item 3 -->
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">28 Mei 2023</div>
-                        <div class="text-xs text-gray-500">09:00 - 10:00</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=Joko+Widodo&background=4F46E5&color=fff" alt="">
-                            </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">Joko Widodo</div>
-                                <div class="text-sm text-gray-500">Laki-laki, 60 tahun</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">Kontrol tekanan darah</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                                90/100
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <a href="#" class="text-blue-600 hover:text-blue-900">Detail</a>
-                    </td>
-                </tr>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $item['tanggal_tampil'] }}</div>
+                            <div class="text-xs text-gray-500 mt-1">{{ $item['jam_mulai'] }} - {{ $item['jam_selesai'] }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">{{ $item['keluhan'] }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">{{ $item['diagnosa'] ?? '-' }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            @if(isset($item['rating']) && $item['rating'])
+                                <div class="flex items-center">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <svg class="w-5 h-5 {{ $i <= $item['rating'] ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                        </svg>
+                                    @endfor
+                                    <span class="ml-1 text-sm text-gray-600">({{ $item['rating'] }}/5)</span>
+                                </div>
+                            @else
+                                <span class="text-gray-500">-</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                            <a href="{{ route('chat.create', $item['id']) }}" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 hover:bg-blue-50 transition inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                Lihat Chat
+                            </a>
+                        </td>
+                    </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            Belum ada riwayat konsultasi selesai
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
     </div>
@@ -181,7 +146,7 @@
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm text-gray-700">
-                        Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">3</span> dari <span class="font-medium">3</span> hasil
+                        Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> dari <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> hasil
                     </p>
                 </div>
                 <div>
@@ -219,7 +184,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm text-green-700 font-medium">Nilai Rata-rata</p>
-                        <p class="text-3xl font-bold text-green-800 mt-1">83.3</p>
+                        <p class="text-3xl font-bold text-green-800 mt-1">{{ $nilaiRata ?? '0' }}</p>
                     </div>
                     <div class="bg-green-100 p-2 rounded-full">
                         <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +198,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm text-blue-700 font-medium">Konsultasi Selesai</p>
-                        <p class="text-3xl font-bold text-blue-800 mt-1">3</p>
+                        <p class="text-3xl font-bold text-blue-800 mt-1">{{ count($riwayatKonsultasiSelesai) }}</p>
                     </div>
                     <div class="bg-blue-100 p-2 rounded-full">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +212,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm text-purple-700 font-medium">Nilai Tertinggi</p>
-                        <p class="text-3xl font-bold text-purple-800 mt-1">90</p>
+                        <p class="text-3xl font-bold text-purple-800 mt-1">{{ $nilaiTertinggi ?? '0' }}</p>
                     </div>
                     <div class="bg-purple-100 p-2 rounded-full">
                         <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,19 +250,19 @@
                     <div class="mb-4">
                         <div class="flex justify-between mb-1 items-center">
                             <div class="text-sm font-medium text-gray-700">Diagnosa</div>
-                            <div class="text-sm font-medium text-gray-700">88%</div>
+                            <div class="text-sm font-medium text-gray-700">75%</div>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: 88%"></div>
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 75%"></div>
                         </div>
                     </div>
                     <div class="mb-4">
                         <div class="flex justify-between mb-1 items-center">
-                            <div class="text-sm font-medium text-gray-700">Penanganan</div>
-                            <div class="text-sm font-medium text-gray-700">82%</div>
+                            <div class="text-sm font-medium text-gray-700">Empati</div>
+                            <div class="text-sm font-medium text-gray-700">90%</div>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: 82%"></div>
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
                         </div>
                     </div>
                 </div>

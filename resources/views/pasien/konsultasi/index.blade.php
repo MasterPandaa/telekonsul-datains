@@ -16,7 +16,7 @@
     </div>
 </div>
 
-<!-- Success alert will be shown via SweetAlert2 -->
+<!-- Notifikasi akan ditampilkan melalui JavaScript -->
 
 <!-- Dashboard Ringkasan -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -24,7 +24,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="text-lg font-semibold">Konsultasi Aktif</h3>
-                <p class="text-2xl font-bold mt-2">{{ $konsultasiAktif->count() }}</p>
+                <p class="text-2xl font-bold mt-2">{{ $konsultasiAktif->where('status', 'Menunggu')->count() + $konsultasiAktif->where('status', 'Terkonfirmasi')->count() }}</p>
             </div>
             <div class="bg-white bg-opacity-30 p-3 rounded-full">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,18 +72,39 @@
     </div>
 </div>
 
-<!-- Konsultasi Aktif -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+<!-- Tab Navigation -->
+<div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+    <div class="border-b">
+        <nav class="flex">
+            <button class="tab-button px-6 py-4 text-sm font-medium text-blue-600 border-b-2 border-blue-600" data-tab="active">
+                Konsultasi Aktif
+            </button>
+            <button class="tab-button px-6 py-4 text-sm font-medium text-gray-600 hover:text-gray-800" data-tab="inactive">
+                Konsultasi Tidak Aktif
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- Konsultasi Aktif (Menunggu dan Terkonfirmasi) -->
+<div id="tab-active" class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
     <div class="p-6 border-b border-gray-200 bg-gray-50">
         <h2 class="text-xl font-semibold text-gray-800 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             Konsultasi Aktif
         </h2>
+        <p class="text-sm text-gray-500">Konsultasi dengan status Menunggu dan Terkonfirmasi</p>
     </div>
     
-    @if($konsultasiAktif->isEmpty())
+    @php
+        $konsultasiAktifFiltered = $konsultasiAktif->filter(function($item) {
+            return in_array($item->status, ['Menunggu', 'Terkonfirmasi']);
+        });
+    @endphp
+    
+    @if($konsultasiAktifFiltered->isEmpty())
     <div class="p-6 text-center">
         <div class="py-8">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +136,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($konsultasiAktif as $item)
+                    @foreach($konsultasiAktifFiltered as $item)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -140,16 +161,6 @@
                                     bg-green-100 text-green-800
                                 @elseif($item->status === 'Menunggu')
                                     bg-yellow-100 text-yellow-800
-                                @elseif($item->status === 'Ditolak')
-                                    bg-red-100 text-red-800
-                                @elseif($item->status === 'Dibatalkan')
-                                    bg-gray-100 text-gray-800
-                                @elseif($item->status === 'Selesai')
-                                    bg-blue-100 text-blue-800
-                                @elseif($item->status === 'Terlambat')
-                                    bg-orange-100 text-orange-800
-                                @elseif($item->status === 'Berlangsung')
-                                    bg-purple-100 text-purple-800 animate-pulse
                                 @endif
                             ">
                                 {{ $item->status }}
@@ -195,49 +206,6 @@
                                             Batalkan
                                         </button>
                                     </form>
-                                @elseif($item->status === 'Ditolak')
-                                    <button type="button" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 text-center hover:bg-blue-50 transition" onclick="lihatAlasanDitolak({{ $item->id }}, '{{ $item->alasan_tolak ?? 'Tidak ada alasan yang diberikan' }}')">
-                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Lihat Alasan
-                                    </button>
-                                @elseif($item->status === 'Dibatalkan')
-                                    <button type="button" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 text-center hover:bg-blue-50 transition" onclick="lihatAlasanBatal({{ $item->id }}, '{{ $item->alasan_batal ?? 'Tidak ada alasan yang diberikan' }}')">
-                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Lihat Alasan
-                                    </button>
-                                @elseif($item->status === 'Terlambat')
-                                    <button type="button" class="text-orange-600 hover:text-orange-900 border border-orange-300 rounded-md px-2 py-1 text-center hover:bg-orange-50 transition" onclick="buatKonsultasiBaru()">
-                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Buat Konsultasi Baru
-                                    </button>
-                                @elseif($item->status === 'Selesai')
-                                    <a href="{{ route('chat.create', $item->id) }}" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 text-center hover:bg-blue-50 transition">
-                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                        </svg>
-                                        Lihat Chat
-                                    </a>
-                                @elseif($item->status === 'Pergantian Sesi')
-                                    <div class="flex flex-col sm:flex-row gap-2">
-                                        <button type="button" class="text-green-600 hover:text-green-900 border border-green-300 rounded-md px-2 py-1 text-center hover:bg-green-50 transition" onclick="terimaGantiSesi({{ $item->id }})">
-                                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                            Terima
-                                        </button>
-                                        <button type="button" class="text-red-600 hover:text-red-900 border border-red-300 rounded-md px-2 py-1 text-center hover:bg-red-50 transition" onclick="tolakGantiSesi({{ $item->id }})">
-                                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                            Tolak
-                                        </button>
-                                    </div>
                                 @endif
                             </div>
                         </td>
@@ -250,31 +218,32 @@
     @endif
 </div>
 
-<!-- Riwayat Konsultasi -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <div class="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+<!-- Konsultasi Tidak Aktif (Dibatalkan dan Terlambat) -->
+<div id="tab-inactive" class="bg-white rounded-lg shadow-md overflow-hidden mb-6 hidden">
+    <div class="p-6 border-b border-gray-200 bg-gray-50">
         <h2 class="text-xl font-semibold text-gray-800 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            Riwayat Konsultasi
+            Konsultasi Tidak Aktif
         </h2>
-        <a href="{{ route('pasien.riwayat.index') }}" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-            Lihat Semua
-            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-        </a>
+        <p class="text-sm text-gray-500">Konsultasi dengan status Dibatalkan dan Terlambat</p>
     </div>
     
-    @if($riwayatKonsultasi->isEmpty())
+    @php
+        $konsultasiTidakAktif = $riwayatKonsultasi->filter(function($item) {
+            return in_array($item->status, ['Dibatalkan', 'Terlambat']);
+        });
+    @endphp
+    
+    @if($konsultasiTidakAktif->isEmpty())
     <div class="p-6 text-center">
         <div class="py-8">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">Belum Ada Riwayat Konsultasi</h3>
-            <p class="mt-1 text-sm text-gray-500">Riwayat konsultasi Anda akan muncul di sini setelah selesai berkonsultasi.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Belum Ada Konsultasi Tidak Aktif</h3>
+            <p class="mt-1 text-sm text-gray-500">Anda belum memiliki konsultasi yang dibatalkan atau terlambat.</p>
         </div>
     </div>
     @else
@@ -284,16 +253,13 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahasiswa</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jadwal</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keluhan</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diagnosa</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($riwayatKonsultasi as $item)
+                    @foreach($konsultasiTidakAktif as $item)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -305,75 +271,35 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $item->tanggal->isoFormat('D MMMM Y') }}</div>
-                            <div class="text-xs text-gray-500 mt-1">{{ substr($item->jam_mulai, 0, 5) }} - {{ substr($item->jam_selesai, 0, 5) }}</div>
-                        </td>
                         <td class="px-6 py-4">
                             <div class="text-sm text-gray-900 line-clamp-2">{{ $item->keluhan }}</div>
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm text-gray-900">{{ $item->diagnosa ?? '-' }}</div>
-                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                @if($item->status === 'Selesai')
-                                    bg-blue-100 text-blue-800
-                                @elseif($item->status === 'Dibatalkan')
+                                @if($item->status === 'Dibatalkan')
                                     bg-gray-100 text-gray-800
-                                @elseif($item->status === 'Ditolak')
-                                    bg-red-100 text-red-800
+                                @elseif($item->status === 'Terlambat')
+                                    bg-orange-100 text-orange-800
                                 @endif
                             ">
                                 {{ $item->status }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
-                            @if($item->status === 'Selesai')
-                                @if($item->rating)
-                                    <div class="flex items-center">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            <svg class="w-5 h-5 {{ $i <= $item->rating ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                            </svg>
-                                        @endfor
-                                        <span class="ml-1 text-sm text-gray-600">({{ $item->rating }}/5)</span>
-                                    </div>
-                                @else
-                                    <button type="button" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 text-center hover:bg-blue-50 transition" onclick="beriRating({{ $item->id }})">
-                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                                        </svg>
-                                        Beri Rating
-                                    </button>
-                                @endif
-                            @else
-                                -
-                            @endif
-                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            @if($item->status === 'Selesai')
-                                <a href="{{ route('chat.create', $item->id) }}" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 hover:bg-blue-50 transition inline-flex items-center">
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <a href="{{ route('pasien.konsultasi.create') }}" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 hover:bg-blue-50 transition inline-flex items-center">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    Lihat Chat
+                                    Buat Ulang
                                 </a>
-                            @elseif($item->status === 'Ditolak')
-                                <button type="button" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 text-center hover:bg-blue-50 transition" onclick="lihatAlasanDitolak({{ $item->id }}, '{{ $item->alasan_tolak ?? 'Tidak ada alasan yang diberikan' }}')">
-                                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <button type="button" onclick="hapusKonsultasi({{ $item->id }})" class="text-red-600 hover:text-red-900 border border-red-300 rounded-md px-2 py-1 hover:bg-red-50 transition inline-flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
-                                    Lihat Alasan
+                                    Hapus
                                 </button>
-                            @elseif($item->status === 'Dibatalkan')
-                                <button type="button" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 text-center hover:bg-blue-50 transition" onclick="lihatAlasanBatal({{ $item->id }}, '{{ $item->alasan_batal ?? 'Tidak ada alasan yang diberikan' }}')">
-                                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                    Lihat Alasan
-                                </button>
-                            @endif
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -384,427 +310,260 @@
     @endif
 </div>
 
-@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        @if(session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: '{{ session('success') }}',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                toast: true,
-                position: 'top-end',
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                }
+    // Tab switching
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Hide all tabs
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.classList.add('hidden');
             });
-        @endif
-
-        // Update countdown timers
-        const countdownTimers = document.querySelectorAll('.countdown-timer');
+            
+            // Show selected tab
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            // Update active tab button
+            tabButtons.forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-600');
+            });
+            
+            this.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            this.classList.remove('text-gray-600');
+        });
+    });
+    
+    // Countdown timer functionality
+    function updateCountdowns() {
+        const countdownElements = document.querySelectorAll('.countdown-timer');
+        const now = new Date().getTime();
         
-        function updateTimers() {
-            countdownTimers.forEach(function(timer) {
-                const targetTime = parseInt(timer.dataset.target);
-                const now = new Date().getTime();
-                const difference = targetTime - now;
-                
-                if (difference <= 0) {
-                    timer.innerHTML = 'Konsultasi sudah dimulai';
+        countdownElements.forEach(element => {
+            const targetTime = parseInt(element.getAttribute('data-target'));
+            const timeRemainingElement = element.querySelector('.time-remaining');
+            
+            if (!targetTime) return;
+            
+            const distance = targetTime - now;
+            
+            if (distance <= 0) {
+                timeRemainingElement.textContent = "Waktunya konsultasi!";
+                element.classList.add('bg-green-50', 'text-green-700', 'border-green-200');
+                element.classList.remove('bg-gray-50', 'text-gray-600', 'border-gray-200');
                     return;
                 }
                 
-                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-                
-                const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                const timeRemaining = timer.querySelector('.time-remaining');
-                if (timeRemaining) {
-                    timeRemaining.textContent = formattedTime;
-                }
-            });
-        }
-        
-        // Update timers every second
-        setInterval(updateTimers, 1000);
-        updateTimers(); // Initial update
-    });
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            timeRemainingElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        });
+    }
+    
+    // Update countdowns immediately and then every second
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
+    
+    // Tampilkan notifikasi jika ada flash message
+    @if(session('success'))
+        showNotification("{{ session('success') }}", 'success');
+    @endif
+    
+    @if(session('error'))
+        showNotification("{{ session('error') }}", 'error');
+    @endif
+    
+    @if(session('warning'))
+        showNotification("{{ session('warning') }}", 'warning');
+    @endif
+    
+    @if(session('info'))
+        showNotification("{{ session('info') }}", 'info');
+    @endif
+});
 
-    // Fungsi untuk konfirmasi pembatalan konsultasi
+// Fungsi untuk menampilkan notifikasi menarik
+function showNotification(message, type = 'success') {
+    // Hapus notifikasi lama jika ada
+    const oldNotification = document.getElementById('healsai-notification');
+    if (oldNotification) {
+        oldNotification.remove();
+    }
+    
+    // Tentukan warna berdasarkan tipe
+    let bgColor, iconSvg;
+    if (type === 'success') {
+        bgColor = 'from-emerald-500 to-green-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+    } else if (type === 'error') {
+        bgColor = 'from-red-500 to-rose-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    } else if (type === 'warning') {
+        bgColor = 'from-amber-500 to-yellow-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+    } else if (type === 'info') {
+        bgColor = 'from-blue-500 to-indigo-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    }
+    
+    // Buat elemen notifikasi
+    const notification = document.createElement('div');
+    notification.id = 'healsai-notification';
+    notification.className = 'fixed top-4 right-4 z-50 flex items-center p-4 mb-4 rounded-xl shadow-lg text-white bg-gradient-to-r ' + bgColor + ' transition-all duration-500 transform translate-x-full opacity-0';
+    notification.innerHTML = `
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/25 mr-3">
+            ${iconSvg}
+        </div>
+        <div class="text-sm font-medium">${message}</div>
+        <button type="button" class="ml-4 -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 bg-white/10 hover:bg-white/20" onclick="this.parentElement.remove()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    `;
+    
+    // Tambahkan ke DOM
+    document.body.appendChild(notification);
+    
+    // Tampilkan dengan animasi
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    }, 10);
+    
+    // Sembunyikan setelah beberapa detik
+    setTimeout(() => {
+        notification.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 5000);
+}
+
     function konfirmasiBatalkan(id, tanggal, jam) {
         Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Batalkan Konsultasi</div>',
-            html: `
-                <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500 mb-4">
-                    <div class="text-left text-red-700">
-                        <p class="font-medium">Anda akan membatalkan konsultasi pada:</p>
-                        <p class="mt-2 font-semibold">${tanggal}</p>
-                        <p class="font-semibold">${jam}</p>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">Alasan Pembatalan:</label>
-                    <textarea id="alasan-batal" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500" rows="3" placeholder="Masukkan alasan pembatalan..."></textarea>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">Pembatalan konsultasi akan memberitahu mahasiswa yang bersangkutan.</div>
-            `,
-            icon: false,
+        title: 'Konfirmasi Pembatalan',
+        html: `Apakah Anda yakin ingin membatalkan konsultasi pada<br><strong>${tanggal}</strong> pukul <strong>${jam}</strong>?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Batalkan',
+        cancelButtonText: 'Tidak',
+        reverseButtons: true,
+        customClass: {
+            container: 'swal-custom',
+            popup: 'rounded-lg',
+            title: 'text-lg font-semibold text-gray-800',
+            htmlContainer: 'text-base text-gray-600',
+            confirmButton: 'rounded-md text-sm',
+            cancelButton: 'rounded-md text-sm'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Alasan Pembatalan',
+                input: 'textarea',
+                inputLabel: 'Mohon berikan alasan pembatalan:',
+                inputPlaceholder: 'Tuliskan alasan pembatalan di sini...',
+                inputAttributes: {
+                    'aria-label': 'Tuliskan alasan pembatalan di sini'
+                },
             showCancelButton: true,
-            confirmButtonColor: '#EF4444',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Ya, Batalkan</span>',
-            cancelButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>Kembali</span>',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Kirim',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
             customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md',
-                cancelButton: 'rounded-md'
-            },
-            preConfirm: () => {
-                const alasan = document.getElementById('alasan-batal').value;
+                    input: 'text-sm',
+                    inputLabel: 'text-gray-700'
+                },
+                preConfirm: (alasan) => {
                 if (!alasan) {
-                    Swal.showValidationMessage('<div class="flex items-center text-red-600"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>Anda harus memberikan alasan pembatalan</div>');
-                    return false;
-                }
-                return alasan;
+                        Swal.showValidationMessage('Alasan pembatalan harus diisi')
+                    }
+                    return alasan
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                const form = document.getElementById(`form-batalkan-${id}`);
-                
-                // Tambahkan input alasan
+                    const form = document.getElementById('form-batalkan-' + id);
                 const alasanInput = document.createElement('input');
                 alasanInput.type = 'hidden';
                 alasanInput.name = 'alasan_batal';
                 alasanInput.value = result.value;
-                
                 form.appendChild(alasanInput);
                 form.submit();
             }
         });
-    }
-
-    // Fungsi untuk melihat alasan ditolak
-    function lihatAlasanDitolak(id, alasan) {
-        Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Alasan Penolakan</div>',
-            html: `
-                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-red-500 mb-4">
-                    <div class="text-left text-gray-700">
-                        <p class="font-semibold mb-2">Detail Penolakan:</p>
-                        <p class="italic">"${alasan}"</p>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">Permintaan konsultasi ini telah ditolak oleh mahasiswa</div>
-            `,
-            icon: false,
-            showConfirmButton: true,
-            confirmButtonColor: '#3B82F6',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Saya Mengerti</span>',
-            customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md'
             }
         });
     }
 
-    // Fungsi untuk melihat alasan pembatalan
-    function lihatAlasanBatal(id, alasan) {
+function hapusKonsultasi(id) {
         Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Alasan Pembatalan</div>',
-            html: `
-                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-500 mb-4">
-                    <div class="text-left text-gray-700">
-                        <p class="font-semibold mb-2">Detail Pembatalan:</p>
-                        <p class="italic">"${alasan}"</p>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">Permintaan konsultasi ini telah dibatalkan</div>
-            `,
-            icon: false,
-            showConfirmButton: true,
-            confirmButtonColor: '#3B82F6',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Saya Mengerti</span>',
-            customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md'
-            }
-        });
-    }
-
-    // Fungsi untuk membuat konsultasi baru
-    function buatKonsultasiBaru() {
-        Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>Buat Konsultasi Baru?</div>',
-            html: `
-                <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 mb-4">
-                    <div class="text-left text-blue-700">
-                        <p class="font-medium">Apakah Anda ingin membuat permintaan konsultasi baru?</p>
-                        <p class="text-sm mt-2">Anda akan diarahkan ke halaman pembuatan konsultasi baru.</p>
-                    </div>
-                </div>
-            `,
-            icon: false,
+        title: 'Konfirmasi Hapus',
+        text: 'Apakah Anda yakin ingin menghapus konsultasi ini? Tindakan ini tidak dapat dibatalkan.',
+        icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#F97316',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Ya, Buat Baru</span>',
-            cancelButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Tidak</span>',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+        reverseButtons: true,
             customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md',
-                cancelButton: 'rounded-md'
+            popup: 'rounded-lg',
+            title: 'text-lg font-semibold text-gray-800',
+            htmlContainer: 'text-base text-gray-600',
+            confirmButton: 'rounded-md text-sm',
+            cancelButton: 'rounded-md text-sm'
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = '{{ route("pasien.konsultasi.create") }}';
-            }
-        });
-    }
-
-    // Fungsi untuk menerima pergantian sesi
-    function terimaGantiSesi(id) {
+            // Implementasi penghapusan konsultasi
                 Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Terima Pergantian Sesi</div>',
-            html: `
-                <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500 mb-4">
-                    <div class="text-left text-green-700">
-                        <p class="font-medium">Anda akan menerima permintaan pergantian sesi konsultasi.</p>
-                        <p class="text-sm mt-2">Jadwal konsultasi akan diperbarui sesuai dengan waktu yang diminta oleh mahasiswa.</p>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">Pastikan Anda tersedia pada jadwal baru yang diminta.</div>
-            `,
-            icon: false,
-            showCancelButton: true,
-            confirmButtonColor: '#10B981',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Ya, Terima</span>',
-            cancelButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Batal</span>',
-            customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md',
-                cancelButton: 'rounded-md'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ url("pasien/konsultasi") }}/' + id + '/terima-ganti-sesi';
-                
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                
-                form.appendChild(csrfToken);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    }
-
-    // Fungsi untuk menolak pergantian sesi
-    function tolakGantiSesi(id) {
-        Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Tolak Pergantian Sesi</div>',
-            html: `
-                <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500 mb-4">
-                    <div class="text-left text-red-700">
-                        <p class="font-medium">Anda akan menolak permintaan pergantian sesi konsultasi.</p>
-                        <p class="text-sm mt-2">Konsultasi akan dibatalkan dan mahasiswa akan diberitahu.</p>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">Penolakan pergantian sesi akan membatalkan konsultasi ini secara permanen.</div>
-            `,
-            icon: false,
-            showCancelButton: true,
-            confirmButtonColor: '#EF4444',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Ya, Tolak</span>',
-            cancelButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Batal</span>',
-            customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md',
-                cancelButton: 'rounded-md'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ url("pasien/konsultasi") }}/' + id + '/tolak-ganti-sesi';
-                
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                
-                form.appendChild(csrfToken);
-                document.body.appendChild(form);
-                form.submit();
+                title: 'Fitur Dalam Pengembangan',
+                text: 'Fitur penghapusan konsultasi belum diimplementasikan.',
+                icon: 'info',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'OK'
+            });
             }
         });
     }
     
-    // Fungsi untuk memberikan rating
-    function beriRating(id) {
-        let currentRating = 0;
-        
-        Swal.fire({
-            title: '<div class="flex items-center"><svg class="w-6 h-6 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>Berikan Rating</div>',
-            html: `
-                <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 mb-4">
-                    <div class="text-left text-blue-700">
-                        <p class="font-medium">Berikan penilaian untuk konsultasi ini</p>
-                        <p class="text-sm mt-2">Rating Anda akan membantu meningkatkan kualitas layanan kami</p>
-                    </div>
-                </div>
-                <div class="flex justify-center my-4" id="star-rating">
-                    <svg class="w-8 h-8 mx-1 cursor-pointer text-gray-300 hover:text-yellow-400" data-rating="1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-8 h-8 mx-1 cursor-pointer text-gray-300 hover:text-yellow-400" data-rating="2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-8 h-8 mx-1 cursor-pointer text-gray-300 hover:text-yellow-400" data-rating="3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-8 h-8 mx-1 cursor-pointer text-gray-300 hover:text-yellow-400" data-rating="4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-8 h-8 mx-1 cursor-pointer text-gray-300 hover:text-yellow-400" data-rating="5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                </div>
-                <div class="text-center mb-4">
-                    <span id="rating-text" class="text-lg font-medium">Pilih rating</span>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">Komentar (opsional):</label>
-                    <textarea id="komentar-rating" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Berikan komentar tentang konsultasi ini..."></textarea>
-                </div>
-            `,
-            icon: false,
-            showCancelButton: true,
-            confirmButtonColor: '#3B82F6',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Kirim Rating</span>',
-            cancelButtonText: '<span class="flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Batal</span>',
-            customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-lg font-bold text-gray-800 border-b pb-3',
-                content: 'pt-4',
-                confirmButton: 'rounded-md',
-                cancelButton: 'rounded-md'
-            },
-            didOpen: () => {
-                const stars = document.querySelectorAll('#star-rating svg');
-                const ratingText = document.getElementById('rating-text');
-                const ratingTexts = ['Sangat Buruk', 'Buruk', 'Cukup', 'Baik', 'Sangat Baik'];
-                
-                stars.forEach(star => {
-                    star.addEventListener('click', function() {
-                        const rating = parseInt(this.getAttribute('data-rating'));
-                        currentRating = rating;
-                        
-                        // Update tampilan bintang
-                        stars.forEach((s, index) => {
-                            if (index < rating) {
-                                s.classList.remove('text-gray-300');
-                                s.classList.add('text-yellow-400');
-                            } else {
-                                s.classList.remove('text-yellow-400');
-                                s.classList.add('text-gray-300');
-                            }
-                        });
-                        
-                        // Update teks rating
-                        ratingText.textContent = ratingTexts[rating - 1];
-                    });
-                    
-                    star.addEventListener('mouseover', function() {
-                        const rating = parseInt(this.getAttribute('data-rating'));
-                        
-                        // Highlight bintang saat hover
-                        stars.forEach((s, index) => {
-                            if (index < rating) {
-                                s.classList.add('text-yellow-400');
-                                s.classList.remove('text-gray-300');
-                            }
-                        });
-                    });
-                    
-                    star.addEventListener('mouseout', function() {
-                        // Kembalikan ke status sebelumnya saat mouse keluar
-                        stars.forEach((s, index) => {
-                            if (index < currentRating) {
-                                s.classList.add('text-yellow-400');
-                                s.classList.remove('text-gray-300');
-                            } else {
-                                s.classList.remove('text-yellow-400');
-                                s.classList.add('text-gray-300');
-                            }
-                        });
-                    });
-                });
-            },
-            preConfirm: () => {
-                if (currentRating === 0) {
-                    Swal.showValidationMessage('<div class="flex items-center text-red-600"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>Silakan pilih rating terlebih dahulu</div>');
-                    return false;
-                }
-                
-                const komentar = document.getElementById('komentar-rating').value;
-                return { rating: currentRating, komentar: komentar };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Submit form untuk memberikan rating
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ url("pasien/konsultasi") }}/' + id + '/rating';
-                
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                
-                const ratingInput = document.createElement('input');
-                ratingInput.type = 'hidden';
-                ratingInput.name = 'rating';
-                ratingInput.value = result.value.rating;
-                
-                const komentarInput = document.createElement('input');
-                komentarInput.type = 'hidden';
-                komentarInput.name = 'komentar_rating';
-                komentarInput.value = result.value.komentar;
-                
-                form.appendChild(csrfToken);
-                form.appendChild(ratingInput);
-                form.appendChild(komentarInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    }
+// Tambahkan style kustom untuk SweetAlert
+document.head.insertAdjacentHTML('beforeend', `
+    <style>
+        .swal2-popup {
+            font-family: 'Inter', sans-serif;
+        }
+        .swal2-title {
+            font-weight: 600 !important;
+        }
+        .swal2-html-container {
+            font-size: 0.95rem !important;
+        }
+        .swal2-confirm, .swal2-cancel {
+            font-weight: 500 !important;
+            padding: 0.5rem 1.5rem !important;
+        }
+        .swal2-textarea {
+            border-radius: 0.375rem !important;
+            border-color: #e2e8f0 !important;
+            padding: 0.5rem !important;
+            font-size: 0.875rem !important;
+        }
+        .swal2-textarea:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+        }
+    </style>
+`);
 </script>
-@endpush
+
 @endsection 

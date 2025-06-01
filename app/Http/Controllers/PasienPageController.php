@@ -428,6 +428,9 @@ class PasienPageController extends Controller
 
     public function riwayatIndex()
     {
+        // Jalankan update status konsultasi terlebih dahulu
+        $this->konsultasiService->updateStatus();
+        
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
@@ -437,17 +440,29 @@ class PasienPageController extends Controller
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu');
         }
         
-        // Ambil semua riwayat konsultasi
+        // Ambil data riwayat konsultasi (hanya status selesai)
         $riwayatKonsultasi = Konsultasi::where('pasien_id', $pasien->id)
-            ->whereIn('status', ['Selesai', 'Dibatalkan', 'Ditolak'])
+            ->where('status', 'Selesai')
             ->orderBy('tanggal', 'desc')
             ->orderBy('jam_mulai', 'desc')
             ->with('mahasiswa')
             ->paginate(10);
         
+        // Ambil daftar mahasiswa untuk filter
+        $mahasiswas = User::where('role', 'mahasiswa')
+            ->whereIn('id', function($query) use ($pasien) {
+                $query->select('mahasiswa_id')
+                    ->from('konsultasi')
+                    ->where('pasien_id', $pasien->id)
+                    ->where('status', 'Selesai')
+                    ->distinct();
+            })
+            ->get();
+        
         return view('pasien.riwayat.index', [
             'title' => 'Riwayat Konsultasi',
-            'riwayatKonsultasi' => $riwayatKonsultasi
+            'riwayatKonsultasi' => $riwayatKonsultasi,
+            'mahasiswas' => $mahasiswas
         ]);
     }
 
