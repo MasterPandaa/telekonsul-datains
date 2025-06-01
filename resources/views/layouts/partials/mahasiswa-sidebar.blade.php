@@ -2,8 +2,9 @@
     <!-- User Info -->
     <div class="px-4 py-3 mb-6 bg-blue-50 rounded-lg">
         <div class="flex items-center">
-            <div class="ml-1">
-                <p class="text-sm font-medium text-gray-800">{{ Auth::user()->email }}</p>
+            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full border-2 border-white">
+            <div class="ml-3">
+                <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
                 <p class="text-xs text-gray-500">Mahasiswa</p>
             </div>
         </div>
@@ -118,8 +119,9 @@
     <div class="absolute inset-y-0 left-0 w-64 bg-white shadow-lg py-6 px-4 overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full border-2 border-white mr-3">
                 <div>
-                    <p class="text-sm font-medium text-gray-800">{{ Auth::user()->email }}</p>
+                    <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
                     <p class="text-xs text-gray-500">Mahasiswa</p>
                 </div>
             </div>

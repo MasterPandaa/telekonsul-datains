@@ -19,7 +19,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MahasiswaPasswordController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');

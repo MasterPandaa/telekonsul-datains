@@ -73,4 +73,13 @@ class Pasien extends Model
             return 'Obesitas';
         }
     }
+    
+    // Accessor untuk mendapatkan URL foto profil
+    public function getFotoUrlAttribute()
+    {
+        if ($this->foto && file_exists(public_path('img/pasien/' . $this->foto))) {
+            return asset('img/pasien/' . $this->foto);
+        }
+        return asset('img/pasien/default.jpg');
+    }
 } 

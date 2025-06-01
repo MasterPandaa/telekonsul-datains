@@ -1,20 +1,121 @@
 @extends('layouts.pasien')
 
 @section('pasien-content')
+<style>
+    /* Modern profile styles */
+    .profile-container {
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-header {
+        background: linear-gradient(120deg, #4f46e5, #3b82f6);
+        padding: 0.75rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+    
+    .profile-avatar {
+        background: linear-gradient(120deg, #c7d2fe, #a5b4fc);
+        border: 3px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-avatar:hover {
+        transform: scale(1.05);
+    }
+    
+    .profile-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .profile-card:hover {
+        border-left-color: #3b82f6;
+        transform: translateX(3px);
+    }
+    
+    .edit-button {
+        transition: all 0.3s ease;
+    }
+    
+    .edit-button:hover {
+        transform: scale(1.05);
+    }
+    
+    .info-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        color: #1f2937;
+        font-weight: 500;
+    }
+    
+    .status-badge {
+        background: linear-gradient(120deg, #dcfce7, #bbf7d0);
+        color: #15803d;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+</style>
+
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Profil Saya</h1>
-    <p class="text-sm text-gray-600">Informasi data diri dan riwayat kesehatan</p>
+    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+        <span class="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">Profil Saya</span>
+        <span class="ml-3 px-3 py-1 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 text-xs rounded-full font-medium">Personal Info</span>
+    </h1>
+    <p class="text-sm text-gray-600 mt-1">Kelola informasi profil dan data kesehatan Anda</p>
 </div>
 
 @if(session('success'))
-<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
-    <span class="block sm:inline">{{ session('success') }}</span>
+<div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm">{{ session('success') }}</p>
+        </div>
+    </div>
 </div>
 @endif
 
 @if(session('error'))
-<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-    <span class="block sm:inline">{{ session('error') }}</span>
+<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm">{{ session('error') }}</p>
+        </div>
+    </div>
 </div>
 @endif
 
@@ -30,9 +131,20 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Kolom Profil dan Foto -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="profile-container bg-white">
+        <div class="profile-header text-white">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg">Foto Profil</h3>
+                <div class="status-badge">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Aktif</span>
+                </div>
+            </div>
+        </div>
         <div class="p-6 text-center">
-            <div class="w-32 h-32 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
+            <div class="w-32 h-32 mx-auto profile-avatar rounded-full overflow-hidden mb-4">
                 @if($pasien->foto)
                     <img src="{{ asset('img/pasien/' . $pasien->foto) }}" alt="Foto Profil" class="w-full h-full object-cover">
                 @else
@@ -41,25 +153,29 @@
             </div>
             <h2 class="text-xl font-bold text-gray-800">{{ $pasien->nama }}</h2>
             <p class="text-sm text-gray-600 mt-1">ID: P{{ str_pad($pasien->id, 5, '0', STR_PAD_LEFT) }}</p>
-            <div class="mt-2 inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                Aktif
-            </div>
             
             <div class="mt-6 border-t pt-4">
-                <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition">
-                    Ubah Foto Profil
+                <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" 
+                        class="w-full bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <div class="flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Ubah Foto Profil
+                    </div>
                 </button>
             </div>
         </div>
     </div>
     
     <!-- Kolom Informasi Utama -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div class="p-6 border-b border-gray-200">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="profile-container bg-white">
+            <div class="profile-header text-white">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-gray-800">Informasi Dasar</h3>
-                    <button onclick="document.getElementById('editInformasiModal').classList.remove('hidden')" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <h3 class="text-lg font-semibold">Informasi Dasar</h3>
+                    <button onclick="document.getElementById('editInformasiModal').classList.remove('hidden')" 
+                            class="edit-button bg-white bg-opacity-20 text-white text-sm px-3 py-1 rounded-full flex items-center transition-all duration-300">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
@@ -69,17 +185,17 @@
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Nama Lengkap</p>
-                        <p class="font-medium">{{ $pasien->nama }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Nama Lengkap</p>
+                        <p class="info-value">{{ $pasien->nama }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Jenis Kelamin</p>
-                        <p class="font-medium">{{ $pasien->jenis_kelamin ?? 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Jenis Kelamin</p>
+                        <p class="info-value">{{ $pasien->jenis_kelamin ?? 'Belum diisi' }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Tempat, Tanggal Lahir</p>
-                        <p class="font-medium">
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Tempat, Tanggal Lahir</p>
+                        <p class="info-value">
                             @if($pasien->tempat_lahir && $pasien->tanggal_lahir)
                                 @php
                                     $tanggal_lahir = is_string($pasien->tanggal_lahir) ? $pasien->tanggal_lahir : $pasien->tanggal_lahir->format('d M Y');
@@ -90,35 +206,36 @@
                             @endif
                         </p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Usia</p>
-                        <p class="font-medium">{{ $pasien->usia ? $pasien->usia . ' tahun' : 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Usia</p>
+                        <p class="info-value">{{ $pasien->usia ? $pasien->usia . ' tahun' : 'Belum diisi' }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Email</p>
-                        <p class="font-medium">{{ $pasien->email }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Email</p>
+                        <p class="info-value">{{ $pasien->email }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Telepon</p>
-                        <p class="font-medium">{{ $pasien->no_hp ?? 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Telepon</p>
+                        <p class="info-value">{{ $pasien->no_hp ?? 'Belum diisi' }}</p>
                     </div>
-                    <div class="md:col-span-2">
-                        <p class="text-sm text-gray-500 mb-1">Alamat</p>
-                        <p class="font-medium">{{ $pasien->alamat ?? 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50 md:col-span-2">
+                        <p class="info-label">Alamat</p>
+                        <p class="info-value">{{ $pasien->alamat ?? 'Belum diisi' }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">NIK</p>
-                        <p class="font-medium">{{ $pasien->nik ?? 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">NIK</p>
+                        <p class="info-value">{{ $pasien->nik ?? 'Belum diisi' }}</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div class="p-6 border-b border-gray-200">
+        <div class="profile-container bg-white">
+            <div class="profile-header text-white">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-gray-800">Informasi Medis</h3>
-                    <button onclick="document.getElementById('editMedisModal').classList.remove('hidden')" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <h3 class="text-lg font-semibold">Informasi Medis</h3>
+                    <button onclick="document.getElementById('editMedisModal').classList.remove('hidden')" 
+                            class="edit-button bg-white bg-opacity-20 text-white text-sm px-3 py-1 rounded-full flex items-center transition-all duration-300">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
@@ -128,17 +245,17 @@
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Tinggi Badan</p>
-                        <p class="font-medium">{{ $pasien->tinggi_badan ? $pasien->tinggi_badan . ' cm' : 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Tinggi Badan</p>
+                        <p class="info-value">{{ $pasien->tinggi_badan ? $pasien->tinggi_badan . ' cm' : 'Belum diisi' }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Berat Badan</p>
-                        <p class="font-medium">{{ $pasien->berat_badan ? $pasien->berat_badan . ' kg' : 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Berat Badan</p>
+                        <p class="info-value">{{ $pasien->berat_badan ? $pasien->berat_badan . ' kg' : 'Belum diisi' }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">BMI (Indeks Massa Tubuh)</p>
-                        <p class="font-medium">
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">BMI (Indeks Massa Tubuh)</p>
+                        <p class="info-value">
                             @if($pasien->bmi)
                                 {{ $pasien->bmi }} ({{ $pasien->kategori_bmi }})
                             @else
@@ -146,86 +263,19 @@
                             @endif
                         </p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Tekanan Darah</p>
-                        <p class="font-medium">{{ $pasien->tekanan_darah ?? 'Belum diisi' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Tekanan Darah</p>
+                        <p class="info-value">{{ $pasien->tekanan_darah ?? 'Belum diisi' }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500 mb-1">Riwayat Alergi</p>
-                        <p class="font-medium">{{ $pasien->alergi ?? 'Tidak ada' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50">
+                        <p class="info-label">Riwayat Alergi</p>
+                        <p class="info-value">{{ $pasien->alergi ?? 'Tidak ada' }}</p>
                     </div>
-                    <div class="md:col-span-2">
-                        <p class="text-sm text-gray-500 mb-1">Riwayat Penyakit</p>
-                        <p class="font-medium">{{ $pasien->riwayat_penyakit ?? 'Tidak ada riwayat penyakit kronis' }}</p>
+                    <div class="profile-card p-3 rounded-lg hover:bg-gray-50 md:col-span-2">
+                        <p class="info-label">Riwayat Penyakit</p>
+                        <p class="info-value">{{ $pasien->riwayat_penyakit ?? 'Tidak ada riwayat penyakit kronis' }}</p>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Riwayat Konsultasi Terbaru -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6 lg:col-span-3">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-800">Riwayat Konsultasi Terbaru</h3>
-                <a href="{{ route('pasien.riwayat.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
-                    Lihat Semua
-                </a>
-            </div>
-        </div>
-        <div class="p-6">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahasiswa</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keluhan</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diagnosa</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">10 Mei 2023</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Dr. Mahasiswa 1</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Sakit kepala dan demam</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Demam tifoid</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Selesai
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">28 April 2023</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">Dr. Mahasiswa 2</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">Batuk dan pilek</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">ISPA</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Selesai
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
