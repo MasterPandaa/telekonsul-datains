@@ -4,8 +4,11 @@
 <div class="mb-6">
     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Telekonsultasi</h1>
-            <p class="text-sm text-gray-600">Konsultasikan keluhan Anda dengan mahasiswa kedokteran</p>
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                <span class="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">Telekonsultasi</span>
+                <span class="ml-3 px-3 py-1 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 text-xs rounded-full font-medium">Real-time Chat</span>
+            </h1>
+            <p class="text-sm text-gray-600 mt-1">Konsultasikan keluhan Anda dengan mahasiswa kedokteran</p>
         </div>
         <a href="{{ route('pasien.konsultasi.create') }}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md text-sm transition flex items-center justify-center w-full md:w-auto">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

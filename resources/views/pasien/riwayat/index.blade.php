@@ -16,44 +16,109 @@
     </div>
 </div>
 
+<style>
+    /* Custom Select Styling */
+    select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1.2em;
+    }
+    
+    select:focus {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    }
+
+    /* Hover effect for select options */
+    select option {
+        padding: 1rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    select option:checked {
+        background: linear-gradient(to right, #3B82F6, #4F46E5);
+        color: white;
+    }
+
+    select option:hover {
+        background-color: #EFF6FF;
+    }
+
+    /* Custom scrollbar for select dropdown */
+    select::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    select::-webkit-scrollbar-track {
+        background: #F3F4F6;
+        border-radius: 4px;
+    }
+
+    select::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 4px;
+    }
+
+    select::-webkit-scrollbar-thumb:hover {
+        background: #94A3B8;
+    }
+</style>
+
 <!-- Filter dan Pencarian -->
 <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
     <div class="p-6">
-        <form action="{{ route('pasien.riwayat.index') }}" method="GET" class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="flex-grow">
-                <div class="relative">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari berdasarkan keluhan atau diagnosa..." class="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <div class="absolute left-3 top-2.5">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
+        <form action="{{ route('pasien.riwayat.index') }}" method="GET" class="space-y-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:space-x-4 space-y-4 lg:space-y-0">
+                <!-- Search Bar -->
+                <div class="flex-grow">
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ request('search') }}" 
+                            class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 bg-gray-50 text-gray-800 placeholder-gray-400"
+                            placeholder="Cari berdasarkan keluhan atau diagnosa...">
+                        <div class="absolute left-4 top-3.5 text-gray-400">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="flex flex-col md:flex-row gap-4">
-                <div>
-                    <select name="mahasiswa" class="border rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-                        <option value="">Semua Mahasiswa</option>
-                        @foreach($mahasiswas ?? [] as $mahasiswa)
-                            <option value="{{ $mahasiswa->id }}" {{ request('mahasiswa') == $mahasiswa->id ? 'selected' : '' }}>{{ $mahasiswa->name }}</option>
-                        @endforeach
-                    </select>
+
+                <!-- Filter Mahasiswa -->
+                <div class="w-full lg:w-64">
+                    <div class="relative">
+                        <select name="mahasiswa" class="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 bg-gray-50 text-gray-800 hover:bg-gray-100 cursor-pointer">
+                            <option value="">Semua Mahasiswa</option>
+                            @foreach($mahasiswas ?? [] as $mahasiswa)
+                                <option value="{{ $mahasiswa->id }}" {{ request('mahasiswa') == $mahasiswa->id ? 'selected' : '' }}>
+                                    {{ $mahasiswa->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <select name="period" class="border rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-                        <option value="">Semua Waktu</option>
-                        <option value="7" {{ request('period') == '7' ? 'selected' : '' }}>7 Hari Terakhir</option>
-                        <option value="30" {{ request('period') == '30' ? 'selected' : '' }}>30 Hari Terakhir</option>
-                        <option value="90" {{ request('period') == '90' ? 'selected' : '' }}>3 Bulan Terakhir</option>
-                        <option value="180" {{ request('period') == '180' ? 'selected' : '' }}>6 Bulan Terakhir</option>
-                    </select>
+
+                <!-- Filter Periode -->
+                <div class="w-full lg:w-48">
+                    <div class="relative">
+                        <select name="period" class="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 bg-gray-50 text-gray-800 hover:bg-gray-100 cursor-pointer">
+                            <option value="">Semua Waktu</option>
+                            <option value="7" {{ request('period') == '7' ? 'selected' : '' }}>7 Hari Terakhir</option>
+                            <option value="30" {{ request('period') == '30' ? 'selected' : '' }}>30 Hari Terakhir</option>
+                            <option value="90" {{ request('period') == '90' ? 'selected' : '' }}>3 Bulan Terakhir</option>
+                            <option value="180" {{ request('period') == '180' ? 'selected' : '' }}>6 Bulan Terakhir</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <!-- Tombol Filter -->
+                <div class="w-full lg:w-auto">
+                    <button type="submit" class="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow transform hover:-translate-y-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
-                        Filter
+                        <span>Terapkan Filter</span>
                     </button>
                 </div>
             </div>
@@ -63,14 +128,14 @@
 
 <!-- Tabel Riwayat Konsultasi -->
 <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-    <div class="p-6 border-b border-gray-200 bg-gray-50">
-        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-indigo-600">
+        <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             Riwayat Konsultasi
         </h2>
-        <p class="text-sm text-gray-500">Konsultasi dengan status Selesai</p>
+        <p class="text-sm text-blue-100 mt-1">Konsultasi dengan status Selesai</p>
     </div>
     
     @if($riwayatKonsultasi->isEmpty())
@@ -92,17 +157,17 @@
         </div>
     </div>
     @else
-    <div class="p-6">
+    <div class="p-0">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahasiswa</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jadwal</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keluhan</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diagnosa</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Mahasiswa</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Jadwal</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Keluhan</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Diagnosa</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Rating</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -145,13 +210,13 @@
                                     <span class="ml-1 text-sm text-gray-600">({{ $item->rating }}/5)</span>
                                 </div>
                             @else
-                                <button onclick="berikanRating({{ $item->id }})" class="text-blue-600 hover:text-blue-900 text-sm flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button onclick="berikanRating({{ $item->id }})" class="inline-flex items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                    <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                                     </svg>
                                     Beri Rating
                                 </button>
-                                @endif
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <a href="{{ route('chat.create', $item->id) }}" class="text-blue-600 hover:text-blue-900 border border-blue-300 rounded-md px-2 py-1 hover:bg-blue-50 transition inline-flex items-center">
@@ -168,7 +233,7 @@
         </div>
         
         <!-- Pagination -->
-        <div class="mt-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div class="p-6 mt-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div class="text-sm text-gray-500">
                 Menampilkan {{ $riwayatKonsultasi->firstItem() ?? 0 }}-{{ $riwayatKonsultasi->lastItem() ?? 0 }} dari {{ $riwayatKonsultasi->total() }} hasil
             </div>

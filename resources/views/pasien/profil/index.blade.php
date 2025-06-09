@@ -89,45 +89,7 @@
     <p class="text-sm text-gray-600 mt-1">Kelola informasi profil dan data kesehatan Anda</p>
 </div>
 
-@if(session('success'))
-<div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
-    <div class="flex">
-        <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-        </div>
-        <div class="ml-3">
-            <p class="text-sm">{{ session('success') }}</p>
-        </div>
-    </div>
-</div>
-@endif
-
-@if(session('error'))
-<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
-    <div class="flex">
-        <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </div>
-        <div class="ml-3">
-            <p class="text-sm">{{ session('error') }}</p>
-        </div>
-    </div>
-</div>
-@endif
-
-@if ($errors->any())
-<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-    <ul class="list-disc pl-5">
-        @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
+<!-- Notifikasi akan ditampilkan melalui JavaScript -->
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Kolom Profil dan Foto -->
@@ -418,4 +380,89 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tampilkan notifikasi jika ada flash message
+    @if(session('success'))
+        showNotification("{{ session('success') }}", 'success');
+    @endif
+    
+    @if(session('error'))
+        showNotification("{{ session('error') }}", 'error');
+    @endif
+    
+    @if(session('warning'))
+        showNotification("{{ session('warning') }}", 'warning');
+    @endif
+    
+    @if(session('info'))
+        showNotification("{{ session('info') }}", 'info');
+    @endif
+
+    // Tampilkan notifikasi untuk error validasi jika ada
+    @if ($errors->any())
+        @foreach ($errors->all() as $error)
+            showNotification("{{ $error }}", 'error');
+        @endforeach
+    @endif
+});
+
+// Fungsi untuk menampilkan notifikasi menarik
+function showNotification(message, type = 'success') {
+    // Hapus notifikasi lama jika ada
+    const oldNotification = document.getElementById('healsai-notification');
+    if (oldNotification) {
+        oldNotification.remove();
+    }
+    
+    // Tentukan warna berdasarkan tipe
+    let bgColor, iconSvg;
+    if (type === 'success') {
+        bgColor = 'from-emerald-500 to-green-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+    } else if (type === 'error') {
+        bgColor = 'from-red-500 to-rose-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    } else if (type === 'warning') {
+        bgColor = 'from-amber-500 to-yellow-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+    } else if (type === 'info') {
+        bgColor = 'from-blue-500 to-indigo-500';
+        iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    }
+    
+    // Buat elemen notifikasi
+    const notification = document.createElement('div');
+    notification.id = 'healsai-notification';
+    notification.className = 'fixed top-4 right-4 z-50 flex items-center p-4 mb-4 rounded-xl shadow-lg text-white bg-gradient-to-r ' + bgColor + ' transition-all duration-500 transform translate-x-full opacity-0';
+    notification.innerHTML = `
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/25 mr-3">
+            ${iconSvg}
+        </div>
+        <div class="text-sm font-medium">${message}</div>
+        <button type="button" class="ml-4 -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 bg-white/10 hover:bg-white/20" onclick="this.parentElement.remove()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    `;
+    
+    // Tambahkan ke DOM
+    document.body.appendChild(notification);
+    
+    // Tampilkan dengan animasi
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    }, 10);
+    
+    // Sembunyikan setelah beberapa detik
+    setTimeout(() => {
+        notification.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 5000);
+}
+</script>
+@endpush
 @endsection 

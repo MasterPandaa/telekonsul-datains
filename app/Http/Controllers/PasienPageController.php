@@ -452,7 +452,7 @@ class PasienPageController extends Controller
         $mahasiswas = User::where('role', 'mahasiswa')
             ->whereIn('id', function($query) use ($pasien) {
                 $query->select('mahasiswa_id')
-                    ->from('konsultasi')
+                    ->from('konsultasis')
                     ->where('pasien_id', $pasien->id)
                     ->where('status', 'Selesai')
                     ->distinct();
