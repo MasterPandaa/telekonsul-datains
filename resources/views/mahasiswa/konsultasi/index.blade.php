@@ -1,11 +1,9 @@
 @extends('layouts.mahasiswa')
+
 @section('mahasiswa-content')
-<div class="mb-6 flex items-center justify-between">
-    <div>
+<div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Permintaan Konsultasi</h1>
         <p class="text-sm text-gray-600">Kelola permintaan konsultasi dengan pasien Anda</p>
-    </div>
-    <!-- Tombol Buat Permintaan dihapus karena permintaan dibuat oleh pasien -->
 </div>
 
 <!-- Filter and Search -->
@@ -46,7 +44,7 @@
     </div>
 </div>
 
-<!-- Konsultasi Aktif (Terkonfirmasi dan Menunggu) -->
+<!-- Konsultasi Aktif -->
 <div id="tab-active" class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
     <div class="p-6 border-b border-gray-200 bg-gray-50">
         <h2 class="text-xl font-semibold text-gray-800 flex items-center">
@@ -81,7 +79,7 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @php
-                    $konsultasiAktifFiltered = array_filter($konsultasiAktif, function($item) {
+                    $konsultasiAktifFiltered = array_filter($konsultasiAktif ?? [], function($item) {
                         return in_array($item['status'], ['Terkonfirmasi', 'Menunggu']);
                     });
                 @endphp
@@ -160,7 +158,7 @@
     </div>
 </div>
 
-<!-- Konsultasi Tidak Aktif (Dibatalkan dan Terlambat) -->
+<!-- Konsultasi Tidak Aktif -->
 <div id="tab-inactive" class="bg-white rounded-lg shadow-md overflow-hidden mb-6 hidden">
     <div class="p-6 border-b border-gray-200 bg-gray-50">
         <h2 class="text-xl font-semibold text-gray-800 flex items-center">
@@ -192,7 +190,7 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @php
-                    $konsultasiTidakAktif = array_filter($konsultasiSelesai, function($item) {
+                    $konsultasiTidakAktif = array_filter($konsultasiSelesai ?? [], function($item) {
                         return in_array($item['status'], ['Dibatalkan', 'Terlambat']);
                     });
                 @endphp
@@ -255,7 +253,7 @@
     </div>
 </div>
 
-@section('scripts')
+@push('scripts')
 <script>
     // Tab switching functionality
     document.addEventListener('DOMContentLoaded', function() {
@@ -378,4 +376,5 @@
             }
     }
 </script>
+@endpush
 @endsection 

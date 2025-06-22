@@ -68,4 +68,71 @@ class LogController extends Controller
         
         return back()->with('success', 'Semua log berhasil dihapus!');
     }
+
+    /**
+     * Mendapatkan data aktivitas pengguna untuk grafik
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserActivityData()
+    {
+        // Ambil data aktivitas 7 hari terakhir
+        $startDate = now()->subDays(6)->startOfDay();
+        $endDate = now()->endOfDay();
+        
+        // Data untuk grafik berdasarkan tanggal
+        $activityByDate = Log::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+            
+        // Siapkan array tanggal untuk 7 hari terakhir
+        $dates = [];
+        $counts = [];
+        
+        // Isi dengan 0 untuk tanggal yang tidak ada aktivitas
+        for ($i = 0; $i < 7; $i++) {
+            $date = now()->subDays(6 - $i)->format('Y-m-d');
+            $dates[] = now()->subDays(6 - $i)->format('d M');
+            
+            $found = false;
+            foreach ($activityByDate as $activity) {
+                if ($activity->date == $date) {
+                    $counts[] = $activity->count;
+                    $found = true;
+                    break;
+                }
+            }
+            
+            if (!$found) {
+                $counts[] = 0;
+            }
+        }
+        
+        // Data untuk grafik berdasarkan tipe aktivitas
+        $activityByType = Log::selectRaw('action, COUNT(*) as count')
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
+            ->groupBy('action')
+            ->orderBy('count', 'desc')
+            ->limit(5)
+            ->get();
+            
+        $actionTypes = [];
+        $actionCounts = [];
+        
+        foreach ($activityByType as $activity) {
+            $actionTypes[] = $activity->action;
+            $actionCounts[] = $activity->count;
+        }
+        
+        return response()->json([
+            'dateLabels' => $dates,
+            'dateCounts' => $counts,
+            'actionLabels' => $actionTypes,
+            'actionCounts' => $actionCounts
+        ]);
+    }
 }

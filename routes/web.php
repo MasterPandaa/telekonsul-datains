@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
         Route::get('log/system', [LogController::class, 'system'])->name('log.system');
         Route::delete('log/destroy', [LogController::class, 'destroy'])->name('log.destroy');
         Route::delete('log/clear', [LogController::class, 'clear'])->name('log.clear');
+        Route::get('log/activity-data', [LogController::class, 'getUserActivityData'])->name('log.activity-data');
         
         // Konsultasi status update
         Route::get('konsultasi/update-status', [AdminController::class, 'updateKonsultasiStatus'])->name('konsultasi.update-status');
@@ -74,12 +75,6 @@ Route::middleware(['auth', 'can:isMahasiswa'])->prefix('mahasiswa')->name('mahas
     
     // Riwayat & Nilai
     Route::get('/riwayat', [MahasiswaPageController::class, 'riwayatIndex'])->name('riwayat.index');
-    
-    // Quiz
-    Route::prefix('quiz')->name('quiz.')->group(function() {
-        Route::get('/', [MahasiswaPageController::class, 'quizIndex'])->name('index');
-        Route::get('/{id}', [MahasiswaPageController::class, 'quizShow'])->name('show');
-    });
 
     Route::post('/konsultasi/{konsultasi}/konfirmasi', [MahasiswaPageController::class, 'konfirmasiKonsultasi'])->name('konsultasi.konfirmasi');
     Route::post('/konsultasi/{konsultasi}/tolak', [MahasiswaPageController::class, 'tolakKonsultasi'])->name('konsultasi.tolak');
@@ -144,6 +139,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.readAll');
     Route::get('/notifications/get-latest', [NotificationController::class, 'getLatest'])->name('notifications.getLatest');
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 });
 
 require __DIR__.'/auth.php';

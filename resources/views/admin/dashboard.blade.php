@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 @section('admin-content')
 <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Dashboard Admin</h1>
-    <p class="text-gray-600 mt-1">Selamat datang kembali, {{ $user->name }}</p>
+    <h1 class="text-2xl font-bold text-gray-800">Dashboard Admin</h1>
+    <p class="text-sm text-gray-600">Selamat datang kembali di Sistem Admin ASSRI</p>
 </div>
 
 <!-- Statistik -->
@@ -107,14 +107,8 @@
     <!-- Grafik Aktivitas -->
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Aktivitas Pengguna</h2>
-        <div class="h-64 flex items-center justify-center">
-            <div class="text-gray-400 text-center">
-                <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-                <p>Data grafik akan ditampilkan di sini</p>
-                <p class="text-sm">Anda bisa mengintegrasikan Chart.js atau library grafik lainnya</p>
-            </div>
+        <div class="h-64">
+            <canvas id="userActivityChart"></canvas>
         </div>
     </div>
 
@@ -198,65 +192,77 @@
     </div>
 </div>
 
-<!-- Pengumuman dan Informasi -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Pengumuman -->
-    <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Pengumuman</h2>
-        <div class="space-y-4">
-            <div class="p-4 border border-blue-100 rounded-lg bg-blue-50">
-                <div class="flex items-center mb-2">
-                    <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="font-medium text-blue-800">Pembaruan Sistem</h3>
-                </div>
-                <p class="text-sm text-blue-700">Sistem telah diperbarui ke versi terbaru. Beberapa fitur baru telah ditambahkan dan bug telah diperbaiki.</p>
-                <p class="text-xs text-blue-600 mt-2">2 hari yang lalu</p>
-            </div>
-            
-            <div class="p-4 border border-green-100 rounded-lg bg-green-50">
-                <div class="flex items-center mb-2">
-                    <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="font-medium text-green-800">Pelatihan Pengguna</h3>
-                </div>
-                <p class="text-sm text-green-700">Sesi pelatihan pengguna akan diadakan pada tanggal 15 Juni 2023. Silakan daftar melalui email.</p>
-                <p class="text-xs text-green-600 mt-2">1 minggu yang lalu</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Link Cepat -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Link Cepat</h2>
-        <div class="space-y-3">
-            <a href="{{ route('admin.mahasiswa.create') }}" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                <svg class="w-5 h-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                <span class="text-gray-700">Tambah Mahasiswa Baru</span>
-            </a>
-            <a href="{{ route('admin.dosen.create') }}" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                <span class="text-gray-700">Tambah Dosen Baru</span>
-            </a>
-            <a href="{{ route('admin.pasien.create') }}" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                <svg class="w-5 h-5 text-purple-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                <span class="text-gray-700">Tambah Pasien Baru</span>
-            </a>
-            <a href="{{ route('admin.log.system') }}" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                <svg class="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <span class="text-gray-700">Lihat Log Sistem</span>
-            </a>
-        </div>
-    </div>
-</div>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch data aktivitas pengguna
+        fetch('{{ route("admin.log.activity-data") }}')
+            .then(response => response.json())
+            .then(data => {
+                // Inisialisasi grafik aktivitas berdasarkan tanggal
+                const ctx = document.getElementById('userActivityChart').getContext('2d');
+                const userActivityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.dateLabels,
+                        datasets: [{
+                            label: 'Jumlah Aktivitas',
+                            data: data.dateCounts,
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Aktivitas 7 Hari Terakhir',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return tooltipItems[0].label;
+                                    },
+                                    label: function(context) {
+                                        return `${context.parsed.y} aktivitas`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching user activity data:', error);
+                document.getElementById('userActivityChart').parentNode.innerHTML = `
+                    <div class="text-gray-400 text-center h-full flex flex-col items-center justify-center">
+                        <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p>Gagal memuat data grafik</p>
+                        <p class="text-sm">Silakan refresh halaman atau coba lagi nanti</p>
+                    </div>
+                `;
+            });
+    });
+</script>
+@endpush
 @endsection 

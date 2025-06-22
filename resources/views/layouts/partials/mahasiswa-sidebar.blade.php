@@ -1,13 +1,8 @@
-<aside class="w-64 bg-white shadow-lg flex flex-col py-6 px-4 min-h-screen hidden md:flex">
-    <!-- User Info -->
-    <div class="px-4 py-3 mb-6 bg-blue-50 rounded-lg">
-        <div class="flex items-center">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full border-2 border-white">
-            <div class="ml-3">
-                <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
-                <p class="text-xs text-gray-500">Mahasiswa</p>
-            </div>
-        </div>
+<!-- Desktop Sidebar -->
+<aside class="w-64 bg-white shadow-lg flex-col py-6 px-4 min-h-screen hidden md:flex">
+    <!-- Logo -->
+    <div class="px-4 mb-6 flex justify-center border-b-2 border-gray-100 pb-6">
+        <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
     </div>
     
     <nav class="flex-1">
@@ -33,27 +28,41 @@
                 <a href="{{ route('mahasiswa.konsultasi.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('mahasiswa.konsultasi.*')) bg-blue-100 font-medium text-blue-700 @endif" 
                    @click="localStorage.setItem('lastKonsultasiVisit', Date.now())">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    <span>Permintaan Konsultasi</span>
+                    <span>Telekonsultasi</span>
                     
                     <!-- Titik notifikasi -->
                     <span 
                         x-data="{ 
                             unreadCount: 0,
                             lastVisit: localStorage.getItem('lastKonsultasiVisit') || 0,
-                            hasNewNotifications: false
+                            hasNewNotifications: false,
+                            
+                            checkNotifications() {
+                                fetch('{{ route('notifications.getLatest') }}')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Filter notifikasi konsultasi yang belum dibaca
+                                        const konsultasiNotifs = data.notifications.filter(n => n.type === 'konsultasi_baru' && !n.is_read);
+                                        this.unreadCount = konsultasiNotifs.length;
+                                        
+                                        // Cek apakah ada notifikasi baru yang belum dibaca
+                                        if (this.unreadCount > 0) {
+                                            // Jika halaman saat ini adalah halaman konsultasi, jangan tampilkan notifikasi
+                                            if (!window.location.pathname.includes('konsultasi')) {
+                                                this.hasNewNotifications = true;
+                                            } else {
+                                                this.hasNewNotifications = false;
+                                            }
+                                        } else {
+                                            this.hasNewNotifications = false;
+                                        }
+                                    });
+                            }
                         }"
                         x-init="
-                            fetch('{{ route('notifications.getLatest') }}')
-                                .then(response => response.json())
-                                .then(data => {
-                                    unreadCount = data.notifications.filter(n => n.type === 'konsultasi_baru' && !n.is_read).length;
-                                    
-                                    // Cek apakah ada notifikasi baru sejak kunjungan terakhir
-                                    if (unreadCount > 0) {
-                                        const latestNotifTime = new Date(data.notifications.find(n => n.type === 'konsultasi_baru' && !n.is_read)?.created_at || 0).getTime();
-                                        hasNewNotifications = latestNotifTime > lastVisit;
-                                    }
-                                });
+                            checkNotifications();
+                            // Polling setiap 30 detik
+                            setInterval(() => checkNotifications(), 30000);
                         "
                         x-show="hasNewNotifications"
                         class="ml-auto h-2 w-2 rounded-full bg-red-500"
@@ -71,34 +80,38 @@
                         x-data="{ 
                             unreadCount: 0,
                             lastVisit: localStorage.getItem('lastRiwayatVisit') || 0,
-                            hasNewNotifications: false
+                            hasNewNotifications: false,
+                            
+                            checkNotifications() {
+                                fetch('{{ route('notifications.getLatest') }}')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Filter notifikasi rating yang belum dibaca
+                                        const ratingNotifs = data.notifications.filter(n => n.type === 'rating_baru' && !n.is_read);
+                                        this.unreadCount = ratingNotifs.length;
+                                        
+                                        // Cek apakah ada notifikasi baru yang belum dibaca
+                                        if (this.unreadCount > 0) {
+                                            // Jika halaman saat ini adalah halaman riwayat, jangan tampilkan notifikasi
+                                            if (!window.location.pathname.includes('riwayat')) {
+                                                this.hasNewNotifications = true;
+                                            } else {
+                                                this.hasNewNotifications = false;
+                                            }
+                                        } else {
+                                            this.hasNewNotifications = false;
+                                        }
+                                    });
+                            }
                         }"
                         x-init="
-                            fetch('{{ route('notifications.getLatest') }}')
-                                .then(response => response.json())
-                                .then(data => {
-                                    unreadCount = data.notifications.filter(n => n.type === 'rating_baru' && !n.is_read).length;
-                                    
-                                    // Cek apakah ada notifikasi baru sejak kunjungan terakhir
-                                    if (unreadCount > 0) {
-                                        const latestNotifTime = new Date(data.notifications.find(n => n.type === 'rating_baru' && !n.is_read)?.created_at || 0).getTime();
-                                        hasNewNotifications = latestNotifTime > lastVisit;
-                                    }
-                                });
+                            checkNotifications();
+                            // Polling setiap 30 detik
+                            setInterval(() => checkNotifications(), 30000);
                         "
                         x-show="hasNewNotifications"
                         class="ml-auto h-2 w-2 rounded-full bg-red-500"
                     ></span>
-                </a>
-            </li>
-        </ul>
-
-        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-4">Pembelajaran</div>
-        <ul class="space-y-1">
-            <li>
-                <a href="{{ route('mahasiswa.quiz.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('mahasiswa.quiz.*')) bg-blue-100 font-medium text-blue-700 @endif">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Quiz & Evaluasi
                 </a>
             </li>
         </ul>
@@ -113,18 +126,13 @@
     </div>
 </aside>
 
-<!-- Sidebar Mobile -->
+<!-- Mobile Sidebar -->
 <div id="sidebar-mobile" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-gray-800 opacity-50" onclick="document.getElementById('sidebar-mobile').classList.add('hidden')"></div>
     <div class="absolute inset-y-0 left-0 w-64 bg-white shadow-lg py-6 px-4 overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full border-2 border-white mr-3">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-gray-500">Mahasiswa</p>
-                </div>
-            </div>
+        <!-- Logo for Mobile -->
+        <div class="flex items-center justify-between mb-6 border-b-2 border-gray-300 pb-6">
+            <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
             <button class="text-gray-600" onclick="document.getElementById('sidebar-mobile').classList.add('hidden')">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -154,27 +162,41 @@
                     <a href="{{ route('mahasiswa.konsultasi.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('mahasiswa.konsultasi.*')) bg-blue-100 font-medium text-blue-700 @endif" 
                        @click="localStorage.setItem('lastKonsultasiVisit', Date.now())">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                        <span>Permintaan Konsultasi</span>
+                        <span>Telekonsultasi</span>
                         
                         <!-- Titik notifikasi -->
                         <span 
                             x-data="{ 
                                 unreadCount: 0,
                                 lastVisit: localStorage.getItem('lastKonsultasiVisit') || 0,
-                                hasNewNotifications: false
+                                hasNewNotifications: false,
+                                
+                                checkNotifications() {
+                                    fetch('{{ route('notifications.getLatest') }}')
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            // Filter notifikasi konsultasi yang belum dibaca
+                                            const konsultasiNotifs = data.notifications.filter(n => n.type === 'konsultasi_baru' && !n.is_read);
+                                            this.unreadCount = konsultasiNotifs.length;
+                                            
+                                            // Cek apakah ada notifikasi baru yang belum dibaca
+                                            if (this.unreadCount > 0) {
+                                                // Jika halaman saat ini adalah halaman konsultasi, jangan tampilkan notifikasi
+                                                if (!window.location.pathname.includes('konsultasi')) {
+                                                    this.hasNewNotifications = true;
+                                                } else {
+                                                    this.hasNewNotifications = false;
+                                                }
+                                            } else {
+                                                this.hasNewNotifications = false;
+                                            }
+                                        });
+                                }
                             }"
                             x-init="
-                                fetch('{{ route('notifications.getLatest') }}')
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        unreadCount = data.notifications.filter(n => n.type === 'konsultasi_baru' && !n.is_read).length;
-                                        
-                                        // Cek apakah ada notifikasi baru sejak kunjungan terakhir
-                                        if (unreadCount > 0) {
-                                            const latestNotifTime = new Date(data.notifications.find(n => n.type === 'konsultasi_baru' && !n.is_read)?.created_at || 0).getTime();
-                                            hasNewNotifications = latestNotifTime > lastVisit;
-                                        }
-                                    });
+                                checkNotifications();
+                                // Polling setiap 30 detik
+                                setInterval(() => checkNotifications(), 30000);
                             "
                             x-show="hasNewNotifications"
                             class="ml-auto h-2 w-2 rounded-full bg-red-500"
@@ -192,34 +214,38 @@
                             x-data="{ 
                                 unreadCount: 0,
                                 lastVisit: localStorage.getItem('lastRiwayatVisit') || 0,
-                                hasNewNotifications: false
+                                hasNewNotifications: false,
+                                
+                                checkNotifications() {
+                                    fetch('{{ route('notifications.getLatest') }}')
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            // Filter notifikasi rating yang belum dibaca
+                                            const ratingNotifs = data.notifications.filter(n => n.type === 'rating_baru' && !n.is_read);
+                                            this.unreadCount = ratingNotifs.length;
+                                            
+                                            // Cek apakah ada notifikasi baru yang belum dibaca
+                                            if (this.unreadCount > 0) {
+                                                // Jika halaman saat ini adalah halaman riwayat, jangan tampilkan notifikasi
+                                                if (!window.location.pathname.includes('riwayat')) {
+                                                    this.hasNewNotifications = true;
+                                                } else {
+                                                    this.hasNewNotifications = false;
+                                                }
+                                            } else {
+                                                this.hasNewNotifications = false;
+                                            }
+                                        });
+                                }
                             }"
                             x-init="
-                                fetch('{{ route('notifications.getLatest') }}')
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        unreadCount = data.notifications.filter(n => n.type === 'rating_baru' && !n.is_read).length;
-                                        
-                                        // Cek apakah ada notifikasi baru sejak kunjungan terakhir
-                                        if (unreadCount > 0) {
-                                            const latestNotifTime = new Date(data.notifications.find(n => n.type === 'rating_baru' && !n.is_read)?.created_at || 0).getTime();
-                                            hasNewNotifications = latestNotifTime > lastVisit;
-                                        }
-                                    });
+                                checkNotifications();
+                                // Polling setiap 30 detik
+                                setInterval(() => checkNotifications(), 30000);
                             "
                             x-show="hasNewNotifications"
                             class="ml-auto h-2 w-2 rounded-full bg-red-500"
                         ></span>
-                    </a>
-                </li>
-            </ul>
-
-            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-2">Pembelajaran</div>
-            <ul class="space-y-1">
-                <li>
-                    <a href="{{ route('mahasiswa.quiz.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('mahasiswa.quiz.*')) bg-blue-100 font-medium text-blue-700 @endif">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Quiz & Evaluasi
                     </a>
                 </li>
             </ul>

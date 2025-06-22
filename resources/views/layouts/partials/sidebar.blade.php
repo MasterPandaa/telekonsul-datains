@@ -1,13 +1,7 @@
 <aside class="w-64 bg-white shadow-lg flex flex-col py-6 px-4 min-h-screen hidden md:flex">
-    <!-- User Info -->
-    <div class="px-4 py-3 mb-6 bg-blue-50 rounded-lg">
-        <div class="flex items-center">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full border-2 border-white">
-            <div class="ml-3">
-                <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
-                <p class="text-xs text-gray-500">{{ ucfirst(Auth::user()->role) }}</p>
-            </div>
-        </div>
+    <!-- Logo -->
+    <div class="px-4 mb-6 flex justify-center border-b-2 border-gray-100 pb-6">
+        <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
     </div>
     
     <nav class="flex-1">
@@ -72,14 +66,9 @@
 <div id="sidebar-mobile" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-gray-800 opacity-50" onclick="document.getElementById('sidebar-mobile').classList.add('hidden')"></div>
     <div class="absolute inset-y-0 left-0 w-64 bg-white shadow-lg py-6 px-4 overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full border-2 border-white mr-3">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-gray-500">{{ ucfirst(Auth::user()->role) }}</p>
-                </div>
-            </div>
+        <!-- Logo for Mobile -->
+        <div class="flex items-center justify-between mb-6 border-b-2 border-gray-300 pb-6">
+            <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
             <button class="text-gray-600" onclick="document.getElementById('sidebar-mobile').classList.add('hidden')">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>

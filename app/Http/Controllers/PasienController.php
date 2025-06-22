@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Pasien;
+use App\Services\LogService;
 use Illuminate\Http\Request;
 
 class PasienController extends Controller
@@ -18,7 +19,11 @@ class PasienController extends Controller
             'nik' => 'required|unique:pasiens',
             'email' => 'required|email|unique:pasiens',
         ]);
-        Pasien::create($request->all());
+        $pasien = Pasien::create($request->all());
+        
+        // Catat aktivitas
+        LogService::logActivity('create', 'Pasien', $pasien);
+        
         return redirect()->route('admin.pasien.index')->with('success', 'Data pasien berhasil ditambahkan');
     }
     public function edit(Pasien $pasien) {
@@ -30,11 +35,25 @@ class PasienController extends Controller
             'nik' => 'required|unique:pasiens,nik,'.$pasien->id,
             'email' => 'required|email|unique:pasiens,email,'.$pasien->id,
         ]);
+        $oldData = $pasien->toArray();
         $pasien->update($request->all());
+        
+        // Catat aktivitas
+        LogService::logActivity('update', 'Pasien', [
+            'id' => $pasien->id,
+            'old' => $oldData,
+            'new' => $pasien->toArray()
+        ]);
+        
         return redirect()->route('admin.pasien.index')->with('success', 'Data pasien berhasil diupdate');
     }
     public function destroy(Pasien $pasien) {
+        $pasienData = $pasien->toArray();
         $pasien->delete();
+        
+        // Catat aktivitas
+        LogService::logActivity('delete', 'Pasien', $pasienData);
+        
         return redirect()->route('admin.pasien.index')->with('success', 'Data pasien berhasil dihapus');
     }
 } 

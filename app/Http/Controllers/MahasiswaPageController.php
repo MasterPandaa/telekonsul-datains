@@ -23,8 +23,57 @@ class MahasiswaPageController extends Controller
 
     public function dashboard()
     {
+        // Ambil user yang login
+        $user = Auth::user();
+        
+        // Jalankan update status konsultasi terlebih dahulu
+        $this->konsultasiService->updateStatus();
+        
+        // Hitung jumlah konsultasi aktif (menunggu dan terkonfirmasi)
+        $konsultasiAktifCount = Konsultasi::where('mahasiswa_id', $user->id)
+            ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
+            ->count();
+        
+        // Hitung jumlah konsultasi selesai
+        $konsultasiSelesaiCount = Konsultasi::where('mahasiswa_id', $user->id)
+            ->where('status', 'Selesai')
+            ->count();
+        
+        // Ambil data konsultasi aktif terbaru untuk ditampilkan di tabel
+        $konsultasiAktif = Konsultasi::where('mahasiswa_id', $user->id)
+            ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
+            ->orderBy('tanggal', 'asc')
+            ->orderBy('jam_mulai', 'asc')
+            ->with('pasien')
+            ->take(5)
+            ->get();
+        
+        // Siapkan data untuk tampilan tabel
+        $jadwalKonsultasi = [];
+        foreach ($konsultasiAktif as $item) {
+            $jadwalKonsultasi[] = [
+                'id' => $item->id,
+                'tanggal' => $item->tanggal ? $item->tanggal->format('d F Y') : '-',
+                'jam' => $item->jam_mulai . ' - ' . $item->jam_selesai,
+                'pasien_nama' => $item->pasien->nama ?? 'Pasien',
+                'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
+                'pasien_usia' => $item->pasien->usia ?? '-',
+                'status' => $item->status
+            ];
+        }
+        
+        // Hitung nilai rata-rata dari rating konsultasi
+        $ratingAvg = Konsultasi::where('mahasiswa_id', $user->id)
+            ->whereNotNull('rating')
+            ->avg('rating');
+        $ratingAvg = $ratingAvg ? round($ratingAvg, 1) : 0;
+        
         return view('mahasiswa.dashboard', [
-            'title' => 'Dashboard Mahasiswa'
+            'title' => 'Dashboard Mahasiswa',
+            'konsultasiAktifCount' => $konsultasiAktifCount,
+            'konsultasiSelesaiCount' => $konsultasiSelesaiCount,
+            'jadwalKonsultasi' => $jadwalKonsultasi,
+            'ratingAvg' => $ratingAvg
         ]);
     }
 
@@ -430,21 +479,6 @@ class MahasiswaPageController extends Controller
         
         return redirect()->route('mahasiswa.profil.index')
             ->with('success', 'Prestasi dan penghargaan berhasil diperbarui');
-    }
-
-    public function quizIndex()
-    {
-        return view('mahasiswa.quiz.index', [
-            'title' => 'Quiz & Evaluasi'
-        ]);
-    }
-
-    public function quizShow($id)
-    {
-        return view('mahasiswa.quiz.show', [
-            'title' => 'Detail Quiz',
-            'quiz_id' => $id
-        ]);
     }
 
     public function simpanDiagnosa(Request $request, $id)
