@@ -165,7 +165,7 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Mahasiswa</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Jadwal</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Keluhan</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Diagnosa</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Nilai</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Rating</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Aksi</th>
                     </tr>
@@ -197,7 +197,7 @@
                             <div class="text-sm text-gray-900 line-clamp-2">{{ $item->keluhan }}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm text-gray-900">{{ $item->diagnosa ?? '-' }}</div>
+                            <div class="text-sm text-gray-900 line-clamp-2">{{ $item->nilai ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4">
                             @if($item->rating)

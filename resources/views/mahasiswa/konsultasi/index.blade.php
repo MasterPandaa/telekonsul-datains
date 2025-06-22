@@ -1,6 +1,49 @@
 @extends('layouts.mahasiswa')
 
 @section('mahasiswa-content')
+@php
+    $konsultasiAktifFiltered = array_filter($konsultasiAktif ?? [], function($item) {
+        return in_array($item['status'], ['Terkonfirmasi', 'Menunggu']);
+    });
+    $konsultasiTidakAktif = array_filter($konsultasiSelesai ?? [], function($item) {
+        return in_array($item['status'], ['Dibatalkan', 'Terlambat']);
+    });
+    
+    $uniquePasienAktif = collect($konsultasiAktifFiltered)->unique('pasien_nama')->values();
+    $uniquePasienTidakAktif = collect($konsultasiTidakAktif)->unique('pasien_nama')->values();
+@endphp
+
+<style>
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-10px); }
+    }
+    .custom-select {
+        position: relative;
+        display: inline-block;
+    }
+    .custom-select select {
+        display: none;
+    }
+    .select-selected {
+        position: relative;
+        cursor: pointer;
+    }
+    .select-items {
+        animation: slideDown 0.2s ease-out;
+    }
+    .select-items div:hover {
+        @apply bg-indigo-50;
+    }
+    .select-hide {
+        animation: slideUp 0.2s ease-out;
+    }
+</style>
+
 <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Permintaan Konsultasi</h1>
         <p class="text-sm text-gray-600">Kelola permintaan konsultasi dengan pasien Anda</p>
@@ -12,20 +55,29 @@
         <h2 class="text-lg font-medium text-gray-800">Filter Permintaan</h2>
         <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
             <div class="relative">
-                <input type="text" placeholder="Cari pasien..." class="w-full md:w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" id="search-input" placeholder="Cari pasien..." class="w-full md:w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <div class="absolute right-3 top-2.5">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
             </div>
-            <select class="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Semua Status</option>
-                <option value="waiting">Menunggu</option>
-                <option value="confirmed">Terkonfirmasi</option>
-                <option value="completed">Selesai</option>
-                <option value="cancelled">Dibatalkan</option>
-            </select>
+            <div class="custom-select relative">
+                <div class="select-selected px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 transition-all duration-200 flex items-center justify-between min-w-[200px] group">
+                    <span class="text-gray-700">Semua Pasien</span>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 transform group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div class="select-items absolute z-10 w-full py-1 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg hidden" id="pasien-list">
+                    <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="">Semua Pasien</div>
+                    @foreach($uniquePasienAktif as $pasien)
+                        <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="{{ $pasien['id'] }}">
+                            {{ $pasien['pasien_nama'] }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -78,12 +130,6 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @php
-                    $konsultasiAktifFiltered = array_filter($konsultasiAktif ?? [], function($item) {
-                        return in_array($item['status'], ['Terkonfirmasi', 'Menunggu']);
-                    });
-                @endphp
-                
                 @if(count($konsultasiAktifFiltered) > 0)
                     @foreach($konsultasiAktifFiltered as $item)
                     <tr class="hover:bg-gray-50 transition">
@@ -103,7 +149,7 @@
                         <div class="text-sm text-gray-500">{{ $item['jam_mulai'] }} - {{ $item['jam_selesai'] }}</div>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">{{ $item['keluhan'] }}</div>
+                        <div class="text-sm text-gray-900 line-clamp-2">{{ $item['keluhan'] }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -155,6 +201,56 @@
                 @endif
             </tbody>
         </table>
+    </div>
+
+    <!-- Pagination untuk Konsultasi Aktif -->
+    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+                @if(count($konsultasiAktifFiltered) > 0)
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </a>
+                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </a>
+                @endif
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    @if(count($konsultasiAktifFiltered) > 0)
+                        <p class="text-sm text-gray-700">
+                            Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($konsultasiAktifFiltered) }}</span> dari <span class="font-medium">{{ count($konsultasiAktifFiltered) }}</span> hasil
+                        </p>
+                    @else
+                        <p class="text-sm text-gray-500 italic">
+                            Belum ada konsultasi aktif saat ini
+                        </p>
+                    @endif
+                </div>
+                @if(count($konsultasiAktifFiltered) > 0)
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Sebelumnya</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                1
+                            </a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Selanjutnya</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </nav>
+                    </div>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 
@@ -210,7 +306,7 @@
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="text-sm text-gray-900">{{ $item['keluhan'] }}</div>
+                        <div class="text-sm text-gray-900 line-clamp-2">{{ $item['keluhan'] }}</div>
                     </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -251,130 +347,314 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination untuk Konsultasi Tidak Aktif -->
+    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+                @if(count($konsultasiTidakAktif) > 0)
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </a>
+                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </a>
+                @endif
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    @if(count($konsultasiTidakAktif) > 0)
+                        <p class="text-sm text-gray-700">
+                            Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($konsultasiTidakAktif) }}</span> dari <span class="font-medium">{{ count($konsultasiTidakAktif) }}</span> hasil
+                        </p>
+                    @else
+                        <p class="text-sm text-gray-500 italic">
+                            Belum ada konsultasi tidak aktif saat ini
+                        </p>
+                    @endif
+                </div>
+                @if(count($konsultasiTidakAktif) > 0)
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Sebelumnya</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                1
+                            </a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Selanjutnya</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </nav>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
 <script>
-    // Tab switching functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabButtons = document.querySelectorAll('.tab-button');
+document.addEventListener('DOMContentLoaded', function() {
+    const customSelect = document.querySelector('.custom-select');
+    const selectSelected = customSelect.querySelector('.select-selected');
+    const selectItems = customSelect.querySelector('.select-items');
+    const pasienList = document.getElementById('pasien-list');
+    const searchInput = document.getElementById('search-input');
+    
+    let selectedValue = '';
+    let searchTerm = '';
+    let currentTab = 'active'; // Default tab
+
+    // Data pasien untuk kedua tab
+    const pasienData = {
+        active: @json($uniquePasienAktif),
+        inactive: @json($uniquePasienTidakAktif)
+    };
+
+    // Toggle dropdown with animation
+    selectSelected.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = !selectItems.classList.contains('hidden');
         
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active class from all buttons
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-                    btn.classList.add('text-gray-600');
-                });
-                
-                // Add active class to clicked button
-                button.classList.remove('text-gray-600');
-                button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-                
-                // Hide all tab contents
-                document.querySelectorAll('[id^="tab-"]').forEach(tab => {
-                    tab.classList.add('hidden');
-                });
-                
-                // Show the selected tab content
-                const tabId = button.getAttribute('data-tab');
-                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            });
-        });
-        
-        // Countdown timer functionality
-        const countdownTimers = document.querySelectorAll('.countdown-timer');
-        
-        function updateCountdown() {
-            const now = new Date().getTime();
-            
-            countdownTimers.forEach(timer => {
-                const targetTime = parseInt(timer.getAttribute('data-target'));
-                if (!targetTime) return;
-                
-                const timeRemaining = targetTime - now;
-                
-                if (timeRemaining <= 0) {
-                    timer.querySelector('.time-remaining').textContent = "Waktunya konsultasi!";
-                    // Auto-refresh the page when time is up
-                    location.reload();
-                    return;
-                }
-                
-                // Calculate hours, minutes, seconds
-                const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-                
-                // Display the countdown
-                timer.querySelector('.time-remaining').textContent = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            });
-        }
-        
-        // Update countdown every second
-        if (countdownTimers.length > 0) {
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
+        if (!isOpen) {
+            openSelect();
+        } else {
+            closeSelect();
         }
     });
+
+    // Handle option selection with animation
+    function initializeSelectItems() {
+        selectItems.querySelectorAll('div').forEach(item => {
+            item.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                const text = this.textContent.trim();
+                
+                selectSelected.querySelector('span').textContent = text;
+                selectedValue = value;
+                
+                // Add selected styling
+                selectItems.querySelectorAll('div').forEach(div => {
+                    div.classList.remove('bg-indigo-50', 'text-indigo-600');
+                });
+                this.classList.add('bg-indigo-50', 'text-indigo-600');
+                
+                filterTable();
+                closeSelect();
+            });
+        });
+    }
+
+    // Update pasien list based on current tab
+    function updatePasienList() {
+        const currentPasienData = pasienData[currentTab];
+        let html = '<div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="">Semua Pasien</div>';
+        
+        currentPasienData.forEach(pasien => {
+            html += `
+                <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="${pasien.id}">
+                    ${pasien.pasien_nama}
+                </div>
+            `;
+        });
+        
+        pasienList.innerHTML = html;
+        initializeSelectItems();
+        
+        // Reset selection
+        selectedValue = '';
+        selectSelected.querySelector('span').textContent = 'Semua Pasien';
+    }
+
+    // Handle search input
+    searchInput.addEventListener('input', function() {
+        searchTerm = this.value.toLowerCase();
+        filterTable();
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', closeSelect);
+
+    function openSelect() {
+        selectItems.classList.remove('hidden');
+        selectSelected.querySelector('svg').classList.add('rotate-180');
+        selectSelected.classList.add('border-indigo-500', 'ring-2', 'ring-indigo-200');
+        selectItems.style.animation = 'slideDown 0.2s ease-out';
+    }
+
+    function closeSelect() {
+        selectItems.style.animation = 'slideUp 0.2s ease-out';
+        setTimeout(() => {
+            selectItems.classList.add('hidden');
+            selectSelected.querySelector('svg').classList.remove('rotate-180');
+            selectSelected.classList.remove('border-indigo-500', 'ring-2', 'ring-indigo-200');
+        }, 180);
+    }
+
+    function filterTable() {
+        const activeTable = document.querySelector('#tab-active');
+        const inactiveTable = document.querySelector('#tab-inactive');
+        const currentTable = currentTab === 'active' ? activeTable : inactiveTable;
+        const rows = currentTable.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            if (row.classList.contains('no-data-row')) return;
+            
+            const pasienName = row.querySelector('.text-gray-900')?.textContent.toLowerCase();
+            const pasienId = row.getAttribute('data-pasien-id');
+            
+            const matchesSearch = !searchTerm || (pasienName && pasienName.includes(searchTerm));
+            const matchesFilter = !selectedValue || pasienId === selectedValue;
+            
+            row.classList.toggle('hidden', !(matchesSearch && matchesFilter));
+        });
+
+        // Show/hide no results message
+        const hasVisibleRows = Array.from(rows).some(row => !row.classList.contains('hidden'));
+        const noDataRow = currentTable.querySelector('.no-data-row');
+        
+        if (noDataRow) {
+            noDataRow.classList.toggle('hidden', hasVisibleRows);
+        }
+    }
+
+    // Tab switching functionality
+    const tabButtons = document.querySelectorAll('.tab-button');
     
-    // Konfirmasi terima konsultasi
-    function konfirmasiTerima(id) {
-        if (confirm('Apakah Anda yakin ingin menerima permintaan konsultasi ini?')) {
-            window.location.href = `/mahasiswa/konsultasi/${id}/konfirmasi`;
-            }
-    }
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // Update current tab
+            currentTab = button.getAttribute('data-tab');
+            
+            // Update pasien list for the new tab
+            updatePasienList();
+            
+            // Remove active class from all buttons
+            tabButtons.forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-600');
+            });
+            
+            // Add active class to clicked button
+            button.classList.remove('text-gray-600');
+            button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            
+            // Hide all tab contents
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show the selected tab content
+            document.getElementById(`tab-${currentTab}`).classList.remove('hidden');
+            
+            // Reset and apply filters for the new tab
+            filterTable();
+        });
+    });
 
-    // Konfirmasi tolak konsultasi
-    function konfirmasiTolak(id) {
-        const alasan = prompt('Masukkan alasan penolakan konsultasi:', '');
-        if (alasan !== null) {
-            // Create form element
-                const form = document.createElement('form');
-                form.method = 'POST';
-            form.action = `/mahasiswa/konsultasi/${id}/tolak`;
-                
-            // Add CSRF token
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
-            
-            // Add alasan field
-            const alasanField = document.createElement('input');
-            alasanField.type = 'hidden';
-            alasanField.name = 'alasan_tolak';
-            alasanField.value = alasan;
-            form.appendChild(alasanField);
-            
-            // Add form to body and submit
-                document.body.appendChild(form);
-                form.submit();
-            }
-    }
+    // Initialize select items for the default tab
+    initializeSelectItems();
 
-    // Hapus konsultasi
-    function hapusKonsultasi(id) {
-        if (confirm('Apakah Anda yakin ingin menghapus konsultasi ini dari riwayat?')) {
-            // Create form element
-                const form = document.createElement('form');
-                form.method = 'POST';
-            form.action = `/mahasiswa/konsultasi/${id}/hapus`;
-                
-            // Add CSRF token
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
+    // Countdown timer functionality
+    const countdownTimers = document.querySelectorAll('.countdown-timer');
+    
+    function updateCountdown() {
+        const now = new Date().getTime();
+        
+        countdownTimers.forEach(timer => {
+            const targetTime = parseInt(timer.getAttribute('data-target'));
+            if (!targetTime) return;
             
-            // Add form to body and submit
-                document.body.appendChild(form);
-                form.submit();
+            const timeRemaining = targetTime - now;
+            
+            if (timeRemaining <= 0) {
+                timer.querySelector('.time-remaining').textContent = "Waktunya konsultasi!";
+                // Auto-refresh the page when time is up
+                location.reload();
+                return;
             }
+            
+            // Calculate hours, minutes, seconds
+            const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            
+            // Display the countdown
+            timer.querySelector('.time-remaining').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        });
     }
+    
+    // Update countdown every second
+    if (countdownTimers.length > 0) {
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    }
+});
+
+// Konfirmasi terima konsultasi
+function konfirmasiTerima(id) {
+    if (confirm('Apakah Anda yakin ingin menerima permintaan konsultasi ini?')) {
+        window.location.href = `/mahasiswa/konsultasi/${id}/konfirmasi`;
+    }
+}
+
+// Konfirmasi tolak konsultasi
+function konfirmasiTolak(id) {
+    const alasan = prompt('Masukkan alasan penolakan konsultasi:', '');
+    if (alasan !== null) {
+        // Create form element
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/mahasiswa/konsultasi/${id}/tolak`;
+        
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+        
+        // Add alasan field
+        const alasanField = document.createElement('input');
+        alasanField.type = 'hidden';
+        alasanField.name = 'alasan_tolak';
+        alasanField.value = alasan;
+        form.appendChild(alasanField);
+        
+        // Add form to body and submit
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Hapus konsultasi
+function hapusKonsultasi(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus konsultasi ini dari riwayat?')) {
+        // Create form element
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/mahasiswa/konsultasi/${id}/hapus`;
+        
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+        
+        // Add form to body and submit
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
 @endpush
 @endsection 

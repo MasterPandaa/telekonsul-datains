@@ -90,7 +90,29 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+        textarea {
+            min-height: 40px;
+            overflow: hidden;
+            resize: none;
+            transition: height 0.2s ease;
+        }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function autoResize(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(textarea => {
+                autoResize(textarea);
+                textarea.addEventListener('input', function() {
+                    autoResize(this);
+                });
+            });
+        });
+    </script>
 </head>
 <body class="antialiased bg-gradient-to-br from-blue-50 to-indigo-50">
 <div class="chat-container">
@@ -177,51 +199,71 @@
 
             <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
                 <!-- Sidebar Informasi -->
-                <div class="w-full md:w-72 p-4 bg-gray-50 border-r border-gray-100 overflow-y-auto flex-shrink-0">
-                    <div class="mb-4">
-                        <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">Detail Konsultasi</h3>
-                        <div class="bg-white rounded-lg p-3 shadow-sm">
-                            <div class="mb-2">
-                                <div class="text-xs text-gray-500">Keluhan:</div>
-                                <div class="text-sm font-medium">{{ $konsultasi->keluhan }}</div>
+                <div class="w-full md:w-80 p-4 bg-gradient-to-b from-gray-50 to-blue-50/30 border-r border-gray-100 overflow-y-auto flex-shrink-0">
+                    <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <h3 class="text-sm font-bold text-indigo-700 uppercase tracking-wider">Detail Konsultasi</h3>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50">
+                            <div class="mb-3">
+                                <div class="flex items-center mb-1">
+                                    <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                    </svg>
+                                    <div class="text-xs font-semibold text-indigo-600">Keluhan:</div>
+                                </div>
+                                <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">{{ $konsultasi->keluhan }}</div>
                             </div>
-                            <div class="mb-2">
-                                <div class="text-xs text-gray-500">Status:</div>
-                                <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                            <div class="mb-3">
+                                <div class="flex items-center mb-1">
+                                    <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div class="text-xs font-semibold text-indigo-600">Status:</div>
+                                </div>
+                                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm 
                                     @if($konsultasi->status === 'Terkonfirmasi')
-                                        bg-green-100 text-green-800
+                                        bg-gradient-to-r from-green-400 to-green-500 text-white
                                     @elseif($konsultasi->status === 'Terlambat')
-                                        bg-orange-100 text-orange-800
+                                        bg-gradient-to-r from-orange-400 to-orange-500 text-white
                                     @elseif($konsultasi->status === 'Berlangsung')
-                                        bg-purple-100 text-purple-800
+                                        bg-gradient-to-r from-purple-400 to-purple-500 text-white
                                     @else
-                                        bg-blue-100 text-blue-800
+                                        bg-gradient-to-r from-blue-400 to-blue-500 text-white
                                     @endif">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="7" />
+                                    </svg>
                                     {{ $konsultasi->status }}
                                 </div>
                             </div>
                             <div class="mb-2">
-                                <div class="text-xs text-gray-500">Keterangan Tambahan:</div>
+                                <div class="flex items-center mb-1">
+                                    <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div class="text-xs font-semibold text-indigo-600">Keterangan Tambahan:</div>
+                                </div>
                                 @if($konsultasi->keterangan)
-                                <div class="text-sm mt-1 bg-blue-50 p-2 rounded-md border-l-2 border-blue-300">
+                                <div class="text-sm mt-1 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200 shadow-sm">
                                     <div class="flex">
-                                        <svg class="w-4 h-4 text-blue-500 mt-0.5 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span class="text-gray-700">{{ $konsultasi->keterangan }}</span>
+                                        <span class="text-gray-700 line-clamp-2">{{ $konsultasi->keterangan }}</span>
                                     </div>
                                 </div>
                                 @else
-                                <div class="text-sm text-gray-500 italic">Tidak ada keterangan tambahan</div>
+                                <div class="text-sm text-gray-500 italic p-2">Tidak ada keterangan tambahan</div>
                                 @endif
                             </div>
                             @if($konsultasi->status === 'Terlambat')
-                            <div class="mb-0 mt-3 bg-orange-50 p-2 rounded-md">
+                            <div class="mb-0 mt-3 bg-gradient-to-r from-orange-50 to-orange-100 p-3 rounded-lg shadow-sm animate__animated animate__pulse animate__infinite animate__slower">
                                 <div class="text-xs text-orange-700 flex items-start">
-                                    <svg class="w-4 h-4 text-orange-500 mr-1 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span>Anda terlambat memasuki room chat. Waktu konsultasi telah dikurangi.</span>
+                                    <span class="font-medium">Anda terlambat memasuki room chat. Waktu konsultasi telah dikurangi.</span>
                                 </div>
                             </div>
                             @endif
@@ -229,39 +271,61 @@
                     </div>
 
                     @if($konsultasi->status === 'Berlangsung')
-                    <div class="mb-4">
-                        <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">Panduan Singkat</h3>
-                        <div class="bg-white rounded-lg p-3 shadow-sm">
-                            <ul class="text-xs text-gray-600 space-y-2">
-                                <li class="flex items-start">
-                                    <svg class="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
+                        <div class="flex items-center mb-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 p-1.5 rounded-full shadow-md mr-2">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-sm font-bold text-indigo-700 uppercase tracking-wider">Panduan Singkat</h3>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-white to-blue-50 p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50">
+                            <ul class="text-sm text-gray-600 space-y-3">
+                                <li class="flex items-start bg-blue-50 p-2 rounded-lg mb-2 hover:bg-blue-100/50 transition-colors duration-200">
+                                    <div class="bg-blue-100 p-1 rounded-full mr-2">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span>Sesi konsultasi berlangsung sesuai jadwal.</span>
+                                    </div>
+                                    <span class="font-medium">Sesi konsultasi berlangsung sesuai jadwal</span>
                                 </li>
-                                <li class="flex items-start">
-                                    <svg class="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                
+                                <li class="flex items-start bg-yellow-50 p-2 rounded-lg mb-2 hover:bg-yellow-100/50 transition-colors duration-200">
+                                    <div class="bg-yellow-100 p-1 rounded-full mr-2">
+                                        <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                                     </svg>
-                                    <span>Keterlambatan > 15 menit akan mengubah status menjadi "Terlambat".</span>
+                                    </div>
+                                    <span class="font-medium">Keterlambatan > 15 menit akan mengubah status menjadi "Terlambat"</span>
                                 </li>
-                                <li class="flex items-start">
-                                    <svg class="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                
+                                <li class="flex items-start bg-green-50 p-2 rounded-lg mb-2 hover:bg-green-100/50 transition-colors duration-200">
+                                    <div class="bg-green-100 p-1 rounded-full mr-2">
+                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                     </svg>
-                                    <span>Pesan akan otomatis diperbarui setiap beberapa detik.</span>
+                                    </div>
+                                    <span class="font-medium">Pesan akan otomatis diperbarui setiap beberapa detik</span>
                                 </li>
-                                <li class="flex items-start">
-                                    <svg class="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                
+                                <li class="flex items-start bg-indigo-50 p-2 rounded-lg mb-2 hover:bg-indigo-100/50 transition-colors duration-200">
+                                    <div class="bg-indigo-100 p-1 rounded-full mr-2">
+                                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
                                     </svg>
-                                    <span>Tekan Enter untuk mengirim pesan.</span>
+                                    </div>
+                                    <span class="font-medium">Tekan Enter untuk mengirim pesan</span>
                                 </li>
-                                <li class="flex items-start">
-                                    <svg class="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                
+                                <li class="flex items-start bg-red-50 p-2 rounded-lg hover:bg-red-100/50 transition-colors duration-200">
+                                    <div class="bg-red-100 p-1 rounded-full mr-2">
+                                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                     </svg>
-                                    <span>Konsultasi berakhir saat waktu habis atau tombol "Akhiri Konsultasi" ditekan.</span>
+                                    </div>
+                                    <span class="font-medium">Konsultasi berakhir saat waktu habis atau tombol "Akhiri Konsultasi" ditekan</span>
                                 </li>
                             </ul>
                         </div>
@@ -269,50 +333,63 @@
                     @endif
                     
                     @if(Auth::user()->role === 'mahasiswa' && ($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat'))
-                    <div class="mb-4">
-                        <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">HASIL DIAGNOSA</h3>
-                        <div class="bg-green-50 p-4 rounded-lg shadow-sm border border-green-100 animate__animated animate__fadeIn">
-                            <div class="flex items-center mb-3">
-                                <div class="bg-green-500 p-1.5 rounded-full mr-2 shadow-sm">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                                     </svg>
-                                </div>
-                                <h3 class="text-sm font-semibold text-gray-800">Diagnosa Mahasiswa</h3>
+                            <div class="text-sm font-bold text-indigo-700 uppercase tracking-wider">Hasil Diagnosa</div>
                             </div>
                             
-                            <form action="{{ route('mahasiswa.konsultasi.diagnosa', $konsultasi->id) }}" method="POST" class="space-y-3">
+                        <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50 space-y-4">
+                            <form action="{{ route('mahasiswa.konsultasi.diagnosa', $konsultasi->id) }}" method="POST">
                                 @csrf
                                 <div class="mb-3">
-                                    <div class="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                                        <svg class="w-3.5 h-3.5 mr-1 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center mb-1">
+                                        <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                         </svg>
-                                        Diagnosa:
+                                        <div class="text-xs font-semibold text-indigo-600">Diagnosa:</div>
                                     </div>
                                     <div class="relative">
-                                        <textarea id="diagnosa" name="diagnosa" rows="3" maxlength="500" class="w-full rounded-lg border-green-200 bg-white shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50 text-sm transition-shadow duration-200" placeholder="Masukkan diagnosa pasien..." required>{{ $konsultasi->diagnosa }}</textarea>
-                                        <span id="diagnosa-counter" class="counter-badge">{{ strlen($konsultasi->diagnosa ?? '') }}/500</span>
+                                        <textarea id="diagnosa" name="diagnosa" maxlength="500" 
+                                            class="w-full text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm focus:border-indigo-400 
+                                            focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition-all duration-300 min-h-[40px] resize-none" 
+                                            placeholder="Masukkan diagnosa pasien berdasarkan hasil konsultasi..." 
+                                            required>{{ $konsultasi->diagnosa }}</textarea>
+                                        <span id="diagnosa-counter" class="counter-badge bg-indigo-100/80 text-indigo-700">
+                                            {{ strlen($konsultasi->diagnosa ?? '') }}/500
+                                        </span>
                                     </div>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <div class="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                                        <svg class="w-3.5 h-3.5 mr-1 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center mb-1">
+                                        <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                         </svg>
-                                        Catatan Medis:
+                                        <div class="text-xs font-semibold text-indigo-600">Catatan Medis:</div>
                                     </div>
                                     <div class="relative">
-                                        <textarea id="catatan" name="catatan" rows="3" maxlength="1000" class="w-full rounded-lg border-green-200 bg-white shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50 text-sm transition-shadow duration-200" placeholder="Masukkan catatan medis jika ada...">{{ $konsultasi->catatan }}</textarea>
-                                        <span id="catatan-counter" class="counter-badge">{{ strlen($konsultasi->catatan ?? '') }}/1000</span>
+                                        <textarea id="catatan" name="catatan" maxlength="1000" 
+                                            class="w-full text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm focus:border-indigo-400 
+                                            focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition-all duration-300 min-h-[40px] resize-none" 
+                                            placeholder="Tambahkan catatan medis atau rekomendasi tambahan jika diperlukan...">{{ $konsultasi->catatan }}</textarea>
+                                        <span id="catatan-counter" class="counter-badge bg-indigo-100/80 text-indigo-700">
+                                            {{ strlen($konsultasi->catatan ?? '') }}/1000
+                                        </span>
                                     </div>
                                 </div>
                                 
-                                <div class="flex justify-end pt-1">
-                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm transition-all duration-300">
-                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <div class="flex justify-center mt-4">
+                                    <button type="submit" 
+                                        class="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-medium 
+                                        rounded-lg text-white bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 
+                                        hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 
+                                        shadow-md transition-all duration-300 transform hover:scale-[1.02]">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                         {{ $konsultasi->diagnosa ? 'Update Diagnosa' : 'Simpan Diagnosa' }}
                                     </button>
@@ -323,39 +400,42 @@
                     @endif
                     
                     @if(Auth::user()->role === 'pasien' && $konsultasi->diagnosa)
-                    <div class="mb-4">
-                        <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">Hasil Diagnosa</h3>
-                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg shadow-md border border-green-100 animate__animated animate__fadeIn">
-                            <div class="flex items-center mb-3">
-                                <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-1.5 rounded-full mr-2 shadow-md">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                                     </svg>
-                                </div>
-                                <h3 class="text-sm font-semibold text-gray-800">Diagnosa Mahasiswa</h3>
+                            <div class="text-xs font-semibold text-indigo-600">Hasil Diagnosa</div>
                             </div>
                             
+                        <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50">
+                            <div class="space-y-4">
                             <div class="mb-3">
-                                <div class="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                                    <svg class="w-3.5 h-3.5 mr-1 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center mb-1">
+                                        <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                     </svg>
-                                    Diagnosa:
+                                        <div class="text-xs font-semibold text-indigo-600">Diagnosa:</div>
+                                    </div>
+                                    <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                        {{ $konsultasi->diagnosa }}
                                 </div>
-                                <div class="bg-white text-sm text-gray-700 p-3 rounded border border-green-200 whitespace-pre-wrap">{{ $konsultasi->diagnosa }}</div>
                             </div>
                             
                             @if($konsultasi->catatan)
-                            <div>
-                                <div class="text-xs font-medium text-gray-600 mb-1 flex items-center">
-                                    <svg class="w-3.5 h-3.5 mr-1 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="mb-3">
+                                    <div class="flex items-center mb-1">
+                                        <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
-                                    Catatan Medis:
+                                        <div class="text-xs font-semibold text-indigo-600">Catatan Medis:</div>
+                                    </div>
+                                    <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                        {{ $konsultasi->catatan }}
+                                    </div>
                                 </div>
-                                <div class="bg-white text-sm text-gray-700 p-3 rounded border border-green-200 whitespace-pre-wrap">{{ $konsultasi->catatan }}</div>
+                                @endif
                             </div>
-                            @endif
                         </div>
                     </div>
                     @endif
@@ -422,6 +502,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('message-input');
     const timeRemaining = document.getElementById('time-remaining');
     const typingIndicator = document.getElementById('typing-indicator');
+    
+    // Auto-resize textarea
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    // Initialize auto-resize for diagnosa and catatan
+    const diagnosaTextarea = document.getElementById('diagnosa');
+    const catatanTextarea = document.getElementById('catatan');
+
+    if (diagnosaTextarea) {
+        diagnosaTextarea.style.overflow = 'hidden';
+        autoResize(diagnosaTextarea);
+        diagnosaTextarea.addEventListener('input', function() {
+            autoResize(this);
+        });
+    }
+
+    if (catatanTextarea) {
+        catatanTextarea.style.overflow = 'hidden';
+        autoResize(catatanTextarea);
+        catatanTextarea.addEventListener('input', function() {
+            autoResize(this);
+        });
+    }
     
     // Set timer for 15 minutes
     let timeLeft = 15 * 60; // 15 minutes in seconds

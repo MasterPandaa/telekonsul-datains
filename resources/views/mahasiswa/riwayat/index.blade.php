@@ -1,5 +1,44 @@
 @extends('layouts.mahasiswa')
 @section('mahasiswa-content')
+
+@php
+    $riwayatKonsultasiSelesai = array_filter($riwayatKonsultasi ?? [], function($item) {
+        return $item['status'] === 'Selesai';
+    });
+    $uniquePasien = collect($riwayatKonsultasiSelesai)->unique('pasien_nama')->values();
+@endphp
+
+<style>
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-10px); }
+    }
+    .custom-select {
+        position: relative;
+        display: inline-block;
+    }
+    .custom-select select {
+        display: none;
+    }
+    .select-selected {
+        position: relative;
+        cursor: pointer;
+    }
+    .select-items {
+        animation: slideDown 0.2s ease-out;
+    }
+    .select-items div:hover {
+        @apply bg-indigo-50;
+    }
+    .select-hide {
+        animation: slideUp 0.2s ease-out;
+    }
+</style>
+
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Riwayat Konsultasi</h1>
     <p class="text-sm text-gray-600">Lihat riwayat konsultasi pasien dan nilai yang diperoleh</p>
@@ -11,24 +50,124 @@
         <h2 class="text-lg font-medium text-gray-800">Filter Riwayat</h2>
         <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
             <div class="relative">
-                <input type="text" placeholder="Cari pasien..." class="w-full md:w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" id="search-input" placeholder="Cari pasien..." class="w-full md:w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <div class="absolute right-3 top-2.5">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
             </div>
-            <select class="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Semua Pasien</option>
-                <option value="1">Budi Santoso</option>
-                <option value="2">Siti Rahayu</option>
-                <option value="3">Ahmad Hidayat</option>
-                <option value="4">Dewi Lestari</option>
-                <option value="5">Joko Widodo</option>
-            </select>
+            <div class="custom-select relative">
+                <div class="select-selected px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 transition-all duration-200 flex items-center justify-between min-w-[200px] group">
+                    <span class="text-gray-700">Semua Pasien</span>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 transform group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div class="select-items absolute z-10 w-full py-1 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
+                    <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="">Semua Pasien</div>
+                    @foreach($uniquePasien as $pasien)
+                        <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="{{ $pasien['id'] }}">
+                            {{ $pasien['pasien_nama'] }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const customSelect = document.querySelector('.custom-select');
+    const selectSelected = customSelect.querySelector('.select-selected');
+    const selectItems = customSelect.querySelector('.select-items');
+    const searchInput = document.getElementById('search-input');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    let selectedValue = '';
+    let searchTerm = '';
+
+    // Toggle dropdown with animation
+    selectSelected.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = !selectItems.classList.contains('hidden');
+        
+        if (!isOpen) {
+            openSelect();
+        } else {
+            closeSelect();
+        }
+    });
+
+    // Handle option selection with animation
+    selectItems.querySelectorAll('div').forEach(item => {
+        item.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            const text = this.textContent.trim();
+            
+            selectSelected.querySelector('span').textContent = text;
+            selectedValue = value;
+            
+            // Add selected styling
+            selectItems.querySelectorAll('div').forEach(div => {
+                div.classList.remove('bg-indigo-50', 'text-indigo-600');
+            });
+            this.classList.add('bg-indigo-50', 'text-indigo-600');
+            
+            filterTable();
+            closeSelect();
+        });
+    });
+
+    // Handle search input
+    searchInput.addEventListener('input', function() {
+        searchTerm = this.value.toLowerCase();
+        filterTable();
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', closeSelect);
+
+    function openSelect() {
+        selectItems.classList.remove('hidden');
+        selectSelected.querySelector('svg').classList.add('rotate-180');
+        selectSelected.classList.add('border-indigo-500', 'ring-2', 'ring-indigo-200');
+        selectItems.style.animation = 'slideDown 0.2s ease-out';
+    }
+
+    function closeSelect() {
+        selectItems.style.animation = 'slideUp 0.2s ease-out';
+        setTimeout(() => {
+            selectItems.classList.add('hidden');
+            selectSelected.querySelector('svg').classList.remove('rotate-180');
+            selectSelected.classList.remove('border-indigo-500', 'ring-2', 'ring-indigo-200');
+        }, 180);
+    }
+
+    function filterTable() {
+        tableRows.forEach(row => {
+            if (row.classList.contains('no-data-row')) return;
+            
+            const pasienName = row.querySelector('.text-gray-900').textContent.toLowerCase();
+            const pasienId = row.getAttribute('data-pasien-id');
+            
+            const matchesSearch = !searchTerm || pasienName.includes(searchTerm);
+            const matchesFilter = !selectedValue || pasienId === selectedValue;
+            
+            row.classList.toggle('hidden', !(matchesSearch && matchesFilter));
+        });
+
+        // Show/hide no results message
+        const hasVisibleRows = Array.from(tableRows).some(row => !row.classList.contains('hidden'));
+        const noDataRow = document.querySelector('.no-data-row');
+        
+        if (noDataRow) {
+            noDataRow.classList.toggle('hidden', hasVisibleRows);
+        }
+    }
+});
+</script>
 
 <!-- Riwayat Konsultasi List -->
 <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
@@ -56,7 +195,7 @@
                         Keluhan
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Diagnosa
+                        Nilai
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Rating
@@ -67,15 +206,9 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @php
-                    $riwayatKonsultasiSelesai = array_filter($riwayatKonsultasi ?? [], function($item) {
-                        return $item['status'] === 'Selesai';
-                    });
-                @endphp
-                
                 @if(count($riwayatKonsultasiSelesai) > 0)
                     @foreach($riwayatKonsultasiSelesai as $item)
-                    <tr class="hover:bg-gray-50 transition">
+                    <tr class="hover:bg-gray-50 transition" data-pasien-id="{{ $item['id'] }}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
@@ -92,10 +225,10 @@
                             <div class="text-xs text-gray-500 mt-1">{{ $item['jam_mulai'] }} - {{ $item['jam_selesai'] }}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm text-gray-900">{{ $item['keluhan'] }}</div>
+                            <div class="text-sm text-gray-900 line-clamp-2">{{ $item['keluhan'] }}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm text-gray-900">{{ $item['diagnosa'] ?? '-' }}</div>
+                            <div class="text-sm text-gray-900 line-clamp-2">{{ $item['nilai'] ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4">
                             @if(isset($item['rating']) && $item['rating'])
@@ -136,38 +269,48 @@
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div class="flex items-center justify-between">
             <div class="flex-1 flex justify-between sm:hidden">
-                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    Sebelumnya
-                </a>
-                <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    Selanjutnya
-                </a>
+                @if(count($riwayatKonsultasiSelesai) > 0)
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </a>
+                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </a>
+                @endif
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-sm text-gray-700">
-                        Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> dari <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> hasil
-                    </p>
+                    @if(count($riwayatKonsultasiSelesai) > 0)
+                        <p class="text-sm text-gray-700">
+                            Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> dari <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> hasil
+                        </p>
+                    @else
+                        <p class="text-sm text-gray-500 italic">
+                            Belum ada riwayat konsultasi selesai
+                        </p>
+                    @endif
                 </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <span class="sr-only">Sebelumnya</span>
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                        <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                            1
-                        </a>
-                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <span class="sr-only">Selanjutnya</span>
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    </nav>
-                </div>
+                @if(count($riwayatKonsultasiSelesai) > 0)
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Sebelumnya</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                1
+                            </a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Selanjutnya</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </nav>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -179,7 +322,7 @@
         <h2 class="text-lg font-semibold text-gray-800">Rekap Nilai Konsultasi</h2>
     </div>
     <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-green-50 p-4 rounded-lg border border-green-200">
                 <div class="flex justify-between items-start">
                     <div>
@@ -221,6 +364,20 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-yellow-700 font-medium">Rating Rata-rata</p>
+                        <p class="text-3xl font-bold text-yellow-800 mt-1">{{ $ratingRata ?? '0' }}</p>
+                    </div>
+                    <div class="bg-yellow-100 p-2 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="mt-6 pt-6 border-t border-gray-200">
@@ -249,7 +406,7 @@
                 <div>
                     <div class="mb-4">
                         <div class="flex justify-between mb-1 items-center">
-                            <div class="text-sm font-medium text-gray-700">Diagnosa</div>
+                            <div class="text-sm font-medium text-gray-700">Nilai</div>
                             <div class="text-sm font-medium text-gray-700">75%</div>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">

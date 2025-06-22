@@ -273,6 +273,7 @@ class MahasiswaPageController extends Controller
         $nilaiRata = 0;
         $nilaiTertinggi = 0;
         $nilaiTerendah = 0;
+        $ratingRata = 0; // Initialize average rating variable
         
         if (count($riwayatKonsultasiData) > 0) {
             // Ambil semua rating yang tidak null
@@ -284,6 +285,7 @@ class MahasiswaPageController extends Controller
                 $nilaiRata = array_sum($ratings) / count($ratings);
                 $nilaiTertinggi = max($ratings);
                 $nilaiTerendah = min($ratings);
+                $ratingRata = round($nilaiRata, 1); // Calculate average rating
             }
         }
         
@@ -293,7 +295,8 @@ class MahasiswaPageController extends Controller
             'total' => count($riwayatKonsultasiData),
             'nilaiRata' => round($nilaiRata, 1),
             'nilaiTertinggi' => $nilaiTertinggi,
-            'nilaiTerendah' => $nilaiTerendah
+            'nilaiTerendah' => $nilaiTerendah,
+            'ratingRata' => $ratingRata // Pass average rating to the view
         ]);
     }
 
