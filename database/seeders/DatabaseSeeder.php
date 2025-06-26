@@ -27,10 +27,10 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
         ]);
         User::create([
-            'name' => 'Mahasiswa',
-            'email' => 'mahasiswa@example.com',
-            'password' => bcrypt('mahasiswa'),
-            'role' => 'mahasiswa',
+            'name' => 'Dokter',
+            'email' => 'dokter@example.com',
+            'password' => bcrypt('dokter'),
+            'role' => 'dokter',
         ]);
         User::create([
             'name' => 'Pasien',
@@ -48,9 +48,10 @@ class DatabaseSeeder extends Seeder
         // Panggil seeder lainnya
         $this->call([
             LogSeeder::class,
-            MahasiswaSeeder::class,
+            DokterSeeder::class,
             PasienSeeder::class,
             KonsultasiSeeder::class,
+            DosenSeeder::class,
         ]);
     }
 }

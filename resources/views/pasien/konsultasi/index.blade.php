@@ -8,7 +8,7 @@
                 <span class="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">Telekonsultasi</span>
                 <span class="ml-3 px-3 py-1 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 text-xs rounded-full font-medium">Real-time Chat</span>
             </h1>
-            <p class="text-sm text-gray-600 mt-1">Konsultasikan keluhan Anda dengan mahasiswa kedokteran</p>
+            <p class="text-sm text-gray-600 mt-1">Konsultasikan keluhan Anda dengan dokter</p>
         </div>
         <a href="{{ route('pasien.konsultasi.create') }}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md text-sm transition flex items-center justify-center w-full md:w-auto">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,12 +98,12 @@
             </svg>
             Konsultasi Aktif
         </h2>
-        <p class="text-sm text-gray-500">Konsultasi dengan status Menunggu dan Terkonfirmasi</p>
+        <p class="text-sm text-gray-500">Konsultasi dengan status Menunggu, Terkonfirmasi, dan Berlangsung</p>
     </div>
     
     @php
         $konsultasiAktifFiltered = $konsultasiAktif->filter(function($item) {
-            return in_array($item->status, ['Menunggu', 'Terkonfirmasi']);
+            return in_array($item->status, ['Menunggu', 'Terkonfirmasi', 'Berlangsung']);
         });
     @endphp
     
@@ -131,7 +131,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahasiswa</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dokter</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jadwal</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keluhan</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -144,10 +144,10 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                                    {{ strtoupper(substr($item->mahasiswa->name ?? 'M', 0, 1)) }}
+                                    {{ strtoupper(substr($item->dokter->name ?? 'D', 0, 1)) }}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->mahasiswa->name ?? '-' }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $item->dokter->name ?? '-' }}</div>
                                 </div>
                             </div>
                         </td>
@@ -162,6 +162,8 @@
                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                                 @if($item->status === 'Terkonfirmasi')
                                     bg-green-100 text-green-800
+                                @elseif($item->status === 'Berlangsung')
+                                    bg-purple-100 text-purple-800
                                 @elseif($item->status === 'Menunggu')
                                     bg-yellow-100 text-yellow-800
                                 @endif
@@ -171,12 +173,12 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex flex-col sm:flex-row gap-2">
-                                @if($item->status === 'Terkonfirmasi')
+                                @if($item->status === 'Terkonfirmasi' || $item->status === 'Berlangsung')
                                     @php
                                         $now = \Carbon\Carbon::now();
                                         $jadwalMulai = \Carbon\Carbon::parse($item->tanggal->format('Y-m-d') . ' ' . $item->jam_mulai);
                                         $jadwalSelesai = \Carbon\Carbon::parse($item->tanggal->format('Y-m-d') . ' ' . $item->jam_selesai);
-                                        $isWaktuKonsultasi = $now->between($jadwalMulai, $jadwalSelesai);
+                                        $isWaktuKonsultasi = $now->gte($jadwalMulai);
                                         $selisihWaktu = $now->diffForHumans($jadwalMulai);
                                     @endphp
                                     
@@ -185,18 +187,14 @@
                                             <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                                             </svg>
-                                            Masuk Chat
+                                            Masuk
                                         </a>
                                     @else
                                         <div class="text-gray-600 rounded-md px-2 py-1 border border-gray-300 bg-gray-50 flex items-center">
                                             <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            @if($jadwalMulai->isFuture())
-                                                <span class="countdown-timer" data-target="{{ $jadwalMulai->timestamp * 1000 }}">Tersisa <span class="time-remaining">--:--:--</span> untuk konsultasi</span>
-                                            @else
-                                                Konsultasi sudah berakhir
-                                            @endif
+                                            <span class="countdown-timer" data-target="{{ $jadwalMulai->timestamp * 1000 }}">Tersisa <span class="time-remaining">--:--:--</span></span>
                                         </div>
                                     @endif
                                 @elseif($item->status === 'Menunggu')
@@ -255,7 +253,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahasiswa</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dokter</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keluhan</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
@@ -267,10 +265,10 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                                    {{ strtoupper(substr($item->mahasiswa->name ?? 'M', 0, 1)) }}
+                                    {{ strtoupper(substr($item->dokter->name ?? 'D', 0, 1)) }}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->mahasiswa->name ?? '-' }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $item->dokter->name ?? '-' }}</div>
                                 </div>
                             </div>
                         </td>

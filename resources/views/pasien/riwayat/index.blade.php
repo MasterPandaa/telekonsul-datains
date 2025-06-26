@@ -85,14 +85,14 @@
                     </div>
                 </div>
 
-                <!-- Filter Mahasiswa -->
+                <!-- Filter Dokter -->
                 <div class="w-full lg:w-64">
                     <div class="relative">
-                        <select name="mahasiswa" class="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 bg-gray-50 text-gray-800 hover:bg-gray-100 cursor-pointer">
-                            <option value="">Semua Mahasiswa</option>
-                            @foreach($mahasiswas ?? [] as $mahasiswa)
-                                <option value="{{ $mahasiswa->id }}" {{ request('mahasiswa') == $mahasiswa->id ? 'selected' : '' }}>
-                                    {{ $mahasiswa->name }}
+                        <select name="dokter" class="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 bg-gray-50 text-gray-800 hover:bg-gray-100 cursor-pointer">
+                            <option value="">Semua Dokter</option>
+                            @foreach($dokters ?? [] as $dokter)
+                                <option value="{{ $dokter->id }}" {{ request('dokter') == $dokter->id ? 'selected' : '' }}>
+                                    {{ $dokter->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -162,7 +162,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr class="bg-gray-50">
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Mahasiswa</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Dokter</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Jadwal</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Keluhan</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Nilai</th>
@@ -182,10 +182,10 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                                    {{ strtoupper(substr($item->mahasiswa->name ?? 'M', 0, 1)) }}
+                                    {{ strtoupper(substr($item->dokter->name ?? 'D', 0, 1)) }}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->mahasiswa->name ?? '-' }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $item->dokter->name ?? '-' }}</div>
                                 </div>
                             </div>
                         </td>

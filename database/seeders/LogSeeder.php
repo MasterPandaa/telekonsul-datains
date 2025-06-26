@@ -36,8 +36,8 @@ class LogSeeder extends Seeder
             ],
             [
                 'user_id' => $admin->id,
-                'action' => 'create_mahasiswa',
-                'description' => 'Admin menambahkan data mahasiswa baru',
+                'action' => 'create_dokter',
+                'description' => 'Admin menambahkan data dokter baru',
                 'ip_address' => '127.0.0.1',
                 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
                 'created_at' => Carbon::now()->subDays(2),
@@ -54,8 +54,8 @@ class LogSeeder extends Seeder
             ],
             [
                 'user_id' => $admin->id,
-                'action' => 'update_mahasiswa',
-                'description' => 'Admin memperbarui data mahasiswa',
+                'action' => 'update_dokter',
+                'description' => 'Admin memperbarui data dokter',
                 'ip_address' => '127.0.0.1',
                 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
                 'created_at' => Carbon::now()->subDay(),

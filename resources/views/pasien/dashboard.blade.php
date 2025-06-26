@@ -186,7 +186,7 @@
                 </svg>
             </div>
             <h3 class="text-xl font-semibold text-white mb-2">Telekonsultasi</h3>
-            <p class="text-white/80 mb-4">Konsultasi online dengan mahasiswa kedokteran yang terlatih.</p>
+            <p class="text-white/80 mb-4">Konsultasi online dengan dokter yang terlatih.</p>
             <a href="{{ route('pasien.konsultasi.index') }}" class="inline-flex items-center text-white hover:underline group-hover:translate-x-2 transition-transform">
                 Mulai Konsultasi
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +264,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr class="bg-gray-50">
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahasiswa</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dokter</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -278,11 +278,11 @@
                             <div class="flex items-center">
                                 <div class="h-10 w-10 flex-shrink-0">
                                     <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                                        <span class="text-white font-medium">{{ strtoupper(substr($item->mahasiswa->name ?? 'M', 0, 1)) }}</span>
+                                        <span class="text-white font-medium">{{ strtoupper(substr($item->dokter->name ?? 'D', 0, 1)) }}</span>
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->mahasiswa->name ?? 'Mahasiswa' }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $item->dokter->name ?? 'Dokter' }}</div>
                                     <div class="text-sm text-gray-500">Dokter Umum</div>
                                 </div>
                             </div>

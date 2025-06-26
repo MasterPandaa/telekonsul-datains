@@ -31,7 +31,7 @@ class CleanupArtisanCommands extends Command
         $this->warn('Command konsultasi:update-status sudah tidak diperlukan untuk dijalankan secara terjadwal.');
         $this->info('Status konsultasi sekarang diperbarui secara otomatis ketika:');
         $this->line('1. Pengguna mengakses halaman konsultasi di panel pasien');
-        $this->line('2. Pengguna mengakses halaman konsultasi di panel mahasiswa');
+        $this->line('2. Pengguna mengakses halaman konsultasi di panel dokter');
         $this->line('3. Pengguna mengakses chat room konsultasi');
         $this->line('4. Pengguna mengakses dashboard');
         $this->line('');

@@ -1,82 +1,71 @@
-@props(['title', 'createRoute' => null, 'createLabel' => 'Tambah Data', 'columns' => [], 'data' => [], 'pagination' => null])
+@props(['headers' => [], 'rows' => [], 'actions' => true, 'view' => true, 'edit' => true, 'delete' => true, 'viewRoute' => '', 'editRoute' => '', 'deleteRoute' => '', 'customActions' => null])
 
-<div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <!-- Table Header -->
-    <div class="flex items-center justify-between p-4 border-b">
-        <h2 class="text-lg font-medium text-gray-800">{{ $title }}</h2>
-        
-        <div class="flex items-center space-x-2">
-            <!-- Filter & Search -->
-            <div class="relative mr-2">
-                <input type="text" placeholder="Cari..." class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-            </div>
-            
-            @if($createRoute)
-            <a href="{{ $createRoute }}" class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                {{ $createLabel }}
-            </a>
-            @endif
-        </div>
-    </div>
-    
-    <!-- Table -->
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead>
-                <tr class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    @foreach($columns as $column)
-                    <th class="px-4 py-3 border-b">{{ $column }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {{ $slot }}
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Pagination or Empty State -->
-    <div class="bg-white px-4 py-3 border-t">
-        @if(count($data) === 0)
-        <div class="flex flex-col items-center justify-center py-6 text-center">
-            <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-            <p class="text-gray-500">Tidak ada data yang tersedia</p>
-            @if($createRoute)
-            <a href="{{ $createRoute }}" class="mt-2 text-sm text-blue-600 hover:text-blue-800">
-                Tambahkan data baru
-            </a>
-            @endif
-        </div>
-        @elseif($pagination)
-        <div class="flex items-center justify-between">
-            <div class="flex-1 flex justify-between sm:hidden">
-                {{ $pagination->links() }}
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Menampilkan
-                        <span class="font-medium">{{ $pagination->firstItem() }}</span>
-                        sampai
-                        <span class="font-medium">{{ $pagination->lastItem() }}</span>
-                        dari
-                        <span class="font-medium">{{ $pagination->total() }}</span>
-                        hasil
-                    </p>
-                </div>
-                <div>
-                    {{ $pagination->links() }}
-                </div>
-            </div>
-        </div>
-        @endif
-    </div>
+<div class="overflow-x-auto bg-white rounded-lg shadow-md">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                @foreach($headers as $header)
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {{ $header }}
+                </th>
+                @endforeach
+                
+                @if($actions)
+                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Aksi
+                </th>
+                @endif
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @foreach($rows as $row)
+            <tr class="hover:bg-gray-50">
+                @foreach($row['data'] as $cell)
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {!! $cell !!}
+                </td>
+                @endforeach
+                
+                @if($actions)
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end space-x-2">
+                        @if($view && $viewRoute)
+                        <a href="{{ route($viewRoute, $row['id']) }}" class="text-blue-600 hover:text-blue-900">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </a>
+                        @endif
+                        
+                        @if($edit && $editRoute)
+                        <a href="{{ route($editRoute, $row['id']) }}" class="text-indigo-600 hover:text-indigo-900">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </a>
+                        @endif
+                        
+                        @if($delete && $deleteRoute)
+                        <form action="{{ route($deleteRoute, $row['id']) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:text-red-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </form>
+                        @endif
+                        
+                        @if($customActions)
+                            {{ $customActions($row) }}
+                        @endif
+                    </div>
+                </td>
+                @endif
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
 </div> 

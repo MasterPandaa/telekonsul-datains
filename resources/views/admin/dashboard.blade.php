@@ -15,10 +15,10 @@
                 </svg>
             </div>
             <div>
-                <p class="text-gray-500 text-sm">Total Mahasiswa</p>
+                <p class="text-gray-500 text-sm">Total Dokter</p>
                 <p class="text-2xl font-bold text-gray-800">
-                    @if(class_exists('\App\Models\Mahasiswa'))
-                        {{ \App\Models\Mahasiswa::count() }}
+                    @if(class_exists('\App\Models\Dokter'))
+                        {{ \App\Models\Dokter::count() }}
                     @else
                         0
                     @endif
@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="mt-4">
-            <a href="{{ route('admin.mahasiswa.index') }}" class="text-blue-500 hover:text-blue-600 text-sm font-medium">Lihat Detail &rarr;</a>
+            <a href="{{ route('admin.dokter.index') }}" class="text-blue-500 hover:text-blue-600 text-sm font-medium">Lihat Detail &rarr;</a>
         </div>
     </div>
 

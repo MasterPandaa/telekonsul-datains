@@ -1,32 +1,137 @@
-@extends('layouts.base')
+@extends('layouts.dosen')
+
 @section('content')
-<div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-green-100">
-    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl mt-10">
-        <div class="flex items-center mb-6">
-            <img src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" class="w-14 mr-4">
-            <div>
-                <h2 class="text-2xl font-bold text-blue-700">Dashboard Dosen</h2>
-                <p class="text-gray-600">Halo, <span class="font-semibold">{{ $user->name }}</span></p>
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Dashboard Dosen</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Total Konsultasi Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Konsultasi</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalKonsultasi }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="grid grid-cols-3 gap-6 mt-6">
-            <a href="#" class="bg-blue-100 hover:bg-blue-200 p-6 rounded-lg flex flex-col items-center shadow transition">
-                <svg class="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 17l4 4 4-4m0-5V3a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v9m10 4h-4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2z"/></svg>
-                <span class="font-semibold">Supervisi</span>
-            </a>
-            <a href="#" class="bg-green-100 hover:bg-green-200 p-6 rounded-lg flex flex-col items-center shadow transition">
-                <svg class="w-8 h-8 text-green-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                <span class="font-semibold">Penilaian</span>
-            </a>
-            <a href="#" class="bg-yellow-100 hover:bg-yellow-200 p-6 rounded-lg flex flex-col items-center shadow transition">
-                <svg class="w-8 h-8 text-yellow-600 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                <span class="font-semibold">Profil</span>
-            </a>
+
+        <!-- Konsultasi Selesai Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Konsultasi Selesai</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $konsultasiSelesai }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <form method="POST" action="{{ route('logout') }}" class="mt-8 text-right">
-            @csrf
-            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Logout</button>
-        </form>
+
+        <!-- Konsultasi Pending Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Konsultasi Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $konsultasiPending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rata-rata Rating Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Rata-rata Rating</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($rataRataRating, 1) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Konsultasi Terbaru -->
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Konsultasi Terbaru</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Pasien</th>
+                                    <th>Dokter</th>
+                                    <th>Status</th>
+                                    <th>Nilai Supervisi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($konsultasiTerbaru as $konsultasi)
+                                <tr>
+                                    <td>{{ $konsultasi->tanggal->format('d/m/Y H:i') }}</td>
+                                    <td>{{ $konsultasi->pasien->nama }}</td>
+                                    <td>{{ $konsultasi->dokter->nama }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ $konsultasi->status == 'Selesai' ? 'success' : ($konsultasi->status == 'Menunggu' ? 'warning' : 'danger') }}">
+                                            {{ $konsultasi->status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $konsultasi->nilai_supervisi ?? '-' }}</td>
+                                    <td>
+                                        <a href="{{ route('dosen.supervisi.show', $konsultasi->id) }}" class="btn btn-sm btn-primary">
+                                            Detail
+                                        </a>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center">Tidak ada data konsultasi</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection 

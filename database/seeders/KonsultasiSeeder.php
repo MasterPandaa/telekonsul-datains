@@ -18,11 +18,11 @@ class KonsultasiSeeder extends Seeder
         // Ambil semua pasien yang ada
         $pasiens = Pasien::all();
         
-        // Ambil semua mahasiswa yang ada
-        $mahasiswas = User::where('role', 'mahasiswa')->get();
+        // Ambil semua dokter yang ada
+        $dokters = User::where('role', 'dokter')->get();
         
-        // Jika tidak ada pasien atau mahasiswa, tidak perlu membuat konsultasi
-        if ($pasiens->isEmpty() || $mahasiswas->isEmpty()) {
+        // Jika tidak ada pasien atau dokter, tidak perlu membuat konsultasi
+        if ($pasiens->isEmpty() || $dokters->isEmpty()) {
             return;
         }
         
@@ -30,7 +30,7 @@ class KonsultasiSeeder extends Seeder
         foreach ($pasiens->take(5) as $pasien) {
             Konsultasi::factory()->selesai()->create([
                 'pasien_id' => $pasien->id,
-                'mahasiswa_id' => $mahasiswas->random()->id,
+                'dokter_id' => $dokters->random()->id,
                 'tanggal' => now()->subDays(rand(1, 30)),
             ]);
         }
@@ -39,7 +39,7 @@ class KonsultasiSeeder extends Seeder
         foreach ($pasiens->take(3) as $pasien) {
             Konsultasi::factory()->terkonfirmasi()->create([
                 'pasien_id' => $pasien->id,
-                'mahasiswa_id' => $mahasiswas->random()->id,
+                'dokter_id' => $dokters->random()->id,
                 'tanggal' => now()->addDays(rand(1, 7)),
             ]);
         }
@@ -48,7 +48,7 @@ class KonsultasiSeeder extends Seeder
         foreach ($pasiens->take(2) as $pasien) {
             Konsultasi::factory()->menunggu()->create([
                 'pasien_id' => $pasien->id,
-                'mahasiswa_id' => $mahasiswas->random()->id,
+                'dokter_id' => $dokters->random()->id,
                 'tanggal' => now()->addDays(rand(1, 14)),
             ]);
         }

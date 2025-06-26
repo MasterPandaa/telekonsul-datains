@@ -28,11 +28,8 @@ class DashboardController extends Controller
                     'user' => $user,
                     'title' => 'Dashboard Admin'
                 ]);
-            case 'mahasiswa':
-                return view('mahasiswa.dashboard', [
-                    'user' => $user,
-                    'title' => 'Dashboard Mahasiswa'
-                ]);
+            case 'dokter':
+                return redirect()->route('dokter.dashboard');
             case 'pasien':
                 return redirect()->route('pasien.dashboard');
             case 'dosen':

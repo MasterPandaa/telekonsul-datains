@@ -14,7 +14,7 @@
 </head>
 <body class="font-sans antialiased">
     <div id="app">
-        @include('layouts.partials.navbar')
+        @include('layouts.partials.navbar-app')
         
         <main>
             @yield('content')

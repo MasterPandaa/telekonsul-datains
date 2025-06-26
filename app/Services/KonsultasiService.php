@@ -58,10 +58,9 @@ class KonsultasiService
             $tanggalFormatted = $konsultasi->tanggal->format('Y-m-d');
             $jamMulai = Carbon::parse($tanggalFormatted . ' ' . $konsultasi->jam_mulai);
             $jamSelesai = Carbon::parse($tanggalFormatted . ' ' . $konsultasi->jam_selesai);
-            $batasTerlambat = $jamMulai->copy()->addMinutes(15);
 
-            // Jika sudah memasuki waktu konsultasi tapi belum terlambat
-            if ($now->gte($jamMulai) && $now->lt($batasTerlambat)) {
+            // Jika sudah memasuki waktu konsultasi dan belum melewati waktu selesai
+            if ($now->gte($jamMulai) && $now->lt($jamSelesai)) {
                 $konsultasi->update(['status' => 'Berlangsung']);
                 Log::info("Konsultasi ID: {$konsultasi->id} diubah menjadi Berlangsung");
                 $count++;
@@ -87,18 +86,13 @@ class KonsultasiService
         $count = 0;
         foreach ($konsultasiAktif as $konsultasi) {
             $tanggalFormatted = $konsultasi->tanggal->format('Y-m-d');
-            $konsultasiDateTime = Carbon::parse($tanggalFormatted . ' ' . $konsultasi->jam_mulai);
-            $terlambatDateTime = $konsultasiDateTime->copy()->addMinutes(15);
             $konsultasiEndTime = Carbon::parse($tanggalFormatted . ' ' . $konsultasi->jam_selesai);
 
-            // Jika sudah lewat 15 menit dari waktu mulai
-            if ($now->gt($terlambatDateTime) && $now->lt($konsultasiEndTime)) {
-                // Jika belum ada chat room atau belum ada yang masuk
-                if (!$konsultasi->chatRoom || ($konsultasi->chatRoom && $konsultasi->chatRoom->messages()->count() === 0)) {
-                    $konsultasi->update(['status' => 'Terlambat']);
-                    Log::info("Konsultasi ID: {$konsultasi->id} diubah menjadi Terlambat");
-                    $count++;
-                }
+            // Jika sudah lewat jam selesai dan belum ada chat room yang dibuat
+            if ($now->gt($konsultasiEndTime) && !$konsultasi->chatRoom) {
+                $konsultasi->update(['status' => 'Terlambat']);
+                Log::info("Konsultasi ID: {$konsultasi->id} diubah menjadi Terlambat");
+                $count++;
             }
         }
 
@@ -120,9 +114,12 @@ class KonsultasiService
         foreach ($konsultasiAktif as $konsultasi) {
             $tanggalFormatted = $konsultasi->tanggal->format('Y-m-d');
             $konsultasiEndTime = Carbon::parse($tanggalFormatted . ' ' . $konsultasi->jam_selesai);
+            
+            // Tambahkan grace period 30 menit setelah jam selesai
+            $graceEndTime = $konsultasiEndTime->copy()->addMinutes(30);
 
-            // Jika sudah lewat jam selesai
-            if ($now->gt($konsultasiEndTime)) {
+            // Jika sudah lewat jam selesai + grace period
+            if ($now->gt($graceEndTime)) {
                 $konsultasi->update(['status' => 'Selesai']);
                 
                 // Update juga status chat room menjadi tidak aktif

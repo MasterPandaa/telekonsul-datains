@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('konsultasis', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pasien_id')->constrained('pasiens')->cascadeOnDelete();
-            $table->foreignId('mahasiswa_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('dokter_id')->constrained('users')->cascadeOnDelete();
             $table->date('tanggal');
             $table->time('jam_mulai');
             $table->time('jam_selesai');
@@ -23,7 +23,21 @@ return new class extends Migration
             $table->text('diagnosa')->nullable();
             $table->text('catatan')->nullable();
             $table->integer('nilai')->nullable();
-            $table->enum('status', ['Menunggu', 'Terkonfirmasi', 'Ditolak', 'Selesai', 'Dibatalkan'])->default('Menunggu');
+            $table->unsignedTinyInteger('rating')->nullable()->comment('Rating dari pasien (1-5 bintang)');
+            $table->text('komentar_rating')->nullable()->comment('Komentar tambahan untuk rating');
+            $table->enum('status', [
+                'Menunggu', 'Terkonfirmasi', 'Ditolak', 'Selesai', 'Dibatalkan', 'Terlambat', 'Berlangsung'
+            ])->default('Menunggu');
+            $table->text('alasan_tolak')->nullable();
+            $table->text('alasan_batal')->nullable();
+            $table->text('alasan_terlambat')->nullable();
+            $table->date('tanggal_baru')->nullable();
+            $table->time('jam_mulai_baru')->nullable();
+            $table->time('jam_selesai_baru')->nullable();
+            
+            // Kolom untuk supervisi dosen
+            $table->integer('nilai_supervisi')->nullable();
+            $table->text('catatan_supervisi')->nullable();
             $table->timestamps();
         });
     }

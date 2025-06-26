@@ -13,15 +13,15 @@ class NotificationService
      */
     public function createKonsultasiBaruNotification(Konsultasi $konsultasi)
     {
-        $mahasiswa = User::find($konsultasi->mahasiswa_id);
+        $dokter = User::find($konsultasi->dokter_id);
         $pasien = $konsultasi->pasien;
         
-        // Buat notifikasi untuk mahasiswa
+        // Buat notifikasi untuk dokter
         Notification::create([
-            'user_id' => $mahasiswa->id,
+            'user_id' => $dokter->id,
             'type' => 'konsultasi_baru',
             'message' => "Permintaan konsultasi baru dari {$pasien->nama_lengkap}",
-            'link' => route('mahasiswa.konsultasi.index'),
+            'link' => route('dokter.konsultasi.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,
                 'pasien_id' => $pasien->id,
@@ -37,17 +37,17 @@ class NotificationService
     public function createKonsultasiDitolakNotification(Konsultasi $konsultasi, $alasanTolak)
     {
         $pasien = $konsultasi->pasien;
-        $mahasiswa = User::find($konsultasi->mahasiswa_id);
+        $dokter = User::find($konsultasi->dokter_id);
         
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->user_id,
             'type' => 'konsultasi_ditolak',
-            'message' => "Permintaan konsultasi Anda ditolak oleh {$mahasiswa->name}",
+            'message' => "Permintaan konsultasi Anda ditolak oleh {$dokter->name}",
             'link' => route('pasien.konsultasi.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,
-                'mahasiswa_id' => $mahasiswa->id,
+                'dokter_id' => $dokter->id,
                 'alasan_tolak' => $alasanTolak
             ]
         ]);
@@ -59,17 +59,17 @@ class NotificationService
     public function createKonsultasiTerkonfirmasiNotification(Konsultasi $konsultasi)
     {
         $pasien = $konsultasi->pasien;
-        $mahasiswa = User::find($konsultasi->mahasiswa_id);
+        $dokter = User::find($konsultasi->dokter_id);
         
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->user_id,
             'type' => 'konsultasi_terkonfirmasi',
-            'message' => "Permintaan konsultasi Anda telah dikonfirmasi oleh {$mahasiswa->name}",
+            'message' => "Permintaan konsultasi Anda telah dikonfirmasi oleh {$dokter->name}",
             'link' => route('pasien.konsultasi.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,
-                'mahasiswa_id' => $mahasiswa->id,
+                'dokter_id' => $dokter->id,
                 'tanggal' => $konsultasi->tanggal->format('Y-m-d'),
                 'jam' => $konsultasi->jam_mulai
             ]
@@ -82,28 +82,28 @@ class NotificationService
     public function createKonsultasiAkanDimulaiNotification(Konsultasi $konsultasi)
     {
         $pasien = $konsultasi->pasien;
-        $mahasiswa = User::find($konsultasi->mahasiswa_id);
+        $dokter = User::find($konsultasi->dokter_id);
         
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->user_id,
             'type' => 'konsultasi_akan_dimulai',
-            'message' => "Konsultasi Anda dengan {$mahasiswa->name} akan segera dimulai",
+            'message' => "Konsultasi Anda dengan {$dokter->name} akan segera dimulai",
             'link' => route('pasien.konsultasi.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,
-                'mahasiswa_id' => $mahasiswa->id,
+                'dokter_id' => $dokter->id,
                 'tanggal' => $konsultasi->tanggal->format('Y-m-d'),
                 'jam' => $konsultasi->jam_mulai
             ]
         ]);
         
-        // Buat notifikasi untuk mahasiswa
+        // Buat notifikasi untuk dokter
         Notification::create([
-            'user_id' => $mahasiswa->id,
+            'user_id' => $dokter->id,
             'type' => 'konsultasi_akan_dimulai',
             'message' => "Konsultasi Anda dengan {$pasien->nama_lengkap} akan segera dimulai",
-            'link' => route('mahasiswa.konsultasi.index'),
+            'link' => route('dokter.konsultasi.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,
                 'pasien_id' => $pasien->id,
@@ -118,15 +118,15 @@ class NotificationService
      */
     public function createRatingBaruNotification(Konsultasi $konsultasi)
     {
-        $mahasiswa = User::find($konsultasi->mahasiswa_id);
+        $dokter = User::find($konsultasi->dokter_id);
         $pasien = $konsultasi->pasien;
         
-        // Buat notifikasi untuk mahasiswa
+        // Buat notifikasi untuk dokter
         Notification::create([
-            'user_id' => $mahasiswa->id,
+            'user_id' => $dokter->id,
             'type' => 'rating_baru',
             'message' => "Pasien {$pasien->nama_lengkap} memberikan rating {$konsultasi->rating} bintang",
-            'link' => route('mahasiswa.riwayat.index'),
+            'link' => route('dokter.riwayat.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,
                 'rating' => $konsultasi->rating,
@@ -137,18 +137,18 @@ class NotificationService
     }
     
     /**
-     * Membuat notifikasi untuk diagnosis baru dari mahasiswa
+     * Membuat notifikasi untuk diagnosis baru dari dokter
      */
     public function createDiagnosisBaruNotification(Konsultasi $konsultasi)
     {
-        $mahasiswa = User::find($konsultasi->mahasiswa_id);
+        $dokter = User::find($konsultasi->dokter_id);
         $pasien = User::find($konsultasi->pasien->user_id);
         
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->id,
             'type' => 'diagnosis_baru',
-            'message' => "Mahasiswa {$mahasiswa->name} telah memberikan diagnosis untuk konsultasi Anda",
+            'message' => "Dokter {$dokter->name} telah memberikan diagnosis untuk konsultasi Anda",
             'link' => route('pasien.riwayat.index'),
             'data' => [
                 'konsultasi_id' => $konsultasi->id,

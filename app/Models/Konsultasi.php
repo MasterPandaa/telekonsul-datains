@@ -11,7 +11,7 @@ class Konsultasi extends Model
 
     protected $fillable = [
         'pasien_id',
-        'mahasiswa_id',
+        'dokter_id',
         'tanggal',
         'jam_mulai',
         'jam_selesai',
@@ -32,8 +32,12 @@ class Konsultasi extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
+        'tanggal' => 'datetime',
         'tanggal_baru' => 'date',
+        'jam_mulai' => 'datetime',
+        'jam_selesai' => 'datetime',
+        'jam_mulai_baru' => 'datetime',
+        'jam_selesai_baru' => 'datetime',
     ];
 
     /**
@@ -45,11 +49,11 @@ class Konsultasi extends Model
     }
 
     /**
-     * Relasi dengan mahasiswa (user)
+     * Relasi dengan dokter (user)
      */
-    public function mahasiswa()
+    public function dokter()
     {
-        return $this->belongsTo(User::class, 'mahasiswa_id');
+        return $this->belongsTo(User::class, 'dokter_id');
     }
     
     public function chatRoom()

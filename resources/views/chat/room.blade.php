@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telekonsultasi - {{ Auth::user()->role === 'mahasiswa' ? $konsultasi->pasien->nama : $konsultasi->mahasiswa->name }}</title>
+    <title>Telekonsultasi - {{ Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -119,7 +120,7 @@
         <div class="bg-white shadow-lg h-full flex flex-col">
             <!-- Header -->
             <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                @if(isset($isTerlambat) && $isTerlambat)
+                @if(isset($isTerlambat) && $isTerlambat && $konsultasi->status !== 'Selesai')
                 <div class="bg-yellow-500/20 border-l-4 border-yellow-400 px-4 py-2 mb-3 rounded-r-lg animate__animated animate__fadeIn">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 text-yellow-300 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -149,10 +150,10 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold">
-                            {{ strtoupper(substr(Auth::user()->role === 'mahasiswa' ? $konsultasi->pasien->nama : $konsultasi->mahasiswa->name, 0, 1)) }}
+                            {{ strtoupper(substr(Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name, 0, 1)) }}
                         </div>
                     <div>
-                            <h2 class="text-xl font-semibold">Konsultasi dengan {{ Auth::user()->role === 'mahasiswa' ? $konsultasi->pasien->nama : $konsultasi->mahasiswa->name }}</h2>
+                            <h2 class="text-xl font-semibold">Konsultasi dengan {{ Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name }}</h2>
                             <div class="flex items-center text-sm text-blue-100">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -171,20 +172,20 @@
                             <svg class="w-4 h-4 mr-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            Sisa waktu: <span id="time-remaining" class="ml-1 font-bold">15:00</span>
+                            Sisa waktu: <span id="time-remaining" class="ml-1 font-bold">--:--</span>
                         </div>
                         <div class="flex justify-end">
                             @if($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
-                                <a href="{{ Auth::user()->role === 'mahasiswa' ? route('mahasiswa.konsultasi.index') : route('pasien.konsultasi.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm">
+                                <a href="{{ Auth::user()->role === 'dokter' ? route('dokter.konsultasi.index') : route('pasien.konsultasi.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm">
                                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                                     </svg>
                                     Kembali
                                 </a>
                             @else
-                        <form action="{{ route('chat.end', $chatRoom) }}" method="POST">
+                        <form action="{{ route('chat.end', $chatRoom) }}" method="POST" id="end-chat-form">
                             @csrf
-                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors shadow-sm {{ $konsultasi->status === 'Berlangsung' ? '' : 'opacity-50 cursor-not-allowed' }}" {{ $konsultasi->status === 'Berlangsung' ? '' : 'disabled' }}>
+                                    <button type="button" id="end-chat-button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors shadow-sm {{ in_array($konsultasi->status, ['Berlangsung', 'Terkonfirmasi']) ? '' : 'opacity-50 cursor-not-allowed' }}" {{ in_array($konsultasi->status, ['Berlangsung', 'Terkonfirmasi']) ? '' : 'disabled' }}>
                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                         </svg>
@@ -257,7 +258,7 @@
                                 <div class="text-sm text-gray-500 italic p-2">Tidak ada keterangan tambahan</div>
                                 @endif
                             </div>
-                            @if($konsultasi->status === 'Terlambat')
+                            @if($konsultasi->status === 'Terlambat' && $konsultasi->status !== 'Selesai')
                             <div class="mb-0 mt-3 bg-gradient-to-r from-orange-50 to-orange-100 p-3 rounded-lg shadow-sm animate__animated animate__pulse animate__infinite animate__slower">
                                 <div class="text-xs text-orange-700 flex items-start">
                                     <svg class="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,7 +333,7 @@
                     </div>
                     @endif
                     
-                    @if(Auth::user()->role === 'mahasiswa' && ($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat'))
+                    @if(Auth::user()->role === 'dokter' && ($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat'))
                     <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
                         <div class="flex items-center mb-2">
                             <svg class="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,7 +343,7 @@
                             </div>
                             
                         <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50 space-y-4">
-                            <form action="{{ route('mahasiswa.konsultasi.diagnosa', $konsultasi->id) }}" method="POST">
+                            <form action="{{ route('dokter.konsultasi.diagnosa', $konsultasi->id) }}" method="POST">
                                 @csrf
                                 <div class="mb-3">
                                     <div class="flex items-center mb-1">
@@ -501,375 +502,248 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
     const timeRemaining = document.getElementById('time-remaining');
-    const typingIndicator = document.getElementById('typing-indicator');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     
-    // Auto-resize textarea
-    function autoResize(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    // Initialize auto-resize for diagnosa and catatan
-    const diagnosaTextarea = document.getElementById('diagnosa');
-    const catatanTextarea = document.getElementById('catatan');
-
-    if (diagnosaTextarea) {
-        diagnosaTextarea.style.overflow = 'hidden';
-        autoResize(diagnosaTextarea);
-        diagnosaTextarea.addEventListener('input', function() {
-            autoResize(this);
-        });
-    }
-
-    if (catatanTextarea) {
-        catatanTextarea.style.overflow = 'hidden';
-        autoResize(catatanTextarea);
-        catatanTextarea.addEventListener('input', function() {
-            autoResize(this);
-        });
-    }
+    // Debug info
+    console.log('Chat room initialized');
     
-    // Set timer for 15 minutes
-    let timeLeft = 15 * 60; // 15 minutes in seconds
-    
-    // Jika waktu tersisa dari server tersedia, gunakan waktu tersebut
-    @if(isset($sisaWaktu))
-        timeLeft = {{ $sisaWaktu }} * 60; // convert menit ke detik
-    @endif
-    
-    // Jika status konsultasi sudah selesai, nonaktifkan timer
-    @if($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
-    timeRemaining.textContent = 'Konsultasi selesai';
-    document.getElementById('timer').classList.add('bg-gray-500/20');
-    @else
-    // Tampilkan sisa waktu awal
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    timeRemaining.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
-    // Jika terlambat, tampilkan indikator visual
-    @if(isset($isTerlambat) && $isTerlambat)
-    timeRemaining.classList.add('text-orange-300');
-    document.getElementById('timer').classList.add('bg-orange-500/20');
-    @endif
-    
-    const timer = setInterval(() => {
-        timeLeft--;
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        timeRemaining.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
-        // Animate timer when less than 1 minute
-        if (timeLeft <= 60) {
-            timeRemaining.classList.add('text-red-300');
-            if (!document.getElementById('timer').classList.contains('animate-pulse')) {
-                document.getElementById('timer').classList.add('bg-red-500/20');
-            }
-        }
-        
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            @if(isset($messageForm) && $messageForm)
-            messageForm.style.display = 'none';
-            @endif
-            timeRemaining.textContent = 'Waktu habis';
-            
-            // Tampilkan pesan waktu habis
-            const timeUpMessage = document.createElement('div');
-            timeUpMessage.className = 'flex justify-center my-4 animate__animated animate__fadeIn';
-            timeUpMessage.innerHTML = `
-                <div class="bg-red-100 text-red-800 text-sm px-4 py-2 rounded-lg inline-block">
-                    <p class="flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Waktu konsultasi telah berakhir
-                    </p>
-                </div>
-            `;
-            chatMessages.appendChild(timeUpMessage);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Automatically end chat when time is up
-            setTimeout(() => {
-            fetch(`{{ route('chat.end', $chatRoom) }}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            }).then(() => {
-                window.location.href = '{{ Auth::user()->role === "mahasiswa" ? route("mahasiswa.konsultasi.index") : route("pasien.konsultasi.index") }}';
-            });
-            }, 3000);
-        }
-    }, 1000);
-    @endif
-
-    // Emoji picker
-    const emojiButton = document.getElementById('emoji-button');
-    const picker = new EmojiButton({
-        position: 'top-start',
-        theme: 'light',
-        autoHide: false,
-        rows: 4,
-        recentsCount: 16,
-        emojiSize: '1.5rem'
-    });
-
-    picker.on('emoji', emoji => {
-        messageInput.value += emoji;
-        messageInput.focus();
-    });
-
-    emojiButton.addEventListener('click', () => {
-        picker.togglePicker(emojiButton);
-    });
-    
-    // Load messages
-    let lastMessageId = 0;
+    // Simple function to load messages
     function loadMessages() {
+        console.log('Loading messages...');
         fetch(`{{ route('chat.messages', $chatRoom) }}`)
-            .then(response => response.json())
-            .then(messages => {
-                // Check if we have new messages
-                if (messages.length > 0 && messages[messages.length-1].id !== lastMessageId) {
-                    const isFirstLoad = lastMessageId === 0;
-                    lastMessageId = messages[messages.length-1].id;
-                    
-                    let html = '';
-                    if (isFirstLoad && messages.length > 0) {
-                        html = '<div class="flex justify-center mb-4"><div class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full inline-block">Sesi konsultasi dimulai</div></div>';
-                    }
-                    
-                    html += messages.map(message => {
-                        const isCurrentUser = message.user_id === {{ Auth::id() }};
-                        const time = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        const animationClass = message.id === lastMessageId && !isFirstLoad ? 'animate__animated animate__fadeIn' : '';
-                        
-                        return `
-                            <div class="mb-6 ${isCurrentUser ? 'flex justify-end' : 'flex justify-start'} ${animationClass}">
-                                <div class="flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[80%]">
-                                    <div class="flex items-end ${isCurrentUser ? 'flex-row-reverse' : ''}">
-                                        ${!isCurrentUser ? `
-                                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mr-2 shadow-md">
-                                            ${message.user.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        ` : ''}
-                                        <div class="px-4 py-3 ${isCurrentUser ? 'message-bubble-right bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'message-bubble-left bg-white text-gray-800 border border-gray-100'} shadow-md">
-                                            <p class="text-sm whitespace-pre-wrap leading-relaxed">${message.message}</p>
-                                        </div>
-                                        ${isCurrentUser ? `
-                                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ml-2 shadow-md">
-                                            ${message.user.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        ` : ''}
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1.5 ${isCurrentUser ? 'text-right mr-11' : 'ml-11'} flex items-center ${isCurrentUser ? 'justify-end' : ''}">
-                                        <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        ${time}
-                                    </div>
-                        </div>
-                    </div>
-                        `;
-                    }).join('');
-                    
-                    if (!isFirstLoad) {
-                        // Jika bukan load pertama, tambahkan ke akhir chat
-                        const lastMessages = messages.filter(m => m.id > lastMessageId);
-                        lastMessages.forEach(message => {
-                            const isCurrentUser = message.user_id === {{ Auth::id() }};
-                            const time = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            
-                            const messageDiv = document.createElement('div');
-                            messageDiv.className = `mb-4 ${isCurrentUser ? 'flex justify-end' : 'flex justify-start'} animate__animated animate__fadeIn`;
-                            
-                            // Isi messageDiv dengan HTML untuk pesan
-                            // Sama seperti HTML dalam template literal di atas
-                        });
-                    } else {
-                        // Jika load pertama, set semua konten
-                        chatMessages.innerHTML = html;
-                    }
-                    
-                    // Scroll ke bawah untuk melihat pesan terbaru
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            });
-    }
-    
-    // Typing indicator
-    let typingTimeout;
-    messageInput.addEventListener('input', function() {
-        // Tampilkan indikator mengetik saat user mengetik
-        // Implementasi hanya visual karena tidak ada API realtime
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            typingIndicator.classList.add('hidden');
-        }, 1000);
-    });
-    
-    // Send message
-    messageForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const message = messageInput.value.trim();
-        
-        if (message) {
-            // Tambahkan animasi loading saat mengirim pesan
-            const sendButton = this.querySelector('button[type="submit"]');
-            const originalText = sendButton.innerHTML;
-            sendButton.disabled = true;
-            sendButton.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>`;
-            
-            fetch(`{{ route('chat.send', $chatRoom) }}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ message })
-            })
             .then(response => {
                 if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || 'Terjadi kesalahan saat mengirim pesan');
-                    });
+                    throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-            .then(data => {
-                if (data.success) {
-                    messageInput.value = '';
-                    loadMessages();
+            .then(messages => {
+                console.log('Messages loaded:', messages);
+                // Clear chat first
+                chatMessages.innerHTML = '<div class="flex justify-center mb-4"><div class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full inline-block">Sesi konsultasi dimulai</div></div>';
+                
+                // Add all messages
+                messages.forEach(message => {
+                    const isCurrentUser = message.user_id === {{ Auth::id() }};
+                    const time = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     
-                    // Tambahkan pesan kita sendiri ke chat untuk tampilan instan
-                    const now = new Date();
-                    const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'mb-4 flex justify-end animate__animated animate__fadeIn';
-                    messageDiv.innerHTML = `
-                        <div class="flex flex-col items-end max-w-[80%]">
-                            <div class="flex items-end flex-row-reverse">
-                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ml-2 shadow-md">
-                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                    const html = `
+                        <div class="mb-4 ${isCurrentUser ? 'flex justify-end' : 'flex justify-start'}">
+                            <div class="flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[80%]">
+                                <div class="flex items-end ${isCurrentUser ? 'flex-row-reverse' : ''}">
+                                    ${!isCurrentUser ? `
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mr-2 shadow-md">
+                                        ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    ` : ''}
+                                    <div class="px-4 py-3 ${isCurrentUser ? 'message-bubble-right bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'message-bubble-left bg-white text-gray-800 border border-gray-100'} shadow-md">
+                                        <p class="text-sm whitespace-pre-wrap leading-relaxed">${message.message}</p>
+                                    </div>
+                                    ${isCurrentUser ? `
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ml-2 shadow-md">
+                                        ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    ` : ''}
                                 </div>
-                                <div class="px-4 py-3 message-bubble-right bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md">
-                                    <p class="text-sm whitespace-pre-wrap leading-relaxed">${message}</p>
+                                <div class="text-xs text-gray-500 mt-1.5 ${isCurrentUser ? 'text-right mr-11' : 'ml-11'} flex items-center ${isCurrentUser ? 'justify-end' : ''}">
+                                    <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    ${time}
                                 </div>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1.5 text-right mr-11 flex items-center justify-end">
-                                <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                ${time}
                             </div>
                         </div>
                     `;
-                    chatMessages.appendChild(messageDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
+                    
+                    chatMessages.insertAdjacentHTML('beforeend', html);
+                });
                 
-                // Kembalikan tombol ke semula
-                sendButton.disabled = false;
-                sendButton.innerHTML = originalText;
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error loading messages:', error);
+                showError('Gagal memuat pesan');
+            });
+    }
+    
+    // Send message
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                console.log('Sending message:', message);
+                // Save the message before clearing input
+                const messageText = message;
                 
-                // Tampilkan pesan error di chatroom
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'flex justify-center my-4 animate__animated animate__fadeIn';
-                errorDiv.innerHTML = `
+                // Clear input immediately for better UX
+                messageInput.value = '';
+                
+                fetch(`{{ route('chat.send', $chatRoom) }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        message: messageText,
+                        _token: csrfToken
+                    })
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        // Reload all messages
+                        loadMessages();
+                    } else {
+                        messageInput.value = messageText; // Restore the message if failed
+                        showError(data.message || 'Gagal mengirim pesan');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    messageInput.value = messageText; // Restore the message if failed
+                    showError('Terjadi kesalahan saat mengirim pesan');
+                });
+            }
+        });
+    }
+    
+    // Show error message
+    function showError(message) {
+        console.error('Error message:', message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'flex justify-center my-4';
+        errorDiv.innerHTML = `
+            <div class="bg-red-100 text-red-800 text-sm px-4 py-2 rounded-lg inline-block">
+                <p class="flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    ${message}
+                </p>
+            </div>
+        `;
+        chatMessages.appendChild(errorDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Load messages on page load
+    loadMessages();
+    
+    // Refresh messages every 3 seconds
+    setInterval(loadMessages, 3000);
+    
+    // Handle Enter key to send message
+    if (messageInput) {
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    }
+    
+    // Set timer for consultation
+    let timeLeft = 15 * 60; // 15 minutes in seconds
+    
+    // If time remaining is provided from server, use it
+    @if(isset($sisaWaktu))
+        timeLeft = {{ $sisaWaktu }} * 60; // convert minutes to seconds
+    @endif
+    
+    // If consultation is already finished, disable the timer
+    @if($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
+        timeRemaining.textContent = 'Konsultasi selesai';
+        document.getElementById('timer').classList.add('bg-gray-500/20');
+    @else
+        // Show initial time
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timeRemaining.textContent = minutes + ':' + seconds.toString().padStart(2, '0');
+        
+        // Start countdown
+        const timer = setInterval(() => {
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timeRemaining.textContent = minutes + ':' + seconds.toString().padStart(2, '0');
+            
+            // Highlight timer when less than 1 minute
+            if (timeLeft <= 60) {
+                timeRemaining.classList.add('text-red-300');
+                document.getElementById('timer').classList.add('bg-red-500/20');
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                timeRemaining.textContent = 'Waktu habis';
+                
+                // Display time up message
+                const timeUpMessage = document.createElement('div');
+                timeUpMessage.className = 'flex justify-center my-4';
+                timeUpMessage.innerHTML = `
                     <div class="bg-red-100 text-red-800 text-sm px-4 py-2 rounded-lg inline-block">
                         <p class="flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            ${error.message || 'Terjadi kesalahan saat mengirim pesan'}
+                            Waktu konsultasi telah berakhir
                         </p>
                     </div>
                 `;
-                chatMessages.appendChild(errorDiv);
+                chatMessages.appendChild(timeUpMessage);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 
-                // Kembalikan tombol ke semula
-                sendButton.disabled = false;
-                sendButton.innerHTML = originalText;
-            });
-        }
-    });
+                // End chat automatically
+                setTimeout(() => {
+                    fetch(`{{ route('chat.end', $chatRoom) }}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    }).then(() => {
+                        window.location.href = '{{ Auth::user()->role === "dokter" ? route("dokter.konsultasi.index") : route("pasien.konsultasi.index") }}';
+                    });
+                }, 3000);
+            }
+        }, 1000);
+    @endif
     
-    // Handle Enter key to send message
-    messageInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+    // End chat confirmation
+    const endChatButton = document.getElementById('end-chat-button');
+    const endChatForm = document.getElementById('end-chat-form');
+    
+    if (endChatButton && endChatForm) {
+        endChatButton.addEventListener('click', function(e) {
             e.preventDefault();
-            messageForm.dispatchEvent(new Event('submit'));
-        }
-    });
-    
-    // Load messages pada awalnya dan setiap 3 detik
-    loadMessages();
-    setInterval(loadMessages, 3000);
-
-    // Enhance form interactivity
-    const enhanceDiagnosaForm = () => {
-        const diagnosaTextarea = document.getElementById('diagnosa');
-        const catatanTextarea = document.getElementById('catatan');
-        const diagnosaCounter = document.getElementById('diagnosa-counter');
-        const catatanCounter = document.getElementById('catatan-counter');
-        
-        if (diagnosaTextarea && diagnosaCounter) {
-            diagnosaTextarea.addEventListener('input', function() {
-                const charCount = this.value.length;
-                const maxLength = 500;
-                const remaining = maxLength - charCount;
-                
-                diagnosaCounter.textContent = `${charCount}/${maxLength}`;
-                
-                if (remaining < 50) {
-                    diagnosaCounter.classList.add('text-red-500');
-                } else {
-                    diagnosaCounter.classList.remove('text-red-500');
+            
+            Swal.fire({
+                title: 'Akhiri Konsultasi?',
+                text: 'Anda yakin ingin mengakhiri konsultasi ini? Tindakan ini tidak dapat dibatalkan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Akhiri',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    endChatForm.submit();
                 }
-                
-                // Add subtle animation on input
-                this.classList.add('pulse-border');
-                setTimeout(() => {
-                    this.classList.remove('pulse-border');
-                }, 300);
             });
-        }
-        
-        if (catatanTextarea && catatanCounter) {
-            catatanTextarea.addEventListener('input', function() {
-                const charCount = this.value.length;
-                const maxLength = 1000;
-                const remaining = maxLength - charCount;
-                
-                catatanCounter.textContent = `${charCount}/${maxLength}`;
-                
-                if (remaining < 100) {
-                    catatanCounter.classList.add('text-red-500');
-                } else {
-                    catatanCounter.classList.remove('text-red-500');
-                }
-                
-                // Add subtle animation on input
-                this.classList.add('pulse-border');
-                setTimeout(() => {
-                    this.classList.remove('pulse-border');
-                }, 300);
-            });
-        }
+        });
     }
-
-    // Initialize diagnosa form enhancements
-    enhanceDiagnosaForm();
 });
 </script>
 </body>

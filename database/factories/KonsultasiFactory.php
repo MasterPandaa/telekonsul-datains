@@ -31,7 +31,7 @@ class KonsultasiFactory extends Factory
         
         return [
             'pasien_id' => Pasien::factory(),
-            'mahasiswa_id' => User::factory()->create(['role' => 'mahasiswa'])->id,
+            'dokter_id' => User::factory()->create(['role' => 'dokter'])->id,
             'tanggal' => $tanggal,
             'jam_mulai' => $jam_mulai,
             'jam_selesai' => $jam_selesai,

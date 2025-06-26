@@ -19,7 +19,7 @@ class KonsultasiController extends Controller
             Log::info('API Request: /api/konsultasi/' . $id . ' by user ' . Auth::id());
             
             // Cek dulu apakah konsultasi dengan ID tersebut ada
-            $konsultasi = Konsultasi::with('mahasiswa', 'pasien')->find($id);
+            $konsultasi = Konsultasi::with('dokter', 'pasien')->find($id);
             
             if (!$konsultasi) {
                 Log::warning('Konsultasi not found: ' . $id);
@@ -35,8 +35,8 @@ class KonsultasiController extends Controller
             
             if ($user->role === 'admin') {
                 $hasAccess = true; // Admin memiliki akses ke semua konsultasi
-            } else if ($user->role === 'mahasiswa' && $konsultasi->mahasiswa_id === $user->id) {
-                $hasAccess = true; // Mahasiswa hanya memiliki akses ke konsultasinya sendiri
+            } else if ($user->role === 'dokter' && $konsultasi->dokter_id === $user->id) {
+                $hasAccess = true; // Dokter hanya memiliki akses ke konsultasinya sendiri
             } else if ($user->role === 'pasien' && $konsultasi->pasien->user_id === $user->id) {
                 $hasAccess = true; // Pasien hanya memiliki akses ke konsultasinya sendiri
             }
@@ -61,9 +61,9 @@ class KonsultasiController extends Controller
                 'diagnosa' => $konsultasi->diagnosa,
                 'catatan' => $konsultasi->catatan,
                 'status' => $konsultasi->status,
-                'mahasiswa' => $konsultasi->mahasiswa ? [
-                    'id' => $konsultasi->mahasiswa->id,
-                    'name' => $konsultasi->mahasiswa->name,
+                'dokter' => $konsultasi->dokter ? [
+                    'id' => $konsultasi->dokter->id,
+                    'name' => $konsultasi->dokter->name,
                 ] : null,
                 'pasien' => $konsultasi->pasien ? [
                     'id' => $konsultasi->pasien->id,

@@ -48,11 +48,11 @@ class User extends Authenticatable
     }
     
     /**
-     * Relasi dengan mahasiswa
+     * Relasi dengan dokter
      */
-    public function mahasiswa()
+    public function dokter()
     {
-        return $this->hasOne(Mahasiswa::class);
+        return $this->hasOne(Dokter::class);
     }
     
     /**

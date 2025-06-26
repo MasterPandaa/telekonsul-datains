@@ -15,21 +15,20 @@ class NotificationController extends Controller
      */
     public function index()
     {
-        $notifications = Auth::user()->notifications()->orderBy('created_at', 'desc')->paginate(15);
         $data = [
-            'title' => 'Notifikasi',
-            'notifications' => $notifications
+            'notifications' => $this->getNotificationsForUser(),
+            'unreadCount' => $this->getUnreadCountForUser()
         ];
-        
-        // Tentukan view berdasarkan role
+
         if (Auth::user()->role === 'admin') {
             return view('notifications.admin.index', $data);
-        } else if (Auth::user()->role === 'mahasiswa') {
-            return view('notifications.mahasiswa.index', $data);
+        } else if (Auth::user()->role === 'dokter') {
+            return view('notifications.dokter.index', $data);
+        } else if (Auth::user()->role === 'pasien') {
+            return view('notifications.pasien.index', $data);
         }
-        
-        // Fallback ke view default jika role tidak dikenali
-        return view('notifications.index', $data);
+
+        return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini.');
     }
     
     /**
@@ -74,6 +73,14 @@ class NotificationController extends Controller
      */
     public function getLatest()
     {
+        // Periksa apakah user terautentikasi
+        if (!Auth::check()) {
+            return response()->json([
+                'error' => 'Unauthenticated',
+                'message' => 'User tidak terautentikasi'
+            ], 401);
+        }
+        
         $user = Auth::user();
         
         // Ambil notifikasi terbaru dengan limit 10

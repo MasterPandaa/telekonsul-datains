@@ -6,9 +6,35 @@ use Illuminate\Http\Request;
 
 class PasienController extends Controller
 {
-    public function index() {
-        $pasiens = Pasien::all();
-        return view('admin.pasien.index', compact('pasiens'));
+    public function index(Request $request) {
+        $query = Pasien::query();
+        
+        // Filter pencarian
+        if ($request->has('search') && $request->search != '') {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('nama', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('nik', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('alamat', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('no_hp', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+        
+        // Urutkan data
+        $sortBy = $request->sort_by ?? 'nama';
+        $sortOrder = $request->sort_order ?? 'asc';
+        $query->orderBy($sortBy, $sortOrder);
+        
+        // Pagination
+        $pasiens = $query->paginate(10)->withQueryString();
+        
+        return view('admin.pasien.index', [
+            'pasiens' => $pasiens,
+            'searchTerm' => $request->search ?? '',
+            'sortBy' => $sortBy,
+            'sortOrder' => $sortOrder
+        ]);
     }
     public function create() {
         return view('admin.pasien.create');
@@ -55,5 +81,10 @@ class PasienController extends Controller
         LogService::logActivity('delete', 'Pasien', $pasienData);
         
         return redirect()->route('admin.pasien.index')->with('success', 'Data pasien berhasil dihapus');
+    }
+
+    public function show(Pasien $pasien) {
+        // Menampilkan detail data pasien
+        return view('admin.pasien.show', compact('pasien'));
     }
 } 

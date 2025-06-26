@@ -3,11 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\PasienController;
+use App\Http\Controllers\DokterController;
 use App\Http\Controllers\Admin\LogController;
-use App\Http\Controllers\MahasiswaPageController;
+use App\Http\Controllers\DokterPageController;
 use App\Http\Controllers\PasienPageController;
 use App\Http\Controllers\PasienProfilController;
 use App\Http\Controllers\ChatRoomController;
@@ -16,7 +16,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\API\KonsultasiController;
 use App\Http\Controllers\PasienPasswordController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\MahasiswaPasswordController;
+use App\Http\Controllers\DokterPasswordController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Admin menu
     Route::prefix('admin')->name('admin.')->middleware('can:isAdmin')->group(function () {
-        Route::resource('mahasiswa', MahasiswaController::class);
+        Route::resource('dokter', DokterController::class);
         Route::resource('dosen', DosenController::class);
         Route::resource('pasien', PasienController::class);
         
@@ -54,35 +54,56 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// Mahasiswa Routes
-Route::middleware(['auth', 'can:isMahasiswa'])->prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-    // Dashboard Mahasiswa
-    Route::get('/dashboard', [MahasiswaPageController::class, 'dashboard'])->name('dashboard');
+// Dokter Routes
+Route::middleware(['auth', 'can:isDokter'])->prefix('dokter')->name('dokter.')->group(function () {
+    // Dashboard Dokter
+    Route::get('/dashboard', [DokterPageController::class, 'dashboard'])->name('dashboard');
     
-    // Profil Mahasiswa
-    Route::get('/profil', [MahasiswaPageController::class, 'profilIndex'])->name('profil.index');
-    Route::post('/profil/update-foto', [MahasiswaPageController::class, 'updateFoto'])->name('profil.update-foto');
-    Route::post('/profil/update-informasi', [MahasiswaPageController::class, 'updateInformasi'])->name('profil.update-informasi');
-    Route::post('/profil/update-akademik', [MahasiswaPageController::class, 'updateAkademik'])->name('profil.update-akademik');
-    Route::post('/profil/update-keahlian', [MahasiswaPageController::class, 'updateKeahlian'])->name('profil.update-keahlian');
-    Route::post('/profil/update-prestasi', [MahasiswaPageController::class, 'updatePrestasi'])->name('profil.update-prestasi');
+    // Profil Dokter
+    Route::get('/profil', [DokterPageController::class, 'profilIndex'])->name('profil.index');
+    Route::post('/profil/update-foto', [DokterPageController::class, 'updateFoto'])->name('profil.update-foto');
+    Route::post('/profil/update-informasi', [DokterPageController::class, 'updateInformasi'])->name('profil.update-informasi');
+    Route::post('/profil/update-akademik', [DokterPageController::class, 'updateAkademik'])->name('profil.update-akademik');
+    Route::post('/profil/update-keahlian', [DokterPageController::class, 'updateKeahlian'])->name('profil.update-keahlian');
+    Route::post('/profil/update-prestasi', [DokterPageController::class, 'updatePrestasi'])->name('profil.update-prestasi');
     
     // Konsultasi
     Route::prefix('konsultasi')->name('konsultasi.')->group(function() {
-        Route::get('/', [MahasiswaPageController::class, 'konsultasiIndex'])->name('index');
-        Route::post('/{konsultasi}/diagnosa', [MahasiswaPageController::class, 'simpanDiagnosa'])->name('diagnosa');
+        Route::get('/', [DokterPageController::class, 'konsultasiIndex'])->name('index');
+        Route::post('/{konsultasi}/diagnosa', [DokterPageController::class, 'simpanDiagnosa'])->name('diagnosa');
     });
     
     // Riwayat & Nilai
-    Route::get('/riwayat', [MahasiswaPageController::class, 'riwayatIndex'])->name('riwayat.index');
+    Route::get('/riwayat', [DokterPageController::class, 'riwayatIndex'])->name('riwayat.index');
 
-    Route::post('/konsultasi/{konsultasi}/konfirmasi', [MahasiswaPageController::class, 'konfirmasiKonsultasi'])->name('konsultasi.konfirmasi');
-    Route::post('/konsultasi/{konsultasi}/tolak', [MahasiswaPageController::class, 'tolakKonsultasi'])->name('konsultasi.tolak');
-    Route::post('/konsultasi/{konsultasi}/ganti-sesi', [MahasiswaPageController::class, 'gantiSesiKonsultasi'])->name('konsultasi.gantiSesi');
+    Route::post('/konsultasi/{konsultasi}/konfirmasi', [DokterPageController::class, 'konfirmasiKonsultasi'])->name('konsultasi.konfirmasi');
+    Route::post('/konsultasi/{konsultasi}/tolak', [DokterPageController::class, 'tolakKonsultasi'])->name('konsultasi.tolak');
+    Route::post('/konsultasi/{konsultasi}/ganti-sesi', [DokterPageController::class, 'gantiSesiKonsultasi'])->name('konsultasi.gantiSesi');
     
     // Rute untuk pengaturan password
-    Route::get('/pengaturan', [MahasiswaPasswordController::class, 'index'])->name('pengaturan.index');
-    Route::post('/pengaturan', [MahasiswaPasswordController::class, 'update'])->name('pengaturan.update');
+    Route::get('/pengaturan', [DokterPasswordController::class, 'index'])->name('pengaturan.index');
+    Route::post('/pengaturan', [DokterPasswordController::class, 'update'])->name('pengaturan.update');
+});
+
+// Dosen Routes
+Route::middleware(['auth', 'can:isDosen'])->prefix('dosen')->name('dosen.')->group(function () {
+    // Dashboard Dosen
+    Route::get('/dashboard', [DosenController::class, 'dashboard'])->name('dashboard');
+    
+    // Profil Dosen
+    Route::get('/profil', [DosenController::class, 'profilIndex'])->name('profil.index');
+    Route::post('/profil/update-foto', [DosenController::class, 'updateFoto'])->name('profil.update-foto');
+    Route::post('/profil/update-informasi', [DosenController::class, 'updateInformasi'])->name('profil.update-informasi');
+    
+    // Supervisi
+    Route::prefix('supervisi')->name('supervisi.')->group(function() {
+        Route::get('/', [DosenController::class, 'supervisiIndex'])->name('index');
+        Route::get('/{konsultasi}', [DosenController::class, 'supervisiShow'])->name('show');
+        Route::post('/{konsultasi}/nilai', [DosenController::class, 'supervisiNilai'])->name('nilai');
+    });
+    
+    // Penilaian
+    Route::get('/penilaian', [DosenController::class, 'penilaianIndex'])->name('penilaian.index');
 });
 
 // Pasien Routes

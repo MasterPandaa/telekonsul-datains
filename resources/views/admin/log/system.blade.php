@@ -98,7 +98,7 @@
                     <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="create">Create</div>
                     <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="update">Update</div>
                     <div class="px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer transition-colors duration-150 hover:bg-indigo-50" data-value="delete">Delete</div>
-            </div>
+                </div>
                 <input type="hidden" name="action" id="action-input" value="{{ request('action') }}">
             </div>
         </form>
@@ -117,6 +117,7 @@
                         <th class="pl-4 pr-2 py-3 border-b">
                             <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         </th>
+                        <th class="px-4 py-3 border-b">No</th>
                         <th class="px-4 py-3 border-b">Waktu</th>
                         <th class="px-4 py-3 border-b">User</th>
                         <th class="px-4 py-3 border-b">Aksi</th>
@@ -125,7 +126,7 @@
                     </tr>
                 </thead>
                     <tbody class="divide-y divide-gray-200 bg-white" id="log-table-body">
-                    @forelse($logs as $log)
+                    @forelse($logs as $index => $log)
                         <tr class="hover:bg-gray-50 transition log-row" 
                             data-action="{{ strtolower($log->action) }}" 
                             data-description="{{ strtolower($log->description) }}"
@@ -133,6 +134,9 @@
                             data-ip="{{ $log->ip_address }}">
                         <td class="pl-4 pr-2 py-3 whitespace-nowrap">
                             <input type="checkbox" name="ids[]" value="{{ $log->id }}" class="log-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {{ $logs->firstItem() + $index }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                             {{ $log->created_at->format('d M Y H:i:s') }}
@@ -193,8 +197,56 @@
         </div>
         
         <!-- Pagination -->
-        <div class="bg-white px-4 py-3 border-t">
-            {{ $logs->appends(request()->query())->links() }}
+        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    @if(count($logs) > 0)
+                        <a href="{{ $logs->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 {{ $logs->onFirstPage() ? 'opacity-50 cursor-not-allowed' : '' }}">
+                            Sebelumnya
+                        </a>
+                        <a href="{{ $logs->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 {{ !$logs->hasMorePages() ? 'opacity-50 cursor-not-allowed' : '' }}">
+                            Selanjutnya
+                        </a>
+                    @endif
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        @if(count($logs) > 0)
+                            <p class="text-sm text-gray-700">
+                                Menampilkan <span class="font-medium">{{ $logs->firstItem() }}</span> sampai <span class="font-medium">{{ $logs->lastItem() }}</span> dari <span class="font-medium">{{ $logs->total() }}</span> hasil
+                            </p>
+                        @else
+                            <p class="text-sm text-gray-500 italic">
+                                Belum ada data log sistem saat ini
+                            </p>
+                        @endif
+                    </div>
+                    @if(count($logs) > 0)
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a href="{{ $logs->previousPageUrl() }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 {{ $logs->onFirstPage() ? 'opacity-50 cursor-not-allowed' : '' }}">
+                                    <span class="sr-only">Sebelumnya</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                
+                                <!-- Contoh sederhana untuk menampilkan halaman saat ini saja -->
+                                <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    {{ $logs->currentPage() }}
+                                </a>
+                                
+                                <a href="{{ $logs->nextPageUrl() }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 {{ !$logs->hasMorePages() ? 'opacity-50 cursor-not-allowed' : '' }}">
+                                    <span class="sr-only">Selanjutnya</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </nav>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </form>
 </div>
