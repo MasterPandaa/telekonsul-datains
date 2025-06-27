@@ -8,7 +8,7 @@ class Pasien extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'nama', 'nik', 'email', 'alamat', 'no_hp',
+        'nik', 'email', 'alamat', 'no_hp',
         'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'foto',
         'tinggi_badan', 'berat_badan', 'tekanan_darah', 'alergi', 'riwayat_penyakit'
     ];
@@ -27,6 +27,12 @@ class Pasien extends Model
     public function konsultasi()
     {
         return $this->hasMany(Konsultasi::class);
+    }
+    
+    // Accessor untuk mendapatkan nama dari user
+    public function getNamaAttribute()
+    {
+        return $this->user ? $this->user->name : null;
     }
     
     // Accessor untuk mendapatkan usia pasien

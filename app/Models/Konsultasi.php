@@ -39,12 +39,12 @@ class Konsultasi extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'datetime',
+        'tanggal' => 'date',
         'tanggal_baru' => 'date',
-        'jam_mulai' => 'datetime',
-        'jam_selesai' => 'datetime',
-        'jam_mulai_baru' => 'datetime',
-        'jam_selesai_baru' => 'datetime',
+        'jam_mulai' => 'string',
+        'jam_selesai' => 'string',
+        'jam_mulai_baru' => 'string',
+        'jam_selesai_baru' => 'string',
     ];
 
     /**
@@ -90,5 +90,36 @@ class Konsultasi extends Model
     public function getWaktuAttribute()
     {
         return $this->jam_mulai . ' - ' . $this->jam_selesai;
+    }
+    
+    /**
+     * Mendapatkan nilai rata-rata dari semua kategori nilai
+     */
+    public function getNilaiRataRata()
+    {
+        $nilai = 0;
+        $count = 0;
+        
+        if ($this->nilai_komunikasi) {
+            $nilai += $this->nilai_komunikasi;
+            $count++;
+        }
+        
+        if ($this->nilai_anamnesis) {
+            $nilai += $this->nilai_anamnesis;
+            $count++;
+        }
+        
+        if ($this->nilai_diagnosa) {
+            $nilai += $this->nilai_diagnosa;
+            $count++;
+        }
+        
+        if ($this->nilai_empati) {
+            $nilai += $this->nilai_empati;
+            $count++;
+        }
+        
+        return $count > 0 ? round($nilai / $count) : null;
     }
 } 

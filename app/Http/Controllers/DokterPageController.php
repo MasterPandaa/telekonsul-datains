@@ -62,6 +62,48 @@ class DokterPageController extends Controller
             ];
         }
         
+        // Hitung nilai rata-rata dari keempat aspek penilaian
+        $totalNilai = 0;
+        $countNilai = 0;
+        
+        // Ambil semua konsultasi yang sudah selesai
+        $konsultasiNilai = Konsultasi::where('dokter_id', $user->id)
+            ->where('status', 'Selesai')
+            ->get();
+            
+        foreach ($konsultasiNilai as $konsultasi) {
+            $nilaiKonsultasi = 0;
+            $countAspek = 0;
+            
+            if (!is_null($konsultasi->nilai_komunikasi)) {
+                $nilaiKonsultasi += $konsultasi->nilai_komunikasi;
+                $countAspek++;
+            }
+            
+            if (!is_null($konsultasi->nilai_anamnesis)) {
+                $nilaiKonsultasi += $konsultasi->nilai_anamnesis;
+                $countAspek++;
+            }
+            
+            if (!is_null($konsultasi->nilai_diagnosa)) {
+                $nilaiKonsultasi += $konsultasi->nilai_diagnosa;
+                $countAspek++;
+            }
+            
+            if (!is_null($konsultasi->nilai_empati)) {
+                $nilaiKonsultasi += $konsultasi->nilai_empati;
+                $countAspek++;
+            }
+            
+            if ($countAspek > 0) {
+                $totalNilai += ($nilaiKonsultasi / $countAspek);
+                $countNilai++;
+            }
+        }
+        
+        // Hitung rata-rata nilai
+        $nilaiAvg = $countNilai > 0 ? round($totalNilai / $countNilai) : 0;
+        
         // Hitung nilai rata-rata dari rating konsultasi
         $ratingAvg = Konsultasi::where('dokter_id', $user->id)
             ->whereNotNull('rating')
@@ -73,7 +115,8 @@ class DokterPageController extends Controller
             'konsultasiAktifCount' => $konsultasiAktifCount,
             'konsultasiSelesaiCount' => $konsultasiSelesaiCount,
             'jadwalKonsultasi' => $jadwalKonsultasi,
-            'ratingAvg' => $ratingAvg
+            'ratingAvg' => $ratingAvg,
+            'nilaiAvg' => $nilaiAvg
         ]);
     }
 
@@ -97,7 +140,7 @@ class DokterPageController extends Controller
             ->orderBy('tanggal', 'asc')
             ->orderBy('jam_mulai', 'asc')
             ->with('pasien')
-            ->get();
+            ->paginate(10, ['*'], 'aktif');
             
         // Siapkan data untuk tampilan
         $konsultasiAktifData = [];
@@ -128,6 +171,7 @@ class DokterPageController extends Controller
             
             $konsultasiAktifData[] = [
                 'id' => $item->id,
+                'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
@@ -141,18 +185,17 @@ class DokterPageController extends Controller
             ];
         }
         
-        // Ambil data riwayat konsultasi (selesai, ditolak, dibatalkan, dan terlambat)
-        $konsultasiSelesai = Konsultasi::where('dokter_id', $user->id)
-            ->whereIn('status', ['Selesai', 'Ditolak', 'Dibatalkan', 'Terlambat'])
+        // Ambil data konsultasi tidak aktif (selesai, ditolak, dibatalkan, dan terlambat)
+        $konsultasiTidakAktif = Konsultasi::where('dokter_id', $user->id)
+            ->whereIn('status', ['Dibatalkan', 'Terlambat'])
             ->orderBy('tanggal', 'desc')
             ->orderBy('jam_mulai', 'desc')
             ->with('pasien')
-            ->take(5)
-            ->get();
+            ->paginate(10, ['*'], 'tidak_aktif');
             
         // Siapkan data untuk tampilan
-        $konsultasiSelesaiData = [];
-        foreach ($konsultasiSelesai as $item) {
+        $konsultasiTidakAktifData = [];
+        foreach ($konsultasiTidakAktif as $item) {
             // Menghitung timestamp untuk jadwal konsultasi
             $jadwalTimestamp = null;
             if ($item->tanggal) {
@@ -160,8 +203,9 @@ class DokterPageController extends Controller
                 $jadwalTimestamp = $jadwalDateTime->timestamp * 1000; // Konversi ke milliseconds untuk JavaScript
             }
             
-            $konsultasiSelesaiData[] = [
+            $konsultasiTidakAktifData[] = [
                 'id' => $item->id,
+                'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
@@ -173,23 +217,15 @@ class DokterPageController extends Controller
                 'tanggal_timestamp' => $jadwalTimestamp,
                 'alasan_tolak' => $item->alasan_tolak,
                 'alasan_batal' => $item->alasan_batal,
-                'rating' => $item->rating,
-                'komentar_rating' => $item->komentar_rating
             ];
         }
-        
-        // Hitung total konsultasi
-        $total = count($konsultasiAktifData) + count($konsultasiSelesaiData);
-        $totalAktif = count($konsultasiAktifData);
-        $totalSelesai = count($konsultasiSelesaiData);
         
         return view('dokter.konsultasi.index', [
             'title' => 'Daftar Konsultasi',
             'konsultasiAktif' => $konsultasiAktifData,
-            'konsultasiSelesai' => $konsultasiSelesaiData,
-            'total' => $total,
-            'totalAktif' => $totalAktif,
-            'totalSelesai' => $totalSelesai
+            'konsultasiSelesai' => $konsultasiTidakAktifData,
+            'konsultasiAktifPaginator' => $konsultasiAktif,
+            'konsultasiTidakAktifPaginator' => $konsultasiTidakAktif
         ]);
     }
 
@@ -240,17 +276,17 @@ class DokterPageController extends Controller
         // Ambil user yang login
         $user = Auth::user();
         
-        // Ambil data riwayat konsultasi (selesai, ditolak, dibatalkan, dan terlambat)
-        $konsultasiSelesai = Konsultasi::where('dokter_id', $user->id)
+        // Ambil data riwayat konsultasi (selesai, ditolak, dibatalkan, dan terlambat) dengan paginasi
+        $konsultasi = Konsultasi::where('dokter_id', $user->id)
             ->whereIn('status', ['Selesai', 'Ditolak', 'Dibatalkan', 'Terlambat'])
             ->orderBy('tanggal', 'desc')
             ->orderBy('jam_mulai', 'desc')
             ->with('pasien')
-            ->get();
+            ->paginate(10);
             
         // Siapkan data untuk tampilan
         $konsultasiSelesaiData = [];
-        foreach ($konsultasiSelesai as $item) {
+        foreach ($konsultasi as $item) {
             // Format tanggal
             $tanggalFormat = $item->tanggal ? $item->tanggal->format('d F Y') : '-';
             
@@ -274,7 +310,8 @@ class DokterPageController extends Controller
                 'alasan_batal' => $item->alasan_batal,
                 'rating' => $item->rating,
                 'komentar_rating' => $item->komentar_rating,
-                'diagnosa' => $item->diagnosa
+                'diagnosa' => $item->diagnosa,
+                'nilai' => $item->getNilaiRataRata()
             ];
         }
         
@@ -339,6 +376,7 @@ class DokterPageController extends Controller
         return view('dokter.riwayat.index', [
             'title' => 'Riwayat Konsultasi',
             'konsultasiSelesai' => $konsultasiSelesaiData,
+            'konsultasiPaginator' => $konsultasi,
             'totalSelesai' => $totalSelesai,
             'totalDitolak' => $totalDitolak,
             'totalDibatalkan' => $totalDibatalkan,

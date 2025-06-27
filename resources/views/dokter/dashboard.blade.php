@@ -52,7 +52,7 @@
             </div>
             <div>
                 <p class="text-gray-500 text-sm">Nilai Rata-rata</p>
-                <p class="text-2xl font-bold text-gray-800">85</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $nilaiAvg ?? 0 }}</p>
             </div>
         </div>
         <div class="mt-4">

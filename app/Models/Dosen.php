@@ -11,7 +11,6 @@ class Dosen extends Model
 
     protected $fillable = [
         'user_id',
-        'nama',
         'nip',
         'email',
         'alamat',
@@ -24,6 +23,14 @@ class Dosen extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Accessor untuk mendapatkan nama dari user
+     */
+    public function getNamaAttribute()
+    {
+        return $this->user ? $this->user->name : null;
     }
 
     /**

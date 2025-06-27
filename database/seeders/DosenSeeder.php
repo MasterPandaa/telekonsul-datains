@@ -15,22 +15,31 @@ class DosenSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buat user untuk dosen
-        $user = User::create([
-            'name' => 'Dosen',
-            'email' => 'dosen@example.com',
-            'password' => Hash::make('dosen'),
-            'role' => 'dosen',
-        ]);
+        // Cek apakah user dosen sudah ada
+        $user = User::where('email', 'dosen@example.com')->first();
+        
+        if (!$user) {
+            // Buat user untuk dosen jika belum ada
+            $user = User::create([
+                'name' => 'Dosen Supervisor',
+                'email' => 'dosen@example.com',
+                'password' => Hash::make('dosen'),
+                'role' => 'dosen',
+            ]);
+        }
 
-        // Buat data dosen
-        Dosen::create([
-            'user_id' => $user->id,
-            'nama' => 'Dosen Supervisor',
-            'nip' => '1234567890',
-            'email' => 'dosen@example.com',
-            'alamat' => 'Jl. Pendidikan No. 1',
-            'no_hp' => '081234567890',
-        ]);
+        // Cek apakah data dosen sudah ada
+        $dosen = Dosen::where('user_id', $user->id)->first();
+        
+        if (!$dosen) {
+            // Buat data dosen jika belum ada
+            Dosen::create([
+                'user_id' => $user->id,
+                'nip' => '1234567890',
+                'email' => 'dosen@example.com',
+                'alamat' => 'Jl. Pendidikan No. 1',
+                'no_hp' => '081234567890',
+            ]);
+        }
     }
 } 

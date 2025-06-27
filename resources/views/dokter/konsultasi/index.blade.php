@@ -131,7 +131,9 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @if(count($konsultasiAktifFiltered) > 0)
+                    @php $count = 0; @endphp
                     @foreach($konsultasiAktifFiltered as $item)
+                    @php if($count >= 10) break; $count++; @endphp
                     <tr class="hover:bg-gray-50 transition">
                     <td class="px-6 py-4">
                         <div class="flex items-center">
@@ -215,20 +217,33 @@
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div class="flex items-center justify-between">
             <div class="flex-1 flex justify-between sm:hidden">
-                @if(count($konsultasiAktifFiltered) > 0)
-                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Sebelumnya
-                    </a>
-                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Selanjutnya
-                    </a>
+                @if($konsultasiAktifPaginator && $konsultasiAktifPaginator->total() > 0)
+                    @if($konsultasiAktifPaginator->previousPageUrl())
+                        <a href="{{ $konsultasiAktifPaginator->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Sebelumnya
+                        </a>
+                    @else
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-gray-100 cursor-not-allowed">
+                            Sebelumnya
+                        </span>
+                    @endif
+
+                    @if($konsultasiAktifPaginator->nextPageUrl())
+                        <a href="{{ $konsultasiAktifPaginator->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Selanjutnya
+                        </a>
+                    @else
+                        <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-gray-100 cursor-not-allowed">
+                            Selanjutnya
+                        </span>
+                    @endif
                 @endif
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                    @if(count($konsultasiAktifFiltered) > 0)
+                    @if($konsultasiAktifPaginator && $konsultasiAktifPaginator->total() > 0)
                         <p class="text-sm text-gray-700">
-                            Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($konsultasiAktifFiltered) }}</span> dari <span class="font-medium">{{ count($konsultasiAktifFiltered) }}</span> hasil
+                            Menampilkan <span class="font-medium">{{ $konsultasiAktifPaginator->firstItem() }}</span> sampai <span class="font-medium">{{ $konsultasiAktifPaginator->lastItem() }}</span> dari <span class="font-medium">{{ $konsultasiAktifPaginator->total() }}</span> hasil
                         </p>
                     @else
                         <p class="text-sm text-gray-500 italic">
@@ -236,25 +251,9 @@
                         </p>
                     @endif
                 </div>
-                @if(count($konsultasiAktifFiltered) > 0)
+                @if($konsultasiAktifPaginator && $konsultasiAktifPaginator->total() > 0)
                     <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Sebelumnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                                1
-                            </a>
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Selanjutnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        </nav>
+                        @include('layouts.partials.pagination-limit-5', ['paginator' => $konsultasiAktifPaginator])
                     </div>
                 @endif
             </div>
@@ -293,14 +292,8 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @php
-                    $konsultasiTidakAktif = array_filter($konsultasiSelesai ?? [], function($item) {
-                        return in_array($item['status'], ['Dibatalkan', 'Terlambat']);
-                    });
-                @endphp
-                
-                @if(count($konsultasiTidakAktif) > 0)
-                    @foreach($konsultasiTidakAktif as $item)
+                @if(count($konsultasiSelesai) > 0)
+                    @foreach($konsultasiSelesai as $item)
                     <tr class="hover:bg-gray-50 transition">
                     <td class="px-6 py-4">
                         <div class="flex items-center">
@@ -360,20 +353,33 @@
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div class="flex items-center justify-between">
             <div class="flex-1 flex justify-between sm:hidden">
-                @if(count($konsultasiTidakAktif) > 0)
-                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Sebelumnya
-                    </a>
-                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Selanjutnya
-                    </a>
+                @if($konsultasiTidakAktifPaginator && $konsultasiTidakAktifPaginator->total() > 0)
+                    @if($konsultasiTidakAktifPaginator->previousPageUrl())
+                        <a href="{{ $konsultasiTidakAktifPaginator->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Sebelumnya
+                        </a>
+                    @else
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-gray-100 cursor-not-allowed">
+                            Sebelumnya
+                        </span>
+                    @endif
+
+                    @if($konsultasiTidakAktifPaginator->nextPageUrl())
+                        <a href="{{ $konsultasiTidakAktifPaginator->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Selanjutnya
+                        </a>
+                    @else
+                        <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-gray-100 cursor-not-allowed">
+                            Selanjutnya
+                        </span>
+                    @endif
                 @endif
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                    @if(count($konsultasiTidakAktif) > 0)
+                    @if($konsultasiTidakAktifPaginator && $konsultasiTidakAktifPaginator->total() > 0)
                         <p class="text-sm text-gray-700">
-                            Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($konsultasiTidakAktif) }}</span> dari <span class="font-medium">{{ count($konsultasiTidakAktif) }}</span> hasil
+                            Menampilkan <span class="font-medium">{{ $konsultasiTidakAktifPaginator->firstItem() }}</span> sampai <span class="font-medium">{{ $konsultasiTidakAktifPaginator->lastItem() }}</span> dari <span class="font-medium">{{ $konsultasiTidakAktifPaginator->total() }}</span> hasil
                         </p>
                     @else
                         <p class="text-sm text-gray-500 italic">
@@ -381,25 +387,9 @@
                         </p>
                     @endif
                 </div>
-                @if(count($konsultasiTidakAktif) > 0)
+                @if($konsultasiTidakAktifPaginator && $konsultasiTidakAktifPaginator->total() > 0)
                     <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Sebelumnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                                1
-                            </a>
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Selanjutnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        </nav>
+                        @include('layouts.partials.pagination-limit-5', ['paginator' => $konsultasiTidakAktifPaginator])
                     </div>
                 @endif
             </div>

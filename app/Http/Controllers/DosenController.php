@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class DosenController extends Controller
 {
@@ -52,34 +53,53 @@ class DosenController extends Controller
      */
     public function penilaianStore(Request $request, $id)
     {
+        \Log::info('Penilaian konsultasi request:', $request->all());
+        
         $validator = Validator::make($request->all(), [
             'nilai_komunikasi' => 'required|integer|min:1|max:100',
             'nilai_anamnesis' => 'required|integer|min:1|max:100',
             'nilai_diagnosa' => 'required|integer|min:1|max:100',
             'nilai_empati' => 'required|integer|min:1|max:100',
+            'catatan_dosen' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Validasi gagal:', $validator->errors()->toArray());
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $konsultasi = Konsultasi::findOrFail($id);
-        
-        // Simpan nilai-nilai aspek
-        $konsultasi->nilai_komunikasi = $request->nilai_komunikasi;
-        $konsultasi->nilai_anamnesis = $request->nilai_anamnesis;
-        $konsultasi->nilai_diagnosa = $request->nilai_diagnosa;
-        $konsultasi->nilai_empati = $request->nilai_empati;
-        
-        // Hitung nilai rata-rata
-        $nilai_dosen = round(($request->nilai_komunikasi + $request->nilai_anamnesis + 
-                             $request->nilai_diagnosa + $request->nilai_empati) / 4);
-        
-        $konsultasi->nilai_dosen = $nilai_dosen;
-        $konsultasi->dosen_id = Auth::user()->dosen->id;
-        $konsultasi->save();
+        try {
+            $konsultasi = Konsultasi::findOrFail($id);
+            
+            // Simpan nilai-nilai aspek
+            $konsultasi->nilai_komunikasi = $request->nilai_komunikasi;
+            $konsultasi->nilai_anamnesis = $request->nilai_anamnesis;
+            $konsultasi->nilai_diagnosa = $request->nilai_diagnosa;
+            $konsultasi->nilai_empati = $request->nilai_empati;
+            $konsultasi->catatan_dosen = $request->catatan_dosen;
+            
+            // Hitung nilai rata-rata
+            $nilai_dosen = round(($request->nilai_komunikasi + $request->nilai_anamnesis + 
+                                $request->nilai_diagnosa + $request->nilai_empati) / 4);
+            
+            $konsultasi->nilai_dosen = $nilai_dosen;
+            $konsultasi->dosen_id = Auth::user()->dosen->id;
+            $konsultasi->save();
+            
+            \Log::info('Penilaian berhasil disimpan:', [
+                'konsultasi_id' => $id,
+                'nilai_dosen' => $nilai_dosen
+            ]);
 
-        return redirect()->route('dosen.penilaian.index')->with('success', 'Penilaian berhasil disimpan');
+            return redirect()->route('dosen.penilaian.index')->with('success', 'Penilaian berhasil disimpan');
+        } catch (\Exception $e) {
+            \Log::error('Error saat menyimpan penilaian:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan penilaian. Silakan coba lagi.');
+        }
     }
 
     /**
@@ -199,20 +219,28 @@ class DosenController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $dosen = Auth::user()->dosen;
-        $dosen->nama = $request->nama;
-        $dosen->nip = $request->nip;
-        $dosen->email = $request->email;
-        $dosen->no_hp = $request->no_hp;
-        $dosen->alamat = $request->alamat;
-        $dosen->save();
+        DB::beginTransaction();
+        try {
+            $dosen = Auth::user()->dosen;
+            $dosen->nip = $request->nip;
+            $dosen->email = $request->email;
+            $dosen->no_hp = $request->no_hp;
+            $dosen->alamat = $request->alamat;
+            $dosen->save();
 
-        // Update email di tabel users juga
-        $user = Auth::user();
-        $user->email = $request->email;
-        $user->save();
+            // Update name dan email di tabel users
+            $user = Auth::user();
+            $user->name = $request->nama;
+            $user->email = $request->email;
+            $user->save();
+            
+            DB::commit();
 
-        return redirect()->back()->with('success', 'Informasi profil berhasil diperbarui');
+            return redirect()->back()->with('success', 'Informasi profil berhasil diperbarui');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
     /**

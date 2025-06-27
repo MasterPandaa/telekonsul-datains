@@ -219,104 +219,64 @@
     
     <!-- Pagination -->
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-        <div class="flex items-center justify-between">
-            <div class="flex-1 flex justify-between sm:hidden">
-                @if(count($dokters) > 0)
-                    <a href="{{ $dokters->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 {{ $dokters->onFirstPage() ? 'opacity-50 cursor-not-allowed' : '' }}">
-                        Sebelumnya
-                    </a>
-                    <a href="{{ $dokters->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 {{ !$dokters->hasMorePages() ? 'opacity-50 cursor-not-allowed' : '' }}">
-                        Selanjutnya
-                    </a>
-                @endif
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    @if(count($dokters) > 0)
-                        <p class="text-sm text-gray-700">
-                            Menampilkan <span class="font-medium">{{ $dokters->firstItem() }}</span> sampai <span class="font-medium">{{ $dokters->lastItem() }}</span> dari <span class="font-medium">{{ $dokters->total() }}</span> hasil
-                        </p>
-                    @else
-                        <p class="text-sm text-gray-500 italic">
-                            Belum ada data dokter saat ini
-                        </p>
-                    @endif
-                </div>
-                @if(count($dokters) > 0)
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <a href="{{ $dokters->previousPageUrl() }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 {{ $dokters->onFirstPage() ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                <span class="sr-only">Sebelumnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                            
-                            <!-- Contoh sederhana untuk menampilkan halaman saat ini saja -->
-                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                                {{ $dokters->currentPage() }}
-                            </a>
-                            
-                            <a href="{{ $dokters->nextPageUrl() }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 {{ !$dokters->hasMorePages() ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                <span class="sr-only">Selanjutnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        </nav>
+        {{ $dokters->appends(['search' => $searchTerm ?? '', 'sort_by' => $sortBy, 'sort_order' => $sortOrder])->links('vendor.pagination.tailwind-indonesia') }}
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus -->
+<div id="modal-konfirmasi-hapus" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
                     </div>
-                @endif
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Konfirmasi Hapus
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="modal-description">
+                                Apakah Anda yakin ingin menghapus data dokter ini? Tindakan ini tidak dapat dibatalkan.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="btn-hapus" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Hapus
+                </button>
+                <button type="button" id="btn-batal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Batal
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-@push('scripts')
 <script>
     function konfirmasiHapus(id, nama) {
-        Swal.fire({
-            title: 'Konfirmasi Hapus Data',
-            html: `Apakah Anda yakin ingin menghapus data dokter <strong>${nama}</strong>?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Ya, Hapus Data',
-            cancelButtonText: 'Batal',
-            reverseButtons: true,
-            focusCancel: true,
-            iconColor: '#ef4444',
-            background: '#ffffff',
-            padding: '1rem',
-            customClass: {
-                confirmButton: 'px-4 py-2 rounded text-white text-sm font-medium',
-                cancelButton: 'px-4 py-2 rounded text-white text-sm font-medium',
-                title: 'text-xl text-gray-800 font-bold',
-                popup: 'rounded-xl shadow-md'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById(`form-hapus-${id}`).submit();
-            }
-        });
+        document.getElementById('modal-title').textContent = 'Konfirmasi Hapus';
+        document.getElementById('modal-description').textContent = `Apakah Anda yakin ingin menghapus data dokter ${nama}? Tindakan ini tidak dapat dibatalkan.`;
+        
+        const modal = document.getElementById('modal-konfirmasi-hapus');
+        modal.classList.remove('hidden');
+        
+        document.getElementById('btn-hapus').onclick = function() {
+            document.getElementById(`form-hapus-${id}`).submit();
+        };
+        
+        document.getElementById('btn-batal').onclick = function() {
+            modal.classList.add('hidden');
+        };
     }
-    
-    // Sweet alert untuk notifikasi sukses
-    @if(session('success'))
-    Swal.fire({
-        title: 'Berhasil!',
-        text: "{{ session('success') }}",
-        icon: 'success',
-        iconColor: '#10b981',
-        showConfirmButton: false,
-        timer: 3000,
-        background: '#ffffff',
-        customClass: {
-            popup: 'rounded-xl shadow-md',
-            title: 'text-green-600'
-        }
-    });
-    @endif
 </script>
-@endpush
 @endsection 

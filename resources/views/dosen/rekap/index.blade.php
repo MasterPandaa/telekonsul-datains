@@ -55,6 +55,30 @@
     </div>
 </div>
 
+<!-- Filter dan Search -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+        <h2 class="text-lg font-medium text-gray-800">Filter Data Dokter</h2>
+        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="Cari nama dokter..." class="w-full md:w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <div class="absolute right-3 top-2.5">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <select id="filter-nilai" class="w-full md:w-auto px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Semua Nilai</option>
+                <option value="high">Nilai Tinggi (>80)</option>
+                <option value="medium">Nilai Sedang (50-80)</option>
+                <option value="low">Nilai Rendah (<50)</option>
+                <option value="no">Belum Dinilai</option>
+            </select>
+        </div>
+    </div>
+</div>
+
 <!-- Tabel Rekap Dokter -->
 <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
     <div class="p-6 border-b border-gray-200">
@@ -73,13 +97,13 @@
                         <th class="px-6 py-3 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200" id="dokter-table-body">
                     @php
-                        $dokters = \App\Models\Dokter::all();
-                        $no = 1;
+                        $dokters = \App\Models\Dokter::paginate(10);
+                        $no = ($dokters->currentPage() - 1) * $dokters->perPage() + 1;
                     @endphp
                     
-                    @foreach($dokters as $dokter)
+                    @forelse($dokters as $dokter)
                     @php
                         $totalKonsultasi = \App\Models\Konsultasi::where('dokter_id', $dokter->user_id)
                             ->where('status', 'Selesai')
@@ -95,15 +119,17 @@
                             ->whereNotNull('nilai_dosen')
                             ->avg('nilai_dosen');
                     @endphp
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 dokter-row" 
+                        data-nama="{{ $dokter->nama ?? 'Tidak ada nama' }}" 
+                        data-nilai="{{ $rataRata ?? 0 }}">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $no++ }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($dokter->nama) }}&background=4F46E5&color=fff" alt="{{ $dokter->nama }}">
+                                    <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($dokter->nama ?? 'Tidak ada nama') }}&background=4F46E5&color=fff" alt="{{ $dokter->nama ?? 'Tidak ada nama' }}">
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $dokter->nama }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $dokter->nama ?? 'Tidak ada nama' }}</div>
                                 </div>
                             </div>
                         </td>
@@ -120,35 +146,65 @@
                             <a href="{{ route('dosen.rekap.dokter', $dokter->id) }}" class="text-blue-600 hover:text-blue-900">Detail</a>
                         </td>
                     </tr>
-                    @endforeach
-                    
-                    @if($dokters->isEmpty())
+                    @empty
                     <tr>
                         <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                             Tidak ada data dokter
                         </td>
                     </tr>
-                    @endif
+                    @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
-</div>
-
-<!-- Grafik Rata-rata Nilai -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <div class="p-6 border-b border-gray-200">
-        <h2 class="text-lg font-semibold text-gray-800">Grafik Rata-rata Nilai</h2>
-    </div>
-    <div class="p-6">
-        <div class="h-80">
-            <canvas id="nilaiChart"></canvas>
+        
+        <!-- Pagination -->
+        <div class="mt-4">
+            <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        @if ($dokters->onFirstPage())
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                                Sebelumnya
+                            </span>
+                        @else
+                            <a href="{{ $dokters->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Sebelumnya
+                            </a>
+                        @endif
+                        
+                        @if ($dokters->hasMorePages())
+                            <a href="{{ $dokters->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Selanjutnya
+                            </a>
+                        @else
+                            <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                                Selanjutnya
+                            </span>
+                        @endif
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Menampilkan
+                                <span class="font-medium">{{ $dokters->firstItem() ?? 0 }}</span>
+                                sampai
+                                <span class="font-medium">{{ $dokters->lastItem() ?? 0 }}</span>
+                                dari
+                                <span class="font-medium">{{ $dokters->total() }}</span>
+                                hasil
+                            </p>
+                        </div>
+                        <div>
+                            @include('layouts.partials.pagination-limit-5', ['paginator' => $dokters])
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Show SweetAlert notifications for session messages
@@ -176,41 +232,63 @@
         });
         @endif
         
-        // Chart initialization
-        const ctx = document.getElementById('nilaiChart').getContext('2d');
+        // Filter functionality
+        const searchInput = document.getElementById('search-input');
+        const filterNilai = document.getElementById('filter-nilai');
+        const dokterRows = document.querySelectorAll('#dokter-table-body .dokter-row');
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = '<td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada data yang sesuai dengan filter</td>';
+        emptyRow.id = 'empty-filter-row';
+        emptyRow.style.display = 'none';
         
-        // Data untuk grafik
-        const dokters = @json($dokters->pluck('nama'));
-        const rataRataNilai = @json($dokters->map(function($dokter) {
-            return \App\Models\Konsultasi::where('dokter_id', $dokter->user_id)
-                ->where('status', 'Selesai')
-                ->whereNotNull('nilai_dosen')
-                ->avg('nilai_dosen') ?? 0;
-        }));
+        if (dokterRows.length > 0) {
+            dokterRows[0].parentNode.appendChild(emptyRow);
+        }
         
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: dokters,
-                datasets: [{
-                    label: 'Rata-rata Nilai',
-                    data: rataRataNilai,
-                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
+        // Add event listeners
+        searchInput.addEventListener('input', filterDokters);
+        filterNilai.addEventListener('change', filterDokters);
+        
+        function filterDokters() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const nilaiFilter = filterNilai.value;
+            let visibleCount = 0;
+            
+            dokterRows.forEach(row => {
+                const namaDokter = row.getAttribute('data-nama').toLowerCase();
+                const nilaiDokter = parseFloat(row.getAttribute('data-nilai')) || 0;
+                
+                const matchesSearch = namaDokter.includes(searchTerm);
+                let matchesNilai = true;
+                
+                if (nilaiFilter === 'high') {
+                    matchesNilai = nilaiDokter > 80;
+                } else if (nilaiFilter === 'medium') {
+                    matchesNilai = nilaiDokter >= 50 && nilaiDokter <= 80;
+                } else if (nilaiFilter === 'low') {
+                    matchesNilai = nilaiDokter > 0 && nilaiDokter < 50;
+                } else if (nilaiFilter === 'no') {
+                    matchesNilai = nilaiDokter === 0;
+                }
+                
+                if (matchesSearch && matchesNilai) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show/hide empty message
+            const emptyFilterRow = document.getElementById('empty-filter-row');
+            if (emptyFilterRow) {
+                if (visibleCount === 0) {
+                    emptyFilterRow.style.display = '';
+                } else {
+                    emptyFilterRow.style.display = 'none';
                 }
             }
-        });
+        }
     });
 </script>
 @endpush

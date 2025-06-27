@@ -10,7 +10,7 @@ class Dokter extends Model
     protected $table = 'dokters';
     
     protected $fillable = [
-        'nama', 'no_sip', 'no_str', 'email', 'alamat', 'no_hp', 'jenis_kelamin', 
+        'no_sip', 'no_str', 'email', 'alamat', 'no_hp', 'jenis_kelamin', 
         'tempat_lahir', 'tanggal_lahir', 'foto', 'spesialisasi', 
         'sub_spesialisasi', 'universitas', 'tahun_lulus', 'tempat_praktik',
         'status', 'pengalaman', 'user_id', 'rumah_sakit'
@@ -32,5 +32,11 @@ class Dokter extends Model
             return asset($this->foto);
         }
         return asset('img/dokter/default.jpg');
+    }
+    
+    // Accessor untuk mendapatkan nama dari user
+    public function getNamaAttribute()
+    {
+        return $this->user ? $this->user->name : null;
     }
 } 

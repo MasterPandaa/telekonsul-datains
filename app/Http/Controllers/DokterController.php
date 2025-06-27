@@ -1,20 +1,24 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Dokter;
+use App\Models\User;
 use App\Services\LogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DokterController extends Controller
 {
     public function index(Request $request) {
-        $query = Dokter::query();
+        $query = Dokter::query()->with('user');
         
         // Filter pencarian
         if ($request->has('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('nama', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('no_sip', 'LIKE', "%{$searchTerm}%")
+            $query->whereHas('user', function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%");
+            })->orWhere(function($q) use ($searchTerm) {
+                $q->where('no_sip', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('no_str', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('email', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('alamat', 'LIKE', "%{$searchTerm}%")
@@ -24,9 +28,16 @@ class DokterController extends Controller
         }
         
         // Urutkan data
-        $sortBy = $request->sort_by ?? 'nama';
+        $sortBy = $request->sort_by ?? 'id';
         $sortOrder = $request->sort_order ?? 'asc';
-        $query->orderBy($sortBy, $sortOrder);
+        
+        if ($sortBy === 'nama') {
+            $query->join('users', 'dokters.user_id', '=', 'users.id')
+                  ->orderBy('users.name', $sortOrder)
+                  ->select('dokters.*');
+        } else {
+            $query->orderBy($sortBy, $sortOrder);
+        }
         
         // Pagination
         $dokters = $query->paginate(10)->withQueryString();
@@ -51,7 +62,7 @@ class DokterController extends Controller
             'nama' => 'required|string|max:255',
             'no_sip' => 'required|string|max:50|unique:dokters',
             'no_str' => 'required|string|max:50|unique:dokters',
-            'email' => 'required|email|max:255|unique:dokters',
+            'email' => 'required|email|max:255|unique:dokters|unique:users',
             'alamat' => 'nullable|string|max:255',
             'no_hp' => 'nullable|string|max:15',
             'spesialisasi' => 'nullable|string|max:100',
@@ -68,19 +79,43 @@ class DokterController extends Controller
             'email.unique' => 'Email sudah terdaftar',
         ]);
         
-        $dokter = Dokter::create($validatedData);
-        
-        // Catat aktivitas
+        // Buat user terlebih dahulu
+        DB::beginTransaction();
         try {
-            LogService::logActivity('create', 'Dokter', $dokter);
+            $user = User::create([
+                'name' => $validatedData['nama'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make('dokter123'), // Default password
+                'role' => 'dokter'
+            ]);
+            
+            // Buat dokter dengan relasi ke user
+            $dokterData = collect($validatedData)->except(['nama'])->toArray();
+            $dokterData['user_id'] = $user->id;
+            
+            $dokter = Dokter::create($dokterData);
+            
+            DB::commit();
+            
+            // Catat aktivitas
+            try {
+                LogService::logActivity('create', 'Dokter', $dokter);
+            } catch (\Exception $e) {
+                // Log error jika terjadi masalah
+                \Log::error('Gagal mencatat aktivitas: ' . $e->getMessage());
+            }
+            
+            return redirect()
+                ->route('admin.dokter.index')
+                ->with('success', 'Data dokter berhasil ditambahkan');
+                
         } catch (\Exception $e) {
-            // Log error jika terjadi masalah
-            \Log::error('Gagal mencatat aktivitas: ' . $e->getMessage());
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-        
-        return redirect()
-            ->route('admin.dokter.index')
-            ->with('success', 'Data dokter berhasil ditambahkan');
     }
     
     public function show(Dokter $dokter) {
@@ -120,40 +155,79 @@ class DokterController extends Controller
         ]);
         
         $oldData = $dokter->toArray();
-        $dokter->update($validatedData);
         
-        // Catat aktivitas
+        DB::beginTransaction();
         try {
-            LogService::logActivity('update', 'Dokter', [
-                'old' => $oldData,
-                'new' => $dokter->toArray()
-            ]);
+            // Update user name
+            if ($dokter->user) {
+                $dokter->user->update([
+                    'name' => $validatedData['nama'],
+                    'email' => $validatedData['email']
+                ]);
+            }
+            
+            // Update dokter data
+            $dokterData = collect($validatedData)->except(['nama'])->toArray();
+            $dokter->update($dokterData);
+            
+            DB::commit();
+            
+            // Catat aktivitas
+            try {
+                LogService::logActivity('update', 'Dokter', [
+                    'old' => $oldData,
+                    'new' => $dokter->toArray()
+                ]);
+            } catch (\Exception $e) {
+                // Log error jika terjadi masalah
+                \Log::error('Gagal mencatat aktivitas: ' . $e->getMessage());
+            }
+            
+            return redirect()
+                ->route('admin.dokter.index')
+                ->with('success', 'Data dokter berhasil diperbarui');
+                
         } catch (\Exception $e) {
-            // Log error jika terjadi masalah
-            \Log::error('Gagal mencatat aktivitas: ' . $e->getMessage());
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-        
-        return redirect()
-            ->route('admin.dokter.index')
-            ->with('success', 'Data dokter berhasil diperbarui');
     }
 
     public function destroy(Dokter $dokter) {
         $dokterData = $dokter->toArray();
         
-        // Hapus data
-        $dokter->delete();
-        
-        // Catat aktivitas
+        DB::beginTransaction();
         try {
-            LogService::logActivity('delete', 'Dokter', $dokterData);
+            // Hapus user jika ada
+            if ($dokter->user) {
+                $dokter->user->delete();
+            }
+            
+            // Hapus data dokter
+            $dokter->delete();
+            
+            DB::commit();
+            
+            // Catat aktivitas
+            try {
+                LogService::logActivity('delete', 'Dokter', $dokterData);
+            } catch (\Exception $e) {
+                // Log error jika terjadi masalah
+                \Log::error('Gagal mencatat aktivitas: ' . $e->getMessage());
+            }
+            
+            return redirect()
+                ->route('admin.dokter.index')
+                ->with('success', 'Data dokter berhasil dihapus');
+                
         } catch (\Exception $e) {
-            // Log error jika terjadi masalah
-            \Log::error('Gagal mencatat aktivitas: ' . $e->getMessage());
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-        
-        return redirect()
-            ->route('admin.dokter.index')
-            ->with('success', 'Data dokter berhasil dihapus');
     }
 } 

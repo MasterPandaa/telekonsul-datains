@@ -191,7 +191,7 @@
                 @forelse($konsultasisBelumDinilai as $konsultasi)
                 <tr class="hover:bg-gray-50 transition konsultasi-row" 
                     data-dokter="{{ $konsultasi->dokter->name }}"
-                    data-pasien="{{ $konsultasi->pasien->nama }}"
+                    data-pasien="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}"
                     data-dokter-id="{{ $konsultasi->dokter_id }}"
                     data-tanggal="{{ $konsultasi->tanggal->format('Y-m-d') }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $konsultasi->id }}</td>
@@ -208,10 +208,10 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->pasien->nama) }}&background=4F46E5&color=fff" alt="{{ $konsultasi->pasien->nama }}">
+                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->pasien->nama ?? 'Tidak ada nama') }}&background=4F46E5&color=fff" alt="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}">
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">{{ $konsultasi->pasien->nama }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}</div>
                             </div>
                         </div>
                     </td>
@@ -243,7 +243,7 @@
                 @empty
                 <tr id="belum-dinilai-empty-row">
                     <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                        Tidak ada konsultasi yang belum dinilai
+                        Belum ada riwayat konsultasi selesai
                     </td>
                 </tr>
                 @endforelse
@@ -254,7 +254,43 @@
     <!-- Pagination untuk Belum Dinilai -->
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div class="flex justify-between items-center">
-            {{ $konsultasisBelumDinilai->appends(['sudah_page' => request('sudah_page')])->withQueryString()->links('vendor.pagination.tailwind') }}
+            <div class="flex-1 flex justify-between sm:hidden">
+                @if ($konsultasisBelumDinilai->onFirstPage())
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                        Sebelumnya
+                    </span>
+                @else
+                    <a href="{{ $konsultasisBelumDinilai->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </a>
+                @endif
+                
+                @if ($konsultasisBelumDinilai->hasMorePages())
+                    <a href="{{ $konsultasisBelumDinilai->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </a>
+                @else
+                    <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                        Selanjutnya
+                    </span>
+                @endif
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Menampilkan
+                        <span class="font-medium">{{ $konsultasisBelumDinilai->firstItem() ?? 0 }}</span>
+                        sampai
+                        <span class="font-medium">{{ $konsultasisBelumDinilai->lastItem() ?? 0 }}</span>
+                        dari
+                        <span class="font-medium">{{ $konsultasisBelumDinilai->total() }}</span>
+                        hasil
+                    </p>
+                </div>
+                <div>
+                    @include('layouts.partials.pagination-limit-5', ['paginator' => $konsultasisBelumDinilai->appends(['sudah_page' => request('sudah_page')])->withQueryString()])
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -306,7 +342,7 @@
                 @forelse($konsultasisSudahDinilai as $konsultasi)
                 <tr class="hover:bg-gray-50 transition konsultasi-row" 
                     data-dokter="{{ $konsultasi->dokter->name }}"
-                    data-pasien="{{ $konsultasi->pasien->nama }}"
+                    data-pasien="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}"
                     data-dokter-id="{{ $konsultasi->dokter_id }}"
                     data-tanggal="{{ $konsultasi->tanggal->format('Y-m-d') }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $konsultasi->id }}</td>
@@ -323,10 +359,10 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->pasien->nama) }}&background=4F46E5&color=fff" alt="{{ $konsultasi->pasien->nama }}">
+                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->pasien->nama ?? 'Tidak ada nama') }}&background=4F46E5&color=fff" alt="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}">
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">{{ $konsultasi->pasien->nama }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}</div>
                             </div>
                         </div>
                     </td>
@@ -349,7 +385,7 @@
                 @empty
                 <tr id="sudah-dinilai-empty-row">
                     <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                        Tidak ada konsultasi yang sudah dinilai
+                        Belum ada riwayat konsultasi selesai
                     </td>
                 </tr>
                 @endforelse
@@ -360,7 +396,43 @@
     <!-- Pagination untuk Sudah Dinilai -->
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div class="flex justify-between items-center">
-            {{ $konsultasisSudahDinilai->appends(['belum_page' => request('belum_page')])->withQueryString()->links('vendor.pagination.tailwind') }}
+            <div class="flex-1 flex justify-between sm:hidden">
+                @if ($konsultasisSudahDinilai->onFirstPage())
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                        Sebelumnya
+                    </span>
+                @else
+                    <a href="{{ $konsultasisSudahDinilai->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </a>
+                @endif
+                
+                @if ($konsultasisSudahDinilai->hasMorePages())
+                    <a href="{{ $konsultasisSudahDinilai->nextPageUrl() }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </a>
+                @else
+                    <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                        Selanjutnya
+                    </span>
+                @endif
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Menampilkan
+                        <span class="font-medium">{{ $konsultasisSudahDinilai->firstItem() ?? 0 }}</span>
+                        sampai
+                        <span class="font-medium">{{ $konsultasisSudahDinilai->lastItem() ?? 0 }}</span>
+                        dari
+                        <span class="font-medium">{{ $konsultasisSudahDinilai->total() }}</span>
+                        hasil
+                    </p>
+                </div>
+                <div>
+                    @include('layouts.partials.pagination-limit-5', ['paginator' => $konsultasisSudahDinilai->appends(['belum_page' => request('belum_page')])->withQueryString()])
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -382,7 +454,7 @@
                 </div>
             </div>
             
-                         <form id="penilaianForm" method="POST" class="p-6" onsubmit="prepareFormSubmission()">
+            <form id="penilaianForm" method="POST" class="p-6" onsubmit="return prepareFormSubmission()">
                 @csrf
                 <div class="space-y-6">
                     <!-- Hidden fields to store actual values -->
@@ -675,10 +747,56 @@
     
     // Prepare form submission - transfer values from display inputs to hidden inputs
     function prepareFormSubmission() {
-        document.getElementById('nilai_komunikasi_hidden').value = document.getElementById('nilai_komunikasi_display').value;
-        document.getElementById('nilai_anamnesis_hidden').value = document.getElementById('nilai_anamnesis_display').value;
-        document.getElementById('nilai_diagnosa_hidden').value = document.getElementById('nilai_diagnosa_display').value;
-        document.getElementById('nilai_empati_hidden').value = document.getElementById('nilai_empati_display').value;
+        // Get values from display inputs
+        const komunikasi = document.getElementById('nilai_komunikasi_display').value;
+        const anamnesis = document.getElementById('nilai_anamnesis_display').value;
+        const diagnosa = document.getElementById('nilai_diagnosa_display').value;
+        const empati = document.getElementById('nilai_empati_display').value;
+        
+        // Validate values
+        if (!komunikasi || !anamnesis || !diagnosa || !empati) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'Semua nilai harus diisi',
+                icon: 'error',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return false;
+        }
+        
+        // Validate range
+        if (komunikasi < 1 || komunikasi > 100 || 
+            anamnesis < 1 || anamnesis > 100 || 
+            diagnosa < 1 || diagnosa > 100 || 
+            empati < 1 || empati > 100) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'Nilai harus antara 1-100',
+                icon: 'error',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return false;
+        }
+        
+        // Set values to hidden inputs
+        document.getElementById('nilai_komunikasi_hidden').value = komunikasi;
+        document.getElementById('nilai_anamnesis_hidden').value = anamnesis;
+        document.getElementById('nilai_diagnosa_hidden').value = diagnosa;
+        document.getElementById('nilai_empati_hidden').value = empati;
+        
+        console.log('Form values:', {
+            komunikasi,
+            anamnesis,
+            diagnosa,
+            empati
+        });
+        
         return true;
     }
     
@@ -688,7 +806,7 @@
     function openNilaiModal(konsultasiId) {
         currentKonsultasiId = konsultasiId;
         document.getElementById('nilaiModal').classList.remove('hidden');
-        document.getElementById('penilaianForm').action = `/dosen/penilaian/${konsultasiId}/store`;
+        document.getElementById('penilaianForm').action = "{{ route('dosen.penilaian.store', ['id' => '__ID__']) }}".replace('__ID__', konsultasiId);
         
         // Reset form
         document.getElementById('nilai_komunikasi').value = 75;

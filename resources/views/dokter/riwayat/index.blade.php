@@ -53,7 +53,7 @@
                 <input type="text" id="search-input" placeholder="Cari pasien..." class="w-full md:w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <div class="absolute right-3 top-2.5">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0118 0z"></path>
                     </svg>
                 </div>
             </div>
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </svg>
             Riwayat Konsultasi
         </h2>
-        <p class="text-sm text-gray-500">Konsultasi dengan status Selesai</p>
+        <p class="text-sm text-gray-500">Daftar konsultasi yang telah selesai, dibatalkan, atau ditolak</p>
     </div>
     
     <div class="overflow-x-auto">
@@ -216,6 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         Keluhan
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Nilai
                     </th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -227,8 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @if(count($riwayatKonsultasiSelesai) > 0)
-                    @foreach($riwayatKonsultasiSelesai as $item)
+                @if(count($konsultasiSelesai) > 0)
+                    @php $count = 0; @endphp
+                    @foreach($konsultasiSelesai as $item)
+                    @php if($count >= 10) break; $count++; @endphp
                     <tr class="hover:bg-gray-50 transition" data-pasien-id="{{ $item['pasien_id'] }}">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -249,6 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="text-sm text-gray-900 line-clamp-2">{{ $item['keluhan'] }}</div>
                         </td>
                         <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900 line-clamp-2">{{ $item['status'] }}</div>
+                        </td>
+                        <td class="px-6 py-4">
                             <div class="text-sm text-gray-900 line-clamp-2">{{ $item['nilai'] ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4">
@@ -261,9 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     @endfor
                                     <span class="ml-1 text-sm text-gray-600">({{ $item['rating'] }}/5)</span>
                                 </div>
-                                @if(isset($item['komentar_rating']) && $item['komentar_rating'])
-                                    <div class="mt-1 text-xs text-gray-500 italic line-clamp-2">{{ $item['komentar_rating'] }}</div>
-                                @endif
                             @else
                                 <span class="text-gray-500">-</span>
                             @endif
@@ -298,50 +303,22 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Pagination -->
     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div class="flex items-center justify-between">
-            <div class="flex-1 flex justify-between sm:hidden">
-                @if(count($riwayatKonsultasiSelesai) > 0)
-                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Sebelumnya
-                    </a>
-                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Selanjutnya
-                    </a>
+            <div>
+                @if(count($konsultasiSelesai) > 0)
+                    <p class="text-sm text-gray-700">
+                        Menampilkan <span class="font-medium">{{ $konsultasiPaginator->firstItem() }}</span> sampai <span class="font-medium">{{ $konsultasiPaginator->lastItem() }}</span> dari <span class="font-medium">{{ $konsultasiPaginator->total() }}</span> hasil
+                    </p>
+                @else
+                    <p class="text-sm text-gray-500 italic">
+                        Belum ada riwayat konsultasi selesai
+                    </p>
                 @endif
             </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            @if(count($konsultasiSelesai) > 0)
                 <div>
-                    @if(count($riwayatKonsultasiSelesai) > 0)
-                        <p class="text-sm text-gray-700">
-                            Menampilkan <span class="font-medium">1</span> sampai <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> dari <span class="font-medium">{{ count($riwayatKonsultasiSelesai) }}</span> hasil
-                        </p>
-                    @else
-                        <p class="text-sm text-gray-500 italic">
-                            Belum ada riwayat konsultasi selesai
-                        </p>
-                    @endif
+                    @include('layouts.partials.pagination-limit-5', ['paginator' => $konsultasiPaginator])
                 </div>
-                @if(count($riwayatKonsultasiSelesai) > 0)
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Sebelumnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                            <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                                1
-                            </a>
-                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Selanjutnya</span>
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        </nav>
-                    </div>
-                @endif
-            </div>
+            @endif
         </div>
     </div>
 </div>

@@ -146,7 +146,7 @@
                     </div>
                 </div>
                 @elseif($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
-                <div class="bg-blue-500/20 border-l-4 border-blue-400 px-4 py-2 mb-3 rounded-r-lg animate__animated animate__fadeIn">
+                <div class="bg-blue-500/20 border-l-4 border-blue-400 px-4 py-2 mb-3 rounded-r-lg animate__animated animate__fadeIn hidden" id="konsultasi-selesai-info">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 text-blue-300 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
@@ -471,6 +471,118 @@
                         </div>
                     </div>
                     @endif
+
+                    @if(Auth::user()->role === 'dokter' && $konsultasi->status === 'Selesai')
+                    <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <div class="text-xs font-semibold text-indigo-600">Aspek Penilaian</div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2 md:col-span-1">
+                                    <div class="mb-3">
+                                        <div class="flex items-center mb-1">
+                                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                            </svg>
+                                            <div class="text-xs font-semibold text-indigo-600">Komunikasi:</div>
+                                        </div>
+                                        <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                            {{ $konsultasi->nilai_komunikasi ?? '-' }} / 100
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-2 md:col-span-1">
+                                    <div class="mb-3">
+                                        <div class="flex items-center mb-1">
+                                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                                            </svg>
+                                            <div class="text-xs font-semibold text-indigo-600">Anamnesis:</div>
+                                        </div>
+                                        <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                            {{ $konsultasi->nilai_anamnesis ?? '-' }} / 100
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-2 md:col-span-1">
+                                    <div class="mb-3">
+                                        <div class="flex items-center mb-1">
+                                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                            </svg>
+                                            <div class="text-xs font-semibold text-indigo-600">Diagnosa:</div>
+                                        </div>
+                                        <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                            {{ $konsultasi->nilai_diagnosa ?? '-' }} / 100
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-2 md:col-span-1">
+                                    <div class="mb-3">
+                                        <div class="flex items-center mb-1">
+                                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                            </svg>
+                                            <div class="text-xs font-semibold text-indigo-600">Empati:</div>
+                                        </div>
+                                        <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                            {{ $konsultasi->nilai_empati ?? '-' }} / 100
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-2">
+                                    <div class="mb-3">
+                                        <div class="flex items-center mb-1">
+                                            <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                            </svg>
+                                            <div class="text-xs font-semibold text-indigo-600">Nilai Rata-Rata:</div>
+                                        </div>
+                                        <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm font-semibold">
+                                            @php
+                                                $nilai_rata = 0;
+                                                $count = 0;
+                                                
+                                                if($konsultasi->nilai_komunikasi !== null) {
+                                                    $nilai_rata += $konsultasi->nilai_komunikasi;
+                                                    $count++;
+                                                }
+                                                
+                                                if($konsultasi->nilai_anamnesis !== null) {
+                                                    $nilai_rata += $konsultasi->nilai_anamnesis;
+                                                    $count++;
+                                                }
+                                                
+                                                if($konsultasi->nilai_diagnosa !== null) {
+                                                    $nilai_rata += $konsultasi->nilai_diagnosa;
+                                                    $count++;
+                                                }
+                                                
+                                                if($konsultasi->nilai_empati !== null) {
+                                                    $nilai_rata += $konsultasi->nilai_empati;
+                                                    $count++;
+                                                }
+                                                
+                                                $nilai_rata = $count > 0 ? round($nilai_rata / $count, 1) : 0;
+                                            @endphp
+                                            {{ $nilai_rata }} / 100
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    
                 </div>
 
                 <div class="w-full flex flex-col flex-1 overflow-hidden">
@@ -534,6 +646,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('message-input');
     const timeRemaining = document.getElementById('time-remaining');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Menampilkan pesan konsultasi selesai hanya sekali
+    const konsultasiSelesaiInfo = document.getElementById('konsultasi-selesai-info');
+    if (konsultasiSelesaiInfo) {
+        const konsultasiId = {{ $konsultasi->id }};
+        const infoShownKey = `konsultasi_selesai_info_shown_${konsultasiId}`;
+        
+        // Periksa apakah pesan sudah pernah ditampilkan
+        if (!localStorage.getItem(infoShownKey)) {
+            konsultasiSelesaiInfo.classList.remove('hidden');
+            
+            // Tandai bahwa pesan sudah ditampilkan
+            localStorage.setItem(infoShownKey, 'true');
+            
+            // Sembunyikan setelah 5 detik
+            setTimeout(() => {
+                konsultasiSelesaiInfo.classList.add('animate__fadeOut');
+                setTimeout(() => {
+                    konsultasiSelesaiInfo.classList.add('hidden');
+                }, 1000);
+            }, 5000);
+        }
+    }
     
     // Debug info
     console.log('Chat room initialized');

@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
             PasienSeeder::class,
             KonsultasiSeeder::class,
             DosenSeeder::class,
+            DummyDataSeeder::class,
         ]);
     }
 }

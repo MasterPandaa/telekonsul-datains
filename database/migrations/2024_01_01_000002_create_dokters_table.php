@@ -7,7 +7,7 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('dokters', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('no_sip')->unique();
             $table->string('no_str')->unique();
             $table->string('email')->unique();
@@ -25,7 +25,6 @@ return new class extends Migration {
             $table->string('rumah_sakit')->nullable();
             $table->enum('status', ['Aktif', 'Tidak Aktif', 'Cuti'])->default('Aktif');
             $table->text('pengalaman')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }
