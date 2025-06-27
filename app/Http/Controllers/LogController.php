@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\File;
 class LogController extends Controller
 {
     public function databaseLog() {
-        $logs = DatabaseLog::with('user')->latest()->paginate(30);
+        $logs = DatabaseLog::with('user')->latest()->paginate(10);
         return view('admin.log.database', compact('logs'));
     }
     public function systemLog() {

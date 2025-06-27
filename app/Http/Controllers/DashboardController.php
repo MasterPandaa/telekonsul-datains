@@ -33,10 +33,7 @@ class DashboardController extends Controller
             case 'pasien':
                 return redirect()->route('pasien.dashboard');
             case 'dosen':
-                return view('dosen.dashboard', [
-                    'user' => $user,
-                    'title' => 'Dashboard Dosen'
-                ]);
+                return redirect()->route('dosen.dashboard');
             default:
                 abort(403);
         }

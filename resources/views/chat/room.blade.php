@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telekonsultasi - {{ Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name }}</title>
+    <title>Telekonsultasi - {{ isset($isDosenView) ? 'Supervisi Dosen' : (Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name) }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
@@ -134,7 +134,18 @@
                 </div>
                 @endif
                 
-                @if($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
+                @if(isset($isDosenView))
+                <div class="bg-indigo-500/20 border-l-4 border-indigo-400 px-4 py-2 mb-3 rounded-r-lg animate__animated animate__fadeIn">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-indigo-300 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        <p class="ml-3 text-sm text-white">
+                            Anda melihat riwayat percakapan sebagai dosen supervisor. Anda hanya dapat melihat riwayat pesan.
+                        </p>
+                    </div>
+                </div>
+                @elseif($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
                 <div class="bg-blue-500/20 border-l-4 border-blue-400 px-4 py-2 mb-3 rounded-r-lg animate__animated animate__fadeIn">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 text-blue-300 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -150,10 +161,23 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold">
-                            {{ strtoupper(substr(Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name, 0, 1)) }}
+                            @if(isset($isDosenView))
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            @else
+                                {{ strtoupper(substr(Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name, 0, 1)) }}
+                            @endif
                         </div>
                     <div>
-                            <h2 class="text-xl font-semibold">Konsultasi dengan {{ Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name }}</h2>
+                            <h2 class="text-xl font-semibold">
+                                @if(isset($isDosenView))
+                                    Supervisi: {{ $konsultasi->dokter->name }} dengan {{ $konsultasi->pasien->nama }}
+                                @else
+                                    Konsultasi dengan {{ Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name }}
+                                @endif
+                            </h2>
                             <div class="flex items-center text-sm text-blue-100">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -175,7 +199,14 @@
                             Sisa waktu: <span id="time-remaining" class="ml-1 font-bold">--:--</span>
                         </div>
                         <div class="flex justify-end">
-                            @if($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
+                            @if(isset($isDosenView))
+                                <a href="{{ route('dosen.penilaian.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                    </svg>
+                                    Kembali ke Penilaian
+                                </a>
+                            @elseif($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
                                 <a href="{{ Auth::user()->role === 'dokter' ? route('dokter.konsultasi.index') : route('pasien.konsultasi.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm">
                                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -400,7 +431,7 @@
                     </div>
                     @endif
                     
-                    @if(Auth::user()->role === 'pasien' && $konsultasi->diagnosa)
+                    @if(Auth::user()->role === 'pasien' && $konsultasi->diagnosa || Auth::user()->role === 'dosen' && $konsultasi->diagnosa)
                     <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
                         <div class="flex items-center mb-2">
                             <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DosenController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\Admin\LogController;
@@ -17,6 +16,8 @@ use App\Http\Controllers\API\KonsultasiController;
 use App\Http\Controllers\PasienPasswordController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DokterPasswordController;
+use App\Http\Controllers\DosenController;
+use App\Http\Controllers\DosenPasswordController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -39,7 +40,6 @@ Route::middleware('auth')->group(function () {
     // Admin menu
     Route::prefix('admin')->name('admin.')->middleware('can:isAdmin')->group(function () {
         Route::resource('dokter', DokterController::class);
-        Route::resource('dosen', DosenController::class);
         Route::resource('pasien', PasienController::class);
         
         // Log routes
@@ -90,20 +90,29 @@ Route::middleware(['auth', 'can:isDosen'])->prefix('dosen')->name('dosen.')->gro
     // Dashboard Dosen
     Route::get('/dashboard', [DosenController::class, 'dashboard'])->name('dashboard');
     
-    // Profil Dosen
-    Route::get('/profil', [DosenController::class, 'profilIndex'])->name('profil.index');
-    Route::post('/profil/update-foto', [DosenController::class, 'updateFoto'])->name('profil.update-foto');
-    Route::post('/profil/update-informasi', [DosenController::class, 'updateInformasi'])->name('profil.update-informasi');
-    
-    // Supervisi
-    Route::prefix('supervisi')->name('supervisi.')->group(function() {
-        Route::get('/', [DosenController::class, 'supervisiIndex'])->name('index');
-        Route::get('/{konsultasi}', [DosenController::class, 'supervisiShow'])->name('show');
-        Route::post('/{konsultasi}/nilai', [DosenController::class, 'supervisiNilai'])->name('nilai');
+    // Penilaian Konsultasi
+    Route::prefix('penilaian')->name('penilaian.')->group(function() {
+        Route::get('/', [DosenController::class, 'penilaianIndex'])->name('index');
+        Route::get('/{id}', [DosenController::class, 'penilaianShow'])->name('show');
+        Route::post('/{id}', [DosenController::class, 'penilaianStore'])->name('store');
     });
     
-    // Penilaian
-    Route::get('/penilaian', [DosenController::class, 'penilaianIndex'])->name('penilaian.index');
+    // Rekap Data
+    Route::prefix('rekap')->name('rekap.')->group(function() {
+        Route::get('/', [DosenController::class, 'rekapIndex'])->name('index');
+        Route::get('/dokter/{id}', [DosenController::class, 'rekapDokter'])->name('dokter');
+    });
+    
+    // Profil Dosen
+    Route::prefix('profil')->name('profil.')->group(function() {
+        Route::get('/', [DosenController::class, 'profilIndex'])->name('index');
+        Route::post('/update-foto', [DosenController::class, 'updateFoto'])->name('update-foto');
+        Route::post('/update-informasi', [DosenController::class, 'updateInformasi'])->name('update-informasi');
+    });
+    
+    // Pengaturan Password
+    Route::get('/pengaturan', [DosenPasswordController::class, 'index'])->name('pengaturan.index');
+    Route::post('/pengaturan', [DosenPasswordController::class, 'update'])->name('pengaturan.update');
 });
 
 // Pasien Routes
@@ -149,6 +158,7 @@ Route::middleware(['auth', 'can:isPasien'])->group(function () {
 // Chat Room Routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/chat/{konsultasi}', [ChatRoomController::class, 'create'])->name('chat.create');
+    Route::get('/chat/room/{chatRoom}', [ChatRoomController::class, 'viewRoom'])->name('chat.room');
     Route::post('/chat/{chatRoom}/send', [ChatRoomController::class, 'sendMessage'])->name('chat.send');
     Route::get('/chat/{chatRoom}/messages', [ChatRoomController::class, 'getMessages'])->name('chat.messages');
     Route::post('/chat/{chatRoom}/end', [ChatRoomController::class, 'endChat'])->name('chat.end');

@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Carbon\Carbon;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -92,5 +93,12 @@ class AppServiceProvider extends ServiceProvider
             
             return $formattedDate;
         });
+
+        // Gunakan Tailwind untuk pagination
+        Paginator::useTailwind();
+        
+        // Set default pagination per halaman
+        Paginator::defaultView('vendor.pagination.tailwind');
+        Paginator::defaultSimpleView('vendor.pagination.simple-tailwind');
     }
 }

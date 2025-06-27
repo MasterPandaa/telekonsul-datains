@@ -58,12 +58,11 @@
 </head>
 <body class="font-sans bg-gray-50">
     <div id="app">
+        @yield('body')
         @yield('content')
     </div>
     
     @stack('scripts')
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html> 

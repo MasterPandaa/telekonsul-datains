@@ -24,6 +24,8 @@ class NotificationController extends Controller
             return view('notifications.admin.index', $data);
         } else if (Auth::user()->role === 'dokter') {
             return view('notifications.dokter.index', $data);
+        } else if (Auth::user()->role === 'dosen') {
+            return view('notifications.dosen.index', $data);
         } else if (Auth::user()->role === 'pasien') {
             return view('notifications.pasien.index', $data);
         }

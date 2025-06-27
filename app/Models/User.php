@@ -64,6 +64,14 @@ class User extends Authenticatable
     }
     
     /**
+     * Relasi dengan dosen
+     */
+    public function dosen()
+    {
+        return $this->hasOne(Dosen::class);
+    }
+    
+    /**
      * Relasi dengan notifikasi
      */
     public function notifications()

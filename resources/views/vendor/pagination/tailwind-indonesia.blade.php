@@ -135,4 +135,4 @@
     <div class="flex justify-center py-4">
         <p class="text-gray-500">Tidak ada data yang tersedia</p>
     </div>
-@endif
+@endif 

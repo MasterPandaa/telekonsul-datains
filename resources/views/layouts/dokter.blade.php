@@ -69,6 +69,5 @@
         }
     });
 </script>
-</body>
-</html>
+
 @endsection 

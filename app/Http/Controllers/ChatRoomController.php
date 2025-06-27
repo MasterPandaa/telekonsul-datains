@@ -214,4 +214,29 @@ class ChatRoomController extends Controller
 
         return redirect()->back()->with('success', 'Konsultasi telah berakhir');
     }
+
+    /**
+     * View chat room for dosen (read-only)
+     */
+    public function viewRoom(ChatRoom $chatRoom)
+    {
+        // Cek apakah user adalah dosen
+        $user = Auth::user();
+        if ($user->role !== 'dosen') {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
+        
+        $konsultasi = $chatRoom->konsultasi;
+        
+        // Tandai chat room sebagai read-only untuk dosen
+        $isDosenView = true;
+        
+        return view('chat.room', [
+            'chatRoom' => $chatRoom,
+            'konsultasi' => $konsultasi,
+            'isDosenView' => $isDosenView,
+            'isTerlambat' => false,
+            'sisaWaktu' => 0
+        ]);
+    }
 } 

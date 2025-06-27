@@ -17,7 +17,7 @@ class LogController extends Controller
     {
         $logs = Log::with('user')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(10);
             
         return view('admin.log.system', compact('logs'));
     }
@@ -34,7 +34,7 @@ class LogController extends Controller
             ->orWhere('action', 'like', '%update%')
             ->orWhere('action', 'like', '%delete%')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(10);
             
         return view('admin.log.database', compact('logs'));
     }

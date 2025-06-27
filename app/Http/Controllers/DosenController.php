@@ -1,300 +1,243 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\Dosen;
+use App\Models\Dokter;
 use App\Models\Konsultasi;
-use App\Services\LogService;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class DosenController extends Controller
 {
-    protected $logService;
-
-    public function __construct(LogService $logService)
-    {
-        $this->logService = $logService;
-    }
-
-    public function index(Request $request) {
-        $query = Dosen::query();
-        
-        // Filter pencarian
-        if ($request->has('search')) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('nama', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('nip', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('alamat', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('no_hp', 'LIKE', "%{$searchTerm}%");
-            });
-        }
-        
-        // Urutkan data
-        $sortBy = $request->sort_by ?? 'nama';
-        $sortOrder = $request->sort_order ?? 'asc';
-        $query->orderBy($sortBy, $sortOrder);
-        
-        // Pagination
-        $dosens = $query->paginate(10)->withQueryString();
-        
-        return view('admin.dosen.index', [
-            'dosens' => $dosens,
-            'title' => 'Data Dosen',
-            'searchTerm' => $request->search ?? '',
-            'sortBy' => $sortBy,
-            'sortOrder' => $sortOrder
-        ]);
-    }
-    
-    public function create() {
-        return view('admin.dosen.create', [
-            'title' => 'Tambah Dosen Baru'
-        ]);
-    }
-    
-    public function store(Request $request) {
-        $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:255',
-            'nip' => 'required|string|unique:dosens',
-            'email' => 'required|email|unique:dosens',
-            'alamat' => 'nullable|string',
-            'no_hp' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $dosen = Dosen::create($validator->validated());
-        
-        // Catat aktivitas
-        $this->logService->store(
-            'Menambahkan data dosen baru: ' . $dosen->nama,
-            'create',
-            json_encode($dosen),
-            'dosen'
-        );
-        
-        return redirect()
-            ->route('admin.dosen.index')
-            ->with('success', 'Data dosen berhasil ditambahkan');
-    }
-    
-    public function show(Dosen $dosen) {
-        return view('admin.dosen.show', [
-            'dosen' => $dosen,
-            'title' => 'Detail Dosen'
-        ]);
-    }
-    
-    public function edit(Dosen $dosen) {
-        return view('admin.dosen.edit', [
-            'dosen' => $dosen,
-            'title' => 'Edit Data Dosen'
-        ]);
-    }
-    
-    public function update(Request $request, Dosen $dosen) {
-        $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:255',
-            'nip' => 'required|string|unique:dosens,nip,' . $dosen->id,
-            'email' => 'required|email|unique:dosens,email,' . $dosen->id,
-            'alamat' => 'nullable|string',
-            'no_hp' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $oldData = $dosen->toArray();
-        $dosen->update($validator->validated());
-        
-        // Catat aktivitas
-        $this->logService->store(
-            'Mengubah data dosen: ' . $dosen->nama,
-            'update',
-            json_encode(['old' => $oldData, 'new' => $dosen]),
-            'dosen'
-        );
-        
-        return redirect()
-            ->route('admin.dosen.index')
-            ->with('success', 'Data dosen berhasil diperbarui');
-    }
-    
-    public function destroy(Dosen $dosen) {
-        $dosenData = $dosen->toArray();
-        
-        // Hapus data
-        $dosen->delete();
-        
-        // Catat aktivitas
-        $this->logService->store(
-            'Menghapus data dosen: ' . $dosen->nama,
-            'delete',
-            json_encode($dosenData),
-            'dosen'
-        );
-        
-        return redirect()
-            ->route('admin.dosen.index')
-            ->with('success', 'Data dosen berhasil dihapus');
-    }
-
-    // Dosen Dashboard Methods
+    /**
+     * Menampilkan dashboard dosen
+     */
     public function dashboard()
     {
-        $totalKonsultasi = Konsultasi::count();
-        $konsultasiSelesai = Konsultasi::where('status', 'Selesai')->count();
-        $konsultasiPending = Konsultasi::where('status', 'Menunggu')->count();
-        $rataRataRating = Konsultasi::whereNotNull('rating')->avg('rating') ?? 0;
+        return view('dosen.dashboard', [
+            'title' => 'Dashboard Dosen'
+        ]);
+    }
+
+    /**
+     * Menampilkan halaman penilaian konsultasi
+     */
+    public function penilaianIndex()
+    {
+        return view('dosen.penilaian.index', [
+            'title' => 'Penilaian Konsultasi'
+        ]);
+    }
+
+    /**
+     * Menampilkan detail konsultasi untuk penilaian
+     */
+    public function penilaianShow($id)
+    {
+        $konsultasi = Konsultasi::findOrFail($id);
         
-        // Ambil 5 konsultasi terbaru
-        $konsultasiTerbaru = Konsultasi::with(['pasien', 'dokter'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return view('dosen.dashboard', compact(
-            'totalKonsultasi',
-            'konsultasiSelesai',
-            'konsultasiPending',
-            'rataRataRating',
-            'konsultasiTerbaru'
-        ));
+        return view('dosen.penilaian.show', [
+            'title' => 'Detail Konsultasi',
+            'konsultasi' => $konsultasi
+        ]);
     }
 
-    // Dosen Profile Methods
-    public function profilIndex()
+    /**
+     * Menyimpan penilaian konsultasi
+     */
+    public function penilaianStore(Request $request, $id)
     {
-        $dosen = auth()->user()->dosen;
-        return view('dosen.profil.index', compact('dosen'));
-    }
-
-    public function updateFoto(Request $request)
-    {
-        $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+        $validator = Validator::make($request->all(), [
+            'nilai_komunikasi' => 'required|integer|min:1|max:100',
+            'nilai_anamnesis' => 'required|integer|min:1|max:100',
+            'nilai_diagnosa' => 'required|integer|min:1|max:100',
+            'nilai_empati' => 'required|integer|min:1|max:100',
         ]);
 
-        $dosen = auth()->user()->dosen;
-        $oldFoto = $dosen->foto;
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
+        $konsultasi = Konsultasi::findOrFail($id);
+        
+        // Simpan nilai-nilai aspek
+        $konsultasi->nilai_komunikasi = $request->nilai_komunikasi;
+        $konsultasi->nilai_anamnesis = $request->nilai_anamnesis;
+        $konsultasi->nilai_diagnosa = $request->nilai_diagnosa;
+        $konsultasi->nilai_empati = $request->nilai_empati;
+        
+        // Hitung nilai rata-rata
+        $nilai_dosen = round(($request->nilai_komunikasi + $request->nilai_anamnesis + 
+                             $request->nilai_diagnosa + $request->nilai_empati) / 4);
+        
+        $konsultasi->nilai_dosen = $nilai_dosen;
+        $konsultasi->dosen_id = Auth::user()->dosen->id;
+        $konsultasi->save();
+
+        return redirect()->route('dosen.penilaian.index')->with('success', 'Penilaian berhasil disimpan');
+    }
+
+    /**
+     * Menampilkan halaman rekap data
+     */
+    public function rekapIndex()
+    {
+        return view('dosen.rekap.index', [
+            'title' => 'Rekap Data Konsultasi'
+        ]);
+    }
+
+    /**
+     * Menampilkan detail rekap data dokter
+     */
+    public function rekapDokter($id)
+    {
+        $dokter = Dokter::findOrFail($id);
+        
+        $totalKonsultasi = Konsultasi::where('dokter_id', $dokter->user_id)
+            ->where('status', 'Selesai')
+            ->count();
+            
+        $sudahDinilai = Konsultasi::where('dokter_id', $dokter->user_id)
+            ->where('status', 'Selesai')
+            ->whereNotNull('nilai_dosen')
+            ->count();
+            
+        $rataRata = Konsultasi::where('dokter_id', $dokter->user_id)
+            ->where('status', 'Selesai')
+            ->whereNotNull('nilai_dosen')
+            ->avg('nilai_dosen');
+            
+        $konsultasis = Konsultasi::where('dokter_id', $dokter->user_id)
+            ->where('status', 'Selesai')
+            ->orderBy('updated_at', 'desc')
+            ->paginate(10);
+            
+        $chartData = Konsultasi::where('dokter_id', $dokter->user_id)
+            ->where('status', 'Selesai')
+            ->whereNotNull('nilai_dosen')
+            ->orderBy('id', 'asc')
+            ->select('id', 'nilai_dosen')
+            ->get();
+        
+        return view('dosen.rekap.dokter', [
+            'title' => 'Detail Rekap Dokter',
+            'dokter' => $dokter,
+            'totalKonsultasi' => $totalKonsultasi,
+            'sudahDinilai' => $sudahDinilai,
+            'rataRata' => $rataRata,
+            'konsultasis' => $konsultasis,
+            'chartData' => $chartData
+        ]);
+    }
+
+    /**
+     * Menampilkan halaman profil dosen
+     */
+    public function profilIndex()
+    {
+        $dosen = Auth::user()->dosen;
+        
+        return view('dosen.profil.index', [
+            'title' => 'Profil Saya',
+            'dosen' => $dosen
+        ]);
+    }
+
+    /**
+     * Update foto profil dosen
+     */
+    public function updateFoto(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $dosen = Auth::user()->dosen;
+        
         if ($request->hasFile('foto')) {
-            $foto = $request->file('foto');
-            $filename = 'dosen_' . time() . '.' . $foto->getClientOriginalExtension();
-            $foto->storeAs('public/img/dosen', $filename);
-
-            if ($oldFoto && $oldFoto != 'default.jpg') {
-                Storage::delete('public/img/dosen/' . $oldFoto);
+            // Hapus foto lama jika ada
+            if ($dosen->foto && $dosen->foto != 'default.jpg') {
+                Storage::delete('public/img/dosen/' . $dosen->foto);
             }
-
-            $dosen->update(['foto' => $filename]);
-
-            // Catat aktivitas
-            $this->logService->store(
-                'Mengubah foto profil dosen',
-                'update',
-                json_encode(['old' => $oldFoto, 'new' => $filename]),
-                'dosen'
-            );
+            
+            // Upload foto baru
+            $foto = $request->file('foto');
+            $namaFoto = 'dosen_' . $dosen->id . '_' . time() . '.' . $foto->getClientOriginalExtension();
+            $foto->storeAs('public/img/dosen', $namaFoto);
+            
+            $dosen->foto = $namaFoto;
+            $dosen->save();
         }
 
         return redirect()->back()->with('success', 'Foto profil berhasil diperbarui');
     }
 
+    /**
+     * Update informasi dosen
+     */
     public function updateInformasi(Request $request)
     {
-        $dosen = auth()->user()->dosen;
-        
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:255',
-            'email' => 'required|email|unique:dosens,email,' . $dosen->id,
-            'no_hp' => 'nullable|string',
-            'alamat' => 'nullable|string',
+            'nip' => 'required|string|max:20|unique:dosens,nip,' . Auth::user()->dosen->id,
+            'email' => 'required|email|max:255|unique:dosens,email,' . Auth::user()->dosen->id,
+            'no_hp' => 'nullable|string|max:15',
+            'alamat' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $oldData = $dosen->toArray();
-        $dosen->update($validator->validated());
+        $dosen = Auth::user()->dosen;
+        $dosen->nama = $request->nama;
+        $dosen->nip = $request->nip;
+        $dosen->email = $request->email;
+        $dosen->no_hp = $request->no_hp;
+        $dosen->alamat = $request->alamat;
+        $dosen->save();
 
-        // Catat aktivitas
-        $this->logService->store(
-            'Mengubah informasi profil dosen',
-            'update',
-            json_encode(['old' => $oldData, 'new' => $dosen]),
-            'dosen'
-        );
+        // Update email di tabel users juga
+        $user = Auth::user();
+        $user->email = $request->email;
+        $user->save();
 
         return redirect()->back()->with('success', 'Informasi profil berhasil diperbarui');
     }
 
-    // Supervisi Methods
-    public function supervisiIndex()
-    {
-        $konsultasis = Konsultasi::with(['pasien', 'dokter'])
-            ->latest()
-            ->paginate(10);
-
-        return view('dosen.supervisi.index', compact('konsultasis'));
-    }
-
-    public function supervisiShow(Konsultasi $konsultasi)
-    {
-        $konsultasi->load(['pasien', 'dokter', 'chatRoom.messages']);
-        return view('dosen.supervisi.show', compact('konsultasi'));
-    }
-
-    public function supervisiNilai(Request $request, Konsultasi $konsultasi)
+    /**
+     * Update password dosen
+     */
+    public function updatePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nilai' => 'required|numeric|min:0|max:100',
-            'catatan' => 'required|string'
+            'current_password' => 'required',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $konsultasi->update([
-            'nilai_supervisi' => $request->nilai,
-            'catatan_supervisi' => $request->catatan
-        ]);
+        $user = Auth::user();
+        
+        if (!Hash::check($request->current_password, $user->password)) {
+            return redirect()->back()->withErrors(['current_password' => 'Password saat ini tidak sesuai'])->withInput();
+        }
 
-        // Catat aktivitas
-        $this->logService->store(
-            'Memberikan nilai supervisi untuk konsultasi ID: ' . $konsultasi->id,
-            'update',
-            json_encode(['nilai' => $request->nilai, 'catatan' => $request->catatan]),
-            'konsultasi'
-        );
+        $user->password = Hash::make($request->password);
+        $user->save();
 
-        return redirect()->route('dosen.supervisi.index')
-            ->with('success', 'Nilai supervisi berhasil disimpan');
-    }
-
-    // Penilaian Methods
-    public function penilaianIndex()
-    {
-        $konsultasis = Konsultasi::with(['pasien', 'dokter'])
-            ->whereNotNull('nilai_supervisi')
-            ->latest()
-            ->paginate(10);
-
-        return view('dosen.penilaian.index', compact('konsultasis'));
+        return redirect()->back()->with('success', 'Password berhasil diperbarui');
     }
 } 

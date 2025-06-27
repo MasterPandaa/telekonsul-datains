@@ -12,6 +12,7 @@ class Konsultasi extends Model
     protected $fillable = [
         'pasien_id',
         'dokter_id',
+        'dosen_id',
         'tanggal',
         'jam_mulai',
         'jam_selesai',
@@ -20,6 +21,12 @@ class Konsultasi extends Model
         'diagnosa',
         'catatan',
         'nilai',
+        'nilai_dosen',
+        'nilai_komunikasi',
+        'nilai_anamnesis',
+        'nilai_diagnosa',
+        'nilai_empati',
+        'catatan_dosen',
         'rating',
         'komentar_rating',
         'status',
@@ -54,6 +61,14 @@ class Konsultasi extends Model
     public function dokter()
     {
         return $this->belongsTo(User::class, 'dokter_id');
+    }
+    
+    /**
+     * Relasi dengan dosen
+     */
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class);
     }
     
     public function chatRoom()
