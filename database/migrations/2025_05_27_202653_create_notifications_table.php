@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('type'); // Jenis notifikasi: konsultasi_baru, rating_baru, dll
-            $table->string('message'); // Pesan notifikasi
-            $table->string('link')->nullable(); // Tautan yang akan dibuka saat notifikasi diklik
-            $table->boolean('is_read')->default(false); // Status dibaca
-            $table->json('data')->nullable(); // Data tambahan dalam format JSON
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('notifications')) {
+            Schema::create('notifications', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->string('title');
+                $table->text('message');
+                $table->string('type')->nullable();
+                $table->string('icon')->nullable();
+                $table->string('link')->nullable();
+                $table->boolean('is_read')->default(false);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

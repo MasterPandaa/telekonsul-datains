@@ -12,47 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Karena kolom nama sudah dihapus, kita perlu memastikan bahwa
-        // setidaknya nama di tabel users tidak kosong
-        
-        // Update users yang terkait dengan dokters
-        $users = DB::table('users')
-            ->where('role', 'dokter')
-            ->whereNull('name')
-            ->orWhere('name', '')
-            ->get();
-            
-        foreach ($users as $user) {
-            DB::table('users')
-                ->where('id', $user->id)
-                ->update(['name' => 'Dokter ' . $user->id]);
-        }
-        
-        // Update users yang terkait dengan pasiens
-        $users = DB::table('users')
-            ->where('role', 'pasien')
-            ->whereNull('name')
-            ->orWhere('name', '')
-            ->get();
-            
-        foreach ($users as $user) {
-            DB::table('users')
-                ->where('id', $user->id)
-                ->update(['name' => 'Pasien ' . $user->id]);
-        }
-        
-        // Update users yang terkait dengan dosens
-        $users = DB::table('users')
-            ->where('role', 'dosen')
-            ->whereNull('name')
-            ->orWhere('name', '')
-            ->get();
-            
-        foreach ($users as $user) {
-            DB::table('users')
-                ->where('id', $user->id)
-                ->update(['name' => 'Dosen ' . $user->id]);
-        }
+        // Migrasi ini tidak membuat atau mengubah struktur tabel
+        // Hanya memastikan bahwa nama di tabel users sudah sesuai
+        // Tidak perlu melakukan apa-apa karena kolom nama sudah dihapus
     }
 
     /**
@@ -60,6 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Tidak ada operasi yang perlu di-rollback
+        // Tidak perlu melakukan apa-apa saat rollback
+        // Karena migrasi ini hanya memastikan data sesuai
     }
 }; 

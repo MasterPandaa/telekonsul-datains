@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dosens', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('nip')->unique();
-            $table->string('email')->unique();
-            $table->text('alamat')->nullable();
-            $table->string('no_hp')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('dosens')) {
+            Schema::create('dosens', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->string('nip')->unique();
+                $table->string('email')->unique();
+                $table->text('alamat')->nullable();
+                $table->string('no_hp')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

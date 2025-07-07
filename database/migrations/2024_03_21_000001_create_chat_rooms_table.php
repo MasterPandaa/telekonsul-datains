@@ -6,19 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('chat_rooms', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('konsultasi_id')->constrained('konsultasis')->cascadeOnDelete();
-            $table->string('room_id')->unique();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('started_at')->nullable();
-            $table->timestamp('ended_at')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('chat_rooms')) {
+            Schema::create('chat_rooms', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('konsultasi_id')->constrained()->onDelete('cascade');
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('chat_rooms');

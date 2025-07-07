@@ -4,15 +4,29 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
     public function up(): void {
-        Schema::create('database_logs', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->string('aktivitas');
-            $table->text('keterangan')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('database_logs')) {
+            Schema::create('database_logs', function (Blueprint $table) {
+                $table->id();
+                $table->string('action');
+                $table->string('table');
+                $table->unsignedBigInteger('row_id')->nullable();
+                $table->json('old_values')->nullable();
+                $table->json('new_values')->nullable();
+                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->string('ip_address')->nullable();
+                $table->string('user_agent')->nullable();
+                $table->timestamps();
+            });
+        }
     }
+
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void {
         Schema::dropIfExists('database_logs');
     }

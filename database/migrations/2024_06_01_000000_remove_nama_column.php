@@ -14,19 +14,19 @@ return new class extends Migration
         // Menghapus kolom nama dari tabel dokters, pasiens, dan dosens
         // karena akan menggunakan kolom name dari tabel users
         
-        if (Schema::hasColumn('dokters', 'nama')) {
+        if (Schema::hasTable('dokters') && Schema::hasColumn('dokters', 'nama')) {
             Schema::table('dokters', function (Blueprint $table) {
                 $table->dropColumn('nama');
             });
         }
         
-        if (Schema::hasColumn('pasiens', 'nama')) {
+        if (Schema::hasTable('pasiens') && Schema::hasColumn('pasiens', 'nama')) {
             Schema::table('pasiens', function (Blueprint $table) {
                 $table->dropColumn('nama');
             });
         }
         
-        if (Schema::hasColumn('dosens', 'nama')) {
+        if (Schema::hasTable('dosens') && Schema::hasColumn('dosens', 'nama')) {
             Schema::table('dosens', function (Blueprint $table) {
                 $table->dropColumn('nama');
             });
@@ -39,16 +39,22 @@ return new class extends Migration
     public function down(): void
     {
         // Mengembalikan kolom nama jika migrasi di-rollback
-        Schema::table('dokters', function (Blueprint $table) {
-            $table->string('nama')->after('user_id');
-        });
+        if (Schema::hasTable('dokters') && !Schema::hasColumn('dokters', 'nama')) {
+            Schema::table('dokters', function (Blueprint $table) {
+                $table->string('nama')->nullable()->after('user_id');
+            });
+        }
         
-        Schema::table('pasiens', function (Blueprint $table) {
-            $table->string('nama')->after('user_id');
-        });
+        if (Schema::hasTable('pasiens') && !Schema::hasColumn('pasiens', 'nama')) {
+            Schema::table('pasiens', function (Blueprint $table) {
+                $table->string('nama')->nullable()->after('user_id');
+            });
+        }
         
-        Schema::table('dosens', function (Blueprint $table) {
-            $table->string('nama')->after('user_id');
-        });
+        if (Schema::hasTable('dosens') && !Schema::hasColumn('dosens', 'nama')) {
+            Schema::table('dosens', function (Blueprint $table) {
+                $table->string('nama')->nullable()->after('user_id');
+            });
+        }
     }
 }; 
