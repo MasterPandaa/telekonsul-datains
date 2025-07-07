@@ -26,7 +26,6 @@ class DokterFactory extends Factory
         ]);
         
         return [
-            'nama' => 'dr. ' . fake()->name(),
             'no_sip' => fake()->unique()->numerify('SIP/###/###/####'),
             'no_str' => fake()->unique()->numerify('####.#.#.####.##.#####'),
             'email' => fake()->unique()->safeEmail(),

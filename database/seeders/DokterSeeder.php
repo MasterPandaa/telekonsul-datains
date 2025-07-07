@@ -19,7 +19,6 @@ class DokterSeeder extends Seeder
         
         // Buat dokter dari user yang sudah ada
         $dokter = Dokter::create([
-            'nama' => 'Riska Amalia',
             'no_sip' => 'SIP/123/456/2023',
             'no_str' => '1234.5.6.7890.12.34567',
             'email' => $user->email,

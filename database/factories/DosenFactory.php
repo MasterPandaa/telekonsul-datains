@@ -26,11 +26,11 @@ class DosenFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama' => $this->faker->name(),
             'nip' => $this->faker->unique()->numerify('##########'),
             'email' => $this->faker->unique()->safeEmail(),
             'alamat' => $this->faker->address(),
             'no_hp' => $this->faker->phoneNumber(),
+            'user_id' => User::factory()->create(['role' => 'dosen'])->id,
         ];
     }
 } 

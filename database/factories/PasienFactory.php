@@ -21,7 +21,6 @@ class PasienFactory extends Factory
         $jenis_kelamin = fake()->randomElement(['Laki-laki', 'Perempuan']);
         
         return [
-            'nama' => fake()->name($jenis_kelamin == 'Laki-laki' ? 'male' : 'female'),
             'nik' => fake()->unique()->numerify('################'),
             'email' => fake()->unique()->safeEmail(),
             'alamat' => fake()->address(),

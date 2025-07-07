@@ -19,7 +19,6 @@ class PasienSeeder extends Seeder
         
         if ($user) {
             Pasien::create([
-                'nama' => 'Budi Santoso',
                 'nik' => '3175012345678901',
                 'email' => 'pasien@example.com',
                 'alamat' => 'Jl. Kesehatan No. 123, Jakarta Selatan',
