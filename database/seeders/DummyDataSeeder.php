@@ -364,7 +364,6 @@ class DummyDataSeeder extends Seeder
                         // Buat array pesan dokter dan pasien secara bergantian
                         $messages = [];
                         $roles = [];
-                        
                         // Gunakan pesan default untuk semua konsultasi
                         $defaultMessages = [
                             "Halo, apa keluhan Anda?",
