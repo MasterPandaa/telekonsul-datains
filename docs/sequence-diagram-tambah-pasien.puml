@@ -1,0 +1,37 @@
+@startuml Tambah Pasien
+!theme plain
+
+title Tambah Pasien (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+== Akses Form Tambah Pasien ==
+Admin -> Sistem: Akses manajemen pasien
+Sistem --> Admin: Tampilkan tombol "Tambah Pasien"
+Admin -> Sistem: Klik "Tambah Pasien"
+Sistem --> Admin: Tampilkan form (nama, email, NIK, kontak)
+
+== Submit Data Pasien ==
+Admin -> Sistem: Isi & submit form
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Admin: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Cek unik email & NIK
+    
+    alt Sudah Terdaftar
+        Database --> Sistem: Email/NIK sudah ada
+        Sistem --> Admin: "Email/NIK sudah terdaftar"
+    else Belum Terdaftar
+        Database --> Sistem: OK
+        Sistem -> Database: Simpan user (role: pasien)
+        Sistem -> Database: Simpan profil pasien (NIK, kontak)
+        Database --> Sistem: Data pasien tersimpan
+        Sistem --> Admin: "Pasien berhasil ditambahkan"
+    end
+end
+
+@enduml

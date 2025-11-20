@@ -1,0 +1,42 @@
+@startuml Edit Dosen
+!theme plain
+
+title Edit Dosen (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+== Akses Form Edit ==
+Admin -> Sistem: Akses manajemen dosen
+Sistem -> Database: Ambil daftar dosen
+Database --> Sistem: Data dosen
+Sistem --> Admin: Tampilkan daftar dosen
+
+Admin -> Sistem: Pilih dosen > Klik Edit
+Sistem -> Database: Ambil data dosen terpilih
+Database --> Sistem: Data profil dosen
+Sistem --> Admin: Tampilkan form edit (pre-filled)
+
+== Submit Perubahan ==
+Admin -> Sistem: Ubah data & submit
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Admin: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Cek unik email/NIDN (jika diubah)
+    
+    alt Duplikat Ditemukan
+        Database --> Sistem: Email/NIDN sudah ada
+        Sistem --> Admin: "Email/NIDN sudah terdaftar"
+    else Tidak Duplikat
+        Database --> Sistem: OK
+        Sistem -> Database: Update user (nama/email bila perlu)
+        Sistem -> Database: Update profil dosen (NIDN, kontak, dll)
+        Database --> Sistem: Data dosen diperbarui
+        Sistem --> Admin: "Perubahan berhasil disimpan"
+    end
+end
+
+@enduml

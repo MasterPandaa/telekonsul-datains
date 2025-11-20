@@ -1,0 +1,38 @@
+@startuml Chatbot AI
+!theme plain
+
+title Konsultasi Pasien dengan Chatbot AI
+
+actor Pasien
+participant Sistem
+participant "Chatbot AI\n(HealsAI)" as AI
+database Database
+
+Pasien -> Sistem: Akses halaman chatbot
+Sistem -> Database: Ambil riwayat chat
+Database --> Sistem: Data riwayat chat
+Sistem --> Pasien: Tampilkan interface chatbot
+
+Pasien -> Sistem: Kirim pesan keluhan/pertanyaan
+Sistem -> Database: Simpan pesan pasien
+Sistem -> AI: Kirim pesan ke HealsAI API
+
+AI -> AI: Proses pertanyaan\ndengan AI model
+
+alt AI Berhasil Merespons
+    AI --> Sistem: Response AI (diagnosa/saran)
+    Sistem -> Database: Simpan response AI
+    Sistem --> Pasien: Tampilkan jawaban AI
+    
+else AI Error
+    AI --> Sistem: Error response
+    Sistem --> Pasien: "Maaf, terjadi kesalahan.\nSilakan coba lagi"
+end
+
+Pasien -> Sistem: Lanjutkan percakapan (opsional)
+Sistem -> AI: Kirim pesan lanjutan
+AI --> Sistem: Response lanjutan
+Sistem -> Database: Simpan percakapan
+Sistem --> Pasien: Tampilkan response
+
+@enduml

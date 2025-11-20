@@ -1,0 +1,24 @@
+@startuml Login Dosen
+!theme plain
+
+title Login Dosen
+
+actor Dosen
+participant Sistem
+database Database
+
+Dosen -> Sistem: Buka halaman login
+Sistem --> Dosen: Tampilkan form login
+
+Dosen -> Sistem: Input email & password
+Sistem -> Database: Validasi kredensial
+
+alt Login Berhasil
+    Database --> Sistem: Data user valid (Role: Dosen)
+    Sistem --> Dosen: Redirect ke Dashboard Dosen
+else Login Gagal
+    Database --> Sistem: Kredensial salah
+    Sistem --> Dosen: Tampilkan pesan error
+end
+
+@enduml

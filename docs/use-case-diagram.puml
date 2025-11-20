@@ -1,0 +1,135 @@
+@startuml Use Case Diagram
+' Layout & style
+left to right direction
+!theme plain
+skinparam packageStyle rectangle
+skinparam linetype polyline
+skinparam ArrowColor #3B3B3B
+skinparam UsecaseBorderColor #2F80ED
+skinparam UsecaseBackgroundColor #EEF4FF
+skinparam UsecaseFontColor #0F172A
+skinparam PackageBorderColor #CBD5E1
+skinparam PackageBackgroundColor #FFFFFF
+skinparam ActorBorderColor #475569
+skinparam ActorFontColor #0F172A
+skinparam RectangleBorderColor #94A3B8
+
+' Actors
+actor Admin as admin
+actor Dokter as dokter
+actor Dosen as dosen
+actor Pasien as pasien
+
+' =====================
+' Kelompok Use Case per Aktor
+' =====================
+
+' Blok Admin
+rectangle "Module Admin" as pkg_admin {
+  usecase (Kelola Data Dokter) as UC_A1
+  usecase (Kelola Data Dosen) as UC_A2
+  usecase (Kelola Data Pasien) as UC_A3
+  usecase (Lihat Log Sistem) as UC_A4
+  usecase (Ubah Password) as UC_A5
+  usecase (Logout) as UC_A6
+}
+
+' Blok Dokter
+rectangle "Module Dokter" as pkg_dokter {
+  usecase (Kelola Profil Dokter) as UC_D1
+  usecase (Lihat Permintaan Konsultasi) as UC_D2
+  usecase (Konfirmasi/Tolak Konsultasi) as UC_D3
+  usecase (Lakukan Konsultasi) as UC_D4
+  usecase (Input Diagnosa) as UC_D5
+  usecase (Lihat Riwayat Pasien) as UC_D6
+  usecase (Ubah Password) as UC_D7
+  usecase (Logout) as UC_D8
+}
+
+' Blok Pasien
+rectangle "Module Pasien" as pkg_pasien {
+  usecase (Kelola Profil) as UC_P1
+  usecase (Booking Konsultasi) as UC_P2
+  usecase (Chat dengan Dokter) as UC_P3
+  usecase (Konsultasi Chatbot AI) as UC_P4
+  usecase (Lihat Riwayat Konsultasi) as UC_P5
+  usecase (Beri Rating) as UC_P6
+  usecase (Ubah Password) as UC_P7
+  usecase (Logout) as UC_P8
+}
+
+' Blok Dosen
+rectangle "Module Dosen" as pkg_dosen {
+  usecase (Kelola Profil Dosen) as UC_S1
+  usecase (Lihat Daftar Konsultasi) as UC_S2
+  usecase (Beri Penilaian) as UC_S3
+  usecase (Lihat Rekap Data) as UC_S4
+  usecase (Ubah Password) as UC_S5
+  usecase (Logout) as UC_S6
+}
+
+' =====================
+' Penempatan aktor di samping modul untuk meminimalkan garis silang
+' (Urutan deklarasi membantu layout LTR)
+' =====================
+admin --> UC_A1
+admin --> UC_A2
+admin --> UC_A3
+admin --> UC_A4
+admin --> UC_A5
+admin --> UC_A6
+
+' Dokter
+Dokter as dokter_dummy
+hide dokter_dummy
+
+' Tautkan aktor dokter ke modul dokter
+
+' catatan: gunakan aktor yang sudah dideklarasikan (dokter)
+dokter --> UC_D1
+dokter --> UC_D2
+dokter --> UC_D3
+dokter --> UC_D4
+dokter --> UC_D5
+dokter --> UC_D6
+dokter --> UC_D7
+dokter --> UC_D8
+
+' Pasien
+pasien --> UC_P1
+pasien --> UC_P2
+pasien --> UC_P3
+pasien --> UC_P4
+pasien --> UC_P5
+pasien --> UC_P6
+pasien --> UC_P7
+pasien --> UC_P8
+
+' Dosen
+dosen --> UC_S1
+dosen --> UC_S2
+dosen --> UC_S3
+dosen --> UC_S4
+dosen --> UC_S5
+dosen --> UC_S6
+
+' =====================
+' Include/Extend hubungan utama (seperlunya agar tidak ramai)
+' =====================
+UC_P3 ..> UC_P2 : <<include>>
+UC_P6 ..> UC_P5 : <<extend>>
+UC_D3 ..> UC_D2 : <<include>>
+UC_D5 ..> UC_D4 : <<include>>
+UC_S3 ..> UC_S2 : <<include>>
+
+' =====================
+' Legend
+' =====================
+legend right
+  == Legend ==
+  Aktor: Admin, Dokter, Dosen, Pasien
+  Use Case dikelompokkan per modul untuk meminimalkan garis silang.
+  Panah putus-putus: include/extend antar use case terkait.
+endlegend
+
+@enduml

@@ -15,6 +15,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\API\KonsultasiController;
 use App\Http\Controllers\PasienPasswordController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Admin\DosenController as AdminDosenController;
 use App\Http\Controllers\DokterPasswordController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\DosenPasswordController;
@@ -41,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->middleware('can:isAdmin')->group(function () {
         Route::resource('dokter', DokterController::class);
         Route::resource('pasien', PasienController::class);
+        Route::resource('dosen', AdminDosenController::class);
         
         // Log routes
         Route::get('log/database', [LogController::class, 'database'])->name('log.database');

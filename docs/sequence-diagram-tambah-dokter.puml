@@ -1,0 +1,37 @@
+@startuml Tambah Dokter
+!theme plain
+
+title Tambah Dokter (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+== Akses Form Tambah Dokter ==
+Admin -> Sistem: Akses halaman manajemen dokter
+Sistem --> Admin: Tampilkan tombol "Tambah Dokter"
+Admin -> Sistem: Klik "Tambah Dokter"
+Sistem --> Admin: Tampilkan form (nama, email, no SIP, spesialisasi, kontak)
+
+== Submit Data Dokter ==
+Admin -> Sistem: Isi & submit form
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Admin: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Cek unik email & no SIP
+    
+    alt Sudah Terdaftar
+        Database --> Sistem: Email/no SIP sudah ada
+        Sistem --> Admin: "Email/SIP sudah terdaftar"
+    else Belum Terdaftar
+        Database --> Sistem: OK
+        Sistem -> Database: Simpan user (role: dokter)
+        Sistem -> Database: Simpan profil dokter (SIP, spesialisasi, kontak)
+        Database --> Sistem: Data dokter tersimpan
+        Sistem --> Admin: "Dokter berhasil ditambahkan"
+    end
+end
+
+@enduml

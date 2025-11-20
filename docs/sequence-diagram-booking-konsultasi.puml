@@ -1,0 +1,36 @@
+@startuml Booking Konsultasi
+!theme plain
+
+title Booking Jadwal Konsultasi (Pasien)
+
+actor Pasien
+participant Sistem
+database Database
+
+Pasien -> Sistem: Akses halaman booking konsultasi
+Sistem -> Database: Ambil data dokter & jadwal tersedia
+Database --> Sistem: Daftar dokter & slot waktu
+Sistem --> Pasien: Tampilkan form booking
+
+Pasien -> Sistem: Pilih dokter, tanggal, jam & isi keluhan
+Sistem -> Sistem: Validasi input
+
+alt Input Tidak Valid
+    Sistem --> Pasien: Tampilkan pesan error
+    
+else Input Valid
+    Sistem -> Database: Cek ketersediaan jadwal
+    
+    alt Jadwal Sudah Terisi
+        Database --> Sistem: Slot tidak tersedia
+        Sistem --> Pasien: "Jadwal sudah terisi, pilih waktu lain"
+        
+    else Jadwal Tersedia
+        Database --> Sistem: Slot tersedia
+        Sistem -> Database: Simpan data konsultasi\n(Status: Menunggu)
+        Database --> Sistem: Konsultasi tersimpan
+        Sistem --> Pasien: "Booking berhasil, menunggu konfirmasi dokter"
+    end
+end
+
+@enduml

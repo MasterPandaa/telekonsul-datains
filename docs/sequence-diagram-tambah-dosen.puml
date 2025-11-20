@@ -1,0 +1,37 @@
+@startuml Tambah Dosen
+!theme plain
+
+title Tambah Dosen (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+== Akses Form Tambah Dosen ==
+Admin -> Sistem: Akses manajemen dosen
+Sistem --> Admin: Tampilkan tombol "Tambah Dosen"
+Admin -> Sistem: Klik "Tambah Dosen"
+Sistem --> Admin: Tampilkan form (nama, email, NIDN, kontak)
+
+== Submit Data Dosen ==
+Admin -> Sistem: Isi & submit form
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Admin: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Cek unik email & NIDN
+    
+    alt Sudah Terdaftar
+        Database --> Sistem: Email/NIDN sudah ada
+        Sistem --> Admin: "Email/NIDN sudah terdaftar"
+    else Belum Terdaftar
+        Database --> Sistem: OK
+        Sistem -> Database: Simpan user (role: dosen)
+        Sistem -> Database: Simpan profil dosen (NIDN, kontak)
+        Database --> Sistem: Data dosen tersimpan
+        Sistem --> Admin: "Dosen berhasil ditambahkan"
+    end
+end
+
+@enduml

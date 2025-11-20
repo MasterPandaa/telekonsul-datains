@@ -1,0 +1,24 @@
+@startuml Login Pasien
+!theme plain
+
+title Login Pasien
+
+actor Pasien
+participant Sistem
+database Database
+
+Pasien -> Sistem: Buka halaman login
+Sistem --> Pasien: Tampilkan form login
+
+Pasien -> Sistem: Input email & password
+Sistem -> Database: Validasi kredensial
+
+alt Login Berhasil
+    Database --> Sistem: Data user valid
+    Sistem --> Pasien: Redirect ke Dashboard Pasien
+else Login Gagal
+    Database --> Sistem: Kredensial salah
+    Sistem --> Pasien: Tampilkan pesan error
+end
+
+@enduml

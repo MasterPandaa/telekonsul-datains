@@ -1,81 +1,263 @@
 @extends('layouts.admin')
 
-@section('title', 'Data Dosen')
+@section('admin-content')
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Data Dosen</h1>
+    <p class="text-sm text-gray-600">Kelola data dosen pada sistem</p>
+    </div>
 
-@section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Data Dosen</h3>
-                    <div class="card-tools">
-                        <a href="{{ route('admin.dosen.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Tambah Dosen
+@if(session('success'))
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded shadow" role="alert">
+        <div class="flex items-center">
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>{{ session('success') }}</span>
+        </div>
+    </div>
+@endif
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Header dan Filter -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border-b">
+        <h2 class="text-lg font-medium text-gray-800 mb-3 md:mb-0">Daftar Dosen</h2>
+        
+        <div class="flex flex-col md:flex-row items-start md:items-center space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
+            <!-- Filter and Search -->
+            <form action="{{ route('admin.dosen.index') }}" method="GET" class="flex items-center w-full md:w-auto">
+                <div class="relative flex-grow">
+                    <input type="text" name="search" placeholder="Cari dosen..." value="{{ $searchTerm ?? '' }}" 
+                           class="w-full md:w-64 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                @if(!empty($searchTerm))
+                    <a href="{{ route('admin.dosen.index') }}" class="ml-2 text-sm text-gray-600 hover:text-gray-900">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </a>
+                @endif
+            </form>
+            
+            <a href="{{ route('admin.dosen.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Tambah Dosen
             </a>
         </div>
     </div>
-                <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
+    
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-4 py-3 border-b">No</th>
+                    <th class="px-4 py-3 border-b">
+                        <a href="{{ route('admin.dosen.index', [
+                            'search' => $searchTerm ?? '', 
+                            'sort_by' => 'nama', 
+                            'sort_order' => $sortBy === 'nama' && $sortOrder === 'asc' ? 'desc' : 'asc'
+                        ]) }}" class="flex items-center group">
+                            <span>Nama</span>
+                            <span class="ml-1">
+                                @if($sortBy === 'nama')
+                                    @if($sortOrder === 'asc')
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    @endif
+                                @else
+                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                    </svg>
+                                @endif
+                            </span>
+                        </a>
+                    </th>
+                    <th class="px-4 py-3 border-b">
+                        <a href="{{ route('admin.dosen.index', [
+                            'search' => $searchTerm ?? '', 
+                            'sort_by' => 'nip', 
+                            'sort_order' => $sortBy === 'nip' && $sortOrder === 'asc' ? 'desc' : 'asc'
+                        ]) }}" class="flex items-center group">
+                            <span>NIP</span>
+                            <span class="ml-1">
+                                @if($sortBy === 'nip')
+                                    @if($sortOrder === 'asc')
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    @endif
+                                @else
+                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                    </svg>
+                                @endif
+                            </span>
+                        </a>
+                    </th>
+                    <th class="px-4 py-3 border-b">
+                        <a href="{{ route('admin.dosen.index', [
+                            'search' => $searchTerm ?? '', 
+                            'sort_by' => 'email', 
+                            'sort_order' => $sortBy === 'email' && $sortOrder === 'asc' ? 'desc' : 'asc'
+                        ]) }}" class="flex items-center group">
+                            <span>Kontak</span>
+                            <span class="ml-1">
+                                @if($sortBy === 'email')
+                                    @if($sortOrder === 'asc')
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    @endif
+                                @else
+                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                    </svg>
+                                @endif
+                            </span>
+                        </a>
+                    </th>
+                    <th class="px-4 py-3 border-b text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+                @forelse($dosens as $index => $dosen)
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {{ $dosens->firstItem() + $index }}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded-full bg-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode($dosen->nama) }}&background=3b82f6&color=fff" alt="{{ $dosen->nama }}">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ $dosen->nama }}</div>
+                                <div class="text-xs text-gray-500">{{ $dosen->email }}</div>
+                            </div>
                         </div>
-                    @endif
-
-                    <table id="example1" class="table table-bordered table-striped">
-        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama</th>
-                                <th>NIP</th>
-                                <th>Email</th>
-                                <th>No. HP</th>
-                                <th>Aksi</th>
-            </tr>
-        </thead>
-                        <tbody>
-                            @foreach($dosens as $dosen)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $dosen->nama }}</td>
-                                <td>{{ $dosen->nip }}</td>
-                                <td>{{ $dosen->email }}</td>
-                                <td>{{ $dosen->no_hp }}</td>
-                                <td>
-                                    <a href="{{ route('admin.dosen.show', $dosen->id) }}" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.dosen.edit', $dosen->id) }}" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.dosen.destroy', $dosen->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                            <i class="fas fa-trash"></i>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm text-gray-900">{{ $dosen->nip }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm text-gray-900">{{ $dosen->email }}</div>
+                        <div class="text-sm text-gray-500">{{ $dosen->no_hp }}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <a href="{{ route('admin.dosen.show', $dosen->id) }}" class="p-1.5 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </a>
+                            <a href="{{ route('admin.dosen.edit', $dosen->id) }}" class="p-1.5 bg-yellow-100 text-yellow-600 rounded-md hover:bg-yellow-200 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                </svg>
+                            </a>
+                            <button type="button" onclick="konfirmasiHapus('{{ $dosen->id }}', '{{ $dosen->nama }}')" class="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
                             </button>
-                    </form>
+                            <form id="form-hapus-{{ $dosen->id }}" action="{{ route('admin.dosen.destroy', $dosen->id) }}" method="POST" class="hidden">
+                                @csrf @method('DELETE')
+                            </form>
+                        </div>
                     </td>
                 </tr>
-                            @endforeach
-        </tbody>
-    </table>
+                @empty
+                <tr>
+                    <td colspan="5" class="px-4 py-3 text-center text-gray-500">
+                        <div class="flex flex-col items-center justify-center py-6">
+                            <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <p class="text-gray-500">Tidak ada data dosen yang tersedia.</p>
+                            <a href="{{ route('admin.dosen.create') }}" class="mt-2 text-sm text-blue-600 hover:text-blue-800">Tambahkan data dosen baru</a>
+                        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+        {{ $dosens->appends(['search' => $searchTerm ?? '', 'sort_by' => $sortBy ?? null, 'sort_order' => $sortOrder ?? null])->links('vendor.pagination.tailwind-indonesia') }}
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus -->
+<div id="modal-konfirmasi-hapus" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Konfirmasi Hapus</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="modal-description">Apakah Anda yakin ingin menghapus data dosen ini? Tindakan ini tidak dapat dibatalkan.</p>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="btn-hapus" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">Hapus</button>
+                <button type="button" id="btn-batal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Batal</button>
             </div>
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
 <script>
-    $(function () {
-        $("#example1").DataTable({
-            "responsive": true,
-            "lengthChange": false,
-            "autoWidth": false,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-        }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-    });
+    function konfirmasiHapus(id, nama) {
+        document.getElementById('modal-title').textContent = 'Konfirmasi Hapus';
+        document.getElementById('modal-description').textContent = `Apakah Anda yakin ingin menghapus data dosen ${nama}? Tindakan ini tidak dapat dibatalkan.`;
+        
+        const modal = document.getElementById('modal-konfirmasi-hapus');
+        modal.classList.remove('hidden');
+        
+        document.getElementById('btn-hapus').onclick = function() {
+            document.getElementById(`form-hapus-${id}`).submit();
+        };
+        
+        document.getElementById('btn-batal').onclick = function() {
+            modal.classList.add('hidden');
+        };
+    }
 </script>
-@endsection 
+@endsection
+ 

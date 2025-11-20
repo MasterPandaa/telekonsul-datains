@@ -1,0 +1,42 @@
+@startuml Edit Pasien
+!theme plain
+
+title Edit Pasien (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+== Akses Form Edit ==
+Admin -> Sistem: Akses manajemen pasien
+Sistem -> Database: Ambil daftar pasien
+Database --> Sistem: Data pasien
+Sistem --> Admin: Tampilkan daftar pasien
+
+Admin -> Sistem: Pilih pasien > Klik Edit
+Sistem -> Database: Ambil data pasien terpilih
+Database --> Sistem: Data profil pasien
+Sistem --> Admin: Tampilkan form edit (pre-filled)
+
+== Submit Perubahan ==
+Admin -> Sistem: Ubah data & submit
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Admin: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Cek unik email/NIK (jika diubah)
+    
+    alt Duplikat Ditemukan
+        Database --> Sistem: Email/NIK sudah ada
+        Sistem --> Admin: "Email/NIK sudah terdaftar"
+    else Tidak Duplikat
+        Database --> Sistem: OK
+        Sistem -> Database: Update user (nama/email bila perlu)
+        Sistem -> Database: Update profil pasien (NIK, kontak, dll)
+        Database --> Sistem: Data pasien diperbarui
+        Sistem --> Admin: "Perubahan berhasil disimpan"
+    end
+end
+
+@enduml

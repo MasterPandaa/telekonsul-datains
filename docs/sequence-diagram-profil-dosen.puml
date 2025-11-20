@@ -1,0 +1,56 @@
+@startuml Profil Dosen
+!theme plain
+
+title Lihat dan Edit Profil Dosen
+
+actor Dosen
+participant Sistem
+database Database
+
+== Lihat Profil ==
+Dosen -> Sistem: Akses halaman profil
+Sistem -> Database: Ambil data profil dosen
+Database --> Sistem: Data profil
+Sistem --> Dosen: Tampilkan profil lengkap
+
+== Edit Informasi Dasar ==
+Dosen -> Sistem: Klik edit informasi dasar
+Sistem --> Dosen: Tampilkan form edit
+
+Dosen -> Sistem: Update data (nama, kontak, dll)
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Dosen: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Update informasi dasar
+    Database --> Sistem: Data diperbarui
+    Sistem --> Dosen: "Profil berhasil diperbarui"
+end
+
+== Upload Foto Profil ==
+Dosen -> Sistem: Upload foto profil
+Sistem -> Sistem: Validasi file (format & ukuran)
+
+alt File Tidak Valid
+    Sistem --> Dosen: "Format/ukuran file tidak valid"
+else File Valid
+    Sistem -> Database: Simpan foto profil
+    Database --> Sistem: Foto tersimpan
+    Sistem --> Dosen: "Foto profil berhasil diperbarui"
+end
+
+== Pengaturan Password (opsional) ==
+Dosen -> Sistem: Buka pengaturan password
+Sistem --> Dosen: Tampilkan form password
+Dosen -> Sistem: Ubah password
+Sistem -> Sistem: Validasi (konfirmasi cocok)
+alt Validasi Gagal
+    Sistem --> Dosen: Tampilkan error
+else Validasi Berhasil
+    Sistem -> Database: Update password
+    Database --> Sistem: Password diperbarui
+    Sistem --> Dosen: "Password berhasil diubah"
+end
+
+@enduml

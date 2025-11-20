@@ -27,7 +27,8 @@
         z-index: 50;
     }
     .select-items div:hover {
-        @apply bg-indigo-50;
+        /* Tailwind @apply tidak berlaku di inline style; gunakan warna langsung */
+        background-color: #eef2ff; /* indigo-50 */
     }
     .select-hide {
         animation: slideUp 0.2s ease-out;
@@ -35,7 +36,7 @@
 </style>
 
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Log Aktivitas Sistem</h1>
+    <h1 class="text-2xl font-bold text-gray-800 tracking-tight">Log Aktivitas Sistem</h1>
     <p class="text-sm text-gray-600">Catatan aktivitas semua pengguna dalam sistem</p>
 </div>
 
@@ -50,18 +51,24 @@
     </div>
 @endif
 
-<div class="bg-white rounded-lg shadow-md">
+<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-100">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b">
-        <div>
-            <h2 class="text-lg font-medium text-gray-800">Aktivitas Sistem</h2>
-            <p class="text-sm text-gray-500 mt-1">Total: {{ $logs->total() }} catatan aktivitas</p>
+    <div class="flex items-center justify-between p-4 border-b bg-white/60 backdrop-blur">
+        <div class="flex items-center gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800">Aktivitas Sistem</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Total: {{ $logs->total() }} catatan</p>
+            </div>
+            <div class="hidden sm:flex items-center gap-2">
+                <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">Halaman <span class="font-semibold">{{ $logs->currentPage() }}</span></span>
+                <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-gray-50 text-gray-700 text-xs">Per halaman <span class="font-semibold">{{ $logs->perPage() }}</span></span>
+            </div>
         </div>
-        
+
         <div class="flex items-center space-x-2">
             <form action="{{ route('admin.log.clear') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua log?')">
                 @csrf @method('DELETE')
-                <button type="submit" class="px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition flex items-center">
+                <button type="submit" class="px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition flex items-center shadow-sm">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
@@ -108,26 +115,27 @@
         @csrf @method('DELETE')
         
         <!-- Table Container -->
-        <div class="overflow-hidden">
+        <div class="overflow-hidden rounded-b-xl">
         <!-- Table -->
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead>
-                    <tr class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <thead class="bg-gray-50 sticky top-0 z-10">
+                    <tr class="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                         <th class="pl-4 pr-2 py-3 border-b">
                             <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         </th>
                         <th class="px-4 py-3 border-b">No</th>
                         <th class="px-4 py-3 border-b">Waktu</th>
+                        <th class="px-4 py-3 border-b">Level</th>
                         <th class="px-4 py-3 border-b">User</th>
                         <th class="px-4 py-3 border-b">Aksi</th>
                         <th class="px-4 py-3 border-b">Deskripsi</th>
                         <th class="px-4 py-3 border-b">IP Address</th>
                     </tr>
                 </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white" id="log-table-body">
+                    <tbody class="divide-y divide-gray-100 bg-white" id="log-table-body">
                     @forelse($logs as $index => $log)
-                        <tr class="hover:bg-gray-50 transition log-row" 
+                        <tr class="hover:bg-gray-50/70 transition-colors log-row" 
                             data-action="{{ strtolower($log->action) }}" 
                             data-description="{{ strtolower($log->description) }}"
                             data-user="{{ strtolower($log->user->name ?? '') }}"
@@ -140,6 +148,27 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                             {{ $log->created_at->format('d M Y H:i:s') }}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            @php
+                                $text = strtoupper(($log->description ?? '').' '.($log->action ?? ''));
+                                $level = 'INFO';
+                                foreach (['CRITICAL','FATAL','ERROR','WARN','WARNING','NOTICE','DEBUG','TRACE','INFO'] as $lvl) {
+                                    if (strpos($text, $lvl) !== false) { $level = $lvl === 'WARNING' ? 'WARN' : $lvl; break; }
+                                }
+                                $colors = [
+                                    'INFO' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800'],
+                                    'DEBUG' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-800'],
+                                    'WARN' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800'],
+                                    'ERROR' => ['bg' => 'bg-red-100', 'text' => 'text-red-800'],
+                                    'FATAL' => ['bg' => 'bg-red-200', 'text' => 'text-red-900'],
+                                    'TRACE' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800'],
+                                    'NOTICE' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800'],
+                                    'CRITICAL' => ['bg' => 'bg-rose-100', 'text' => 'text-rose-800'],
+                                ];
+                                $c = $colors[$level] ?? $colors['INFO'];
+                            @endphp
+                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $c['bg'] }} {{ $c['text'] }}">{{ $level }}</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm">
                             <div class="flex items-center">
@@ -174,16 +203,16 @@
                                 {{ $log->action }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-700">
-                            {{ $log->description }}
+                        <td class="px-4 py-3 text-sm text-gray-700 max-w-[28rem]">
+                            <span class="line-clamp-2" title="{{ $log->description }}">{{ $log->description }}</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 font-mono">
                             {{ $log->ip_address }}
                         </td>
                     </tr>
                     @empty
                         <tr id="no-data-row" class="hidden">
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                             <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
@@ -249,6 +278,47 @@
             </div>
         </div>
     </form>
+</div>
+
+<!-- Legend / Deskripsi Level Log -->
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Jenis Level Log & Fungsinya</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg border border-gray-100 bg-blue-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">INFO</span></div>
+            <p class="text-sm text-gray-700">Informasi umum tentang alur aplikasi (keadaan normal).</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-gray-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">DEBUG</span></div>
+            <p class="text-sm text-gray-700">Detail teknis untuk debugging selama pengembangan.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-yellow-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">WARN</span></div>
+            <p class="text-sm text-gray-700">Peringatan adanya potensi masalah namun belum error.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-red-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">ERROR</span></div>
+            <p class="text-sm text-gray-700">Kesalahan yang menyebabkan fitur gagal, perlu ditangani.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-rose-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-800">CRITICAL</span></div>
+            <p class="text-sm text-gray-700">Masalah kritikal yang membutuhkan perhatian segera.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-red-100/50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-200 text-red-900">FATAL</span></div>
+            <p class="text-sm text-gray-700">Kegagalan fatal yang menghentikan aplikasi.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-emerald-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">TRACE</span></div>
+            <p class="text-sm text-gray-700">Jejak sangat detail untuk melacak eksekusi langkah demi langkah.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-indigo-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">NOTICE</span></div>
+            <p class="text-sm text-gray-700">Peristiwa penting namun tidak bermasalah.</p>
+        </div>
+    </div>
+    <p class="mt-4 text-xs text-gray-500">Catatan: Level ditentukan otomatis dari kata kunci pada kolom Aksi/Deskripsi.</p>
+    
 </div>
 
 @push('scripts')

@@ -1,0 +1,39 @@
+@startuml Penilaian Dosen
+!theme plain
+
+title Penilaian Konsultasi oleh Dosen
+
+actor Dosen
+participant Sistem
+database Database
+
+== Akses Halaman Penilaian ==
+Dosen -> Sistem: Akses halaman penilaian konsultasi
+Sistem -> Database: Ambil daftar konsultasi
+Database --> Sistem: Data konsultasi (butuh penilaian)
+Sistem --> Dosen: Tampilkan daftar konsultasi
+
+== Pilih Konsultasi ==
+Dosen -> Sistem: Pilih satu konsultasi
+Sistem -> Database: Ambil detail konsultasi
+Database --> Sistem: Detail konsultasi (dokter, pasien, ringkasan)
+Sistem --> Dosen: Tampilkan form penilaian
+
+== Beri Nilai ==
+Dosen -> Sistem: Isi nilai & komentar
+Sistem -> Sistem: Validasi input (nilai 1-5)
+
+alt Validasi Gagal
+    Sistem --> Dosen: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Simpan penilaian
+    Database --> Sistem: Penilaian tersimpan
+    Sistem --> Dosen: "Penilaian berhasil disimpan"
+    
+    opt Notifikasi
+        Sistem -> Database: Buat notifikasi untuk dokter
+        Database --> Sistem: Notifikasi dibuat
+    end
+end
+
+@enduml

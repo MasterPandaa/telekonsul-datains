@@ -1,0 +1,25 @@
+@startuml Riwayat Dokter
+!theme plain
+
+title Lihat Riwayat Konsultasi Dokter
+
+actor Dokter
+participant Sistem
+database Database
+
+Dokter -> Sistem: Akses halaman riwayat
+Sistem -> Database: Ambil riwayat konsultasi\n(Status: Selesai)
+Database --> Sistem: Data riwayat konsultasi
+Sistem --> Dokter: Tampilkan daftar riwayat
+
+Dokter -> Sistem: Gunakan filter (tanggal/pasien)
+Sistem -> Database: Query dengan filter
+Database --> Sistem: Data terfilter
+Sistem --> Dokter: Tampilkan hasil filter
+
+Dokter -> Sistem: Klik detail konsultasi
+Sistem -> Database: Ambil detail konsultasi
+Database --> Sistem: Detail lengkap\n(diagnosa, tindakan, catatan)
+Sistem --> Dokter: Tampilkan detail konsultasi
+
+@enduml

@@ -27,7 +27,8 @@
         z-index: 50;
     }
     .select-items div:hover {
-        @apply bg-indigo-50;
+        /* Tailwind @apply tidak berlaku di style tag, gunakan warna langsung */
+        background-color: #eef2ff; /* indigo-50 */
     }
     .select-hide {
         animation: slideUp 0.2s ease-out;
@@ -35,7 +36,7 @@
 </style>
 
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Log Database</h1>
+    <h1 class="text-2xl font-bold text-gray-800 tracking-tight">Log Database</h1>
     <p class="text-sm text-gray-600">Catatan aktivitas CRUD pada database</p>
 </div>
 
@@ -50,12 +51,18 @@
     </div>
 @endif
 
-<div class="bg-white rounded-lg shadow-md">
+<div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-100">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b">
-        <div>
-            <h2 class="text-lg font-medium text-gray-800">Log Database</h2>
-            <p class="text-sm text-gray-500 mt-1">Total: {{ $logs->total() }} aktivitas CRUD</p>
+    <div class="flex items-center justify-between p-4 border-b bg-white/60 backdrop-blur">
+        <div class="flex items-center gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800">Log Database</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Total: {{ $logs->total() }} aktivitas CRUD</p>
+            </div>
+            <div class="hidden sm:flex items-center gap-2">
+                <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">Halaman <span class="font-semibold">{{ $logs->currentPage() }}</span></span>
+                <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-gray-50 text-gray-700 text-xs">Per halaman <span class="font-semibold">{{ $logs->perPage() }}</span></span>
+            </div>
         </div>
     </div>
     
@@ -91,22 +98,23 @@
     </div>
     
     <!-- Table Container -->
-    <div class="overflow-hidden">
+    <div class="overflow-hidden rounded-b-xl">
         <!-- Table -->
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead>
-                    <tr class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <thead class="bg-gray-50 sticky top-0 z-10">
+                    <tr class="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                         <th class="px-4 py-3 border-b">No</th>
                         <th class="px-4 py-3 border-b">Waktu</th>
                         <th class="px-4 py-3 border-b">User</th>
                         <th class="px-4 py-3 border-b">Aksi</th>
                         <th class="px-4 py-3 border-b">Deskripsi</th>
+                        <th class="px-4 py-3 border-b">Durasi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 bg-white" id="log-table-body">
+                <tbody class="divide-y divide-gray-100 bg-white" id="log-table-body">
                     @forelse($logs as $index => $log)
-                    <tr class="hover:bg-gray-50 transition log-row" 
+                    <tr class="hover:bg-gray-50/70 transition-colors log-row" 
                         data-action="{{ strtolower($log->action) }}" 
                         data-description="{{ strtolower($log->description) }}"
                         data-user="{{ strtolower($log->user->name ?? '') }}">
@@ -147,13 +155,35 @@
                                 {{ $log->action }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-700">
-                            {{ $log->description }}
+                        <td class="px-4 py-3 text-sm text-gray-700 max-w-[28rem]">
+                            <span class="line-clamp-2" title="{{ $log->description }}">{{ $log->description }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            @php
+                                $desc = (string) ($log->description ?? '');
+                                $duration = null;
+                                // Try patterns like: 123ms, 1.23s, duration: 45 ms, waktu=30ms, took 12ms
+                                if (preg_match('/(?:(?:duration|durasi|waktu|took)\s*[:=]?\s*)?(\d+(?:[\.,]\d+)?)\s*(ms|millisecond|milliseconds|s|sec|secs|second|seconds)?/i', $desc, $m)) {
+                                    $value = str_replace(',', '.', $m[1]);
+                                    $unit = strtolower($m[2] ?? 'ms');
+                                    // Normalize to ms for display
+                                    if (in_array($unit, ['s','sec','secs','second','seconds'])) {
+                                        $duration = (float)$value * 1000;
+                                    } else {
+                                        $duration = (float)$value;
+                                    }
+                                }
+                            @endphp
+                            @if (!is_null($duration))
+                                <span class="px-2 py-1 text-xs font-medium rounded bg-blue-50 text-blue-700">{{ number_format($duration, 0) }} ms</span>
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
                         </td>
                     </tr>
                     @empty
                     <tr id="no-data-row" class="hidden">
-                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                             <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>

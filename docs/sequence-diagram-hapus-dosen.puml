@@ -1,0 +1,24 @@
+@startuml Hapus Dosen
+!theme plain
+
+title Hapus Dosen (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+Admin -> Sistem: Buka manajemen dosen
+Sistem --> Admin: Tampilkan daftar dosen
+
+Admin -> Sistem: Pilih dosen > Klik Hapus
+Sistem --> Admin: Konfirmasi hapus?
+
+alt Konfirmasi Ya
+    Sistem -> Database: Hapus data dosen
+    Database --> Sistem: Berhasil dihapus
+    Sistem --> Admin: "Dosen berhasil dihapus"
+else Batal
+    Sistem --> Admin: Tutup dialog (tidak ada perubahan)
+end
+
+@enduml

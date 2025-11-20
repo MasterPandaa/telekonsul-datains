@@ -1,0 +1,31 @@
+@startuml Riwayat Pasien
+!theme plain
+
+title Lihat Riwayat Konsultasi Pasien
+
+actor Pasien
+participant Sistem
+database Database
+
+Pasien -> Sistem: Akses halaman riwayat
+Sistem -> Database: Ambil riwayat konsultasi\n(Status: Selesai)
+Database --> Sistem: Data riwayat konsultasi
+Sistem --> Pasien: Tampilkan daftar riwayat
+
+Pasien -> Sistem: Klik detail konsultasi
+Sistem -> Database: Ambil detail konsultasi
+Database --> Sistem: Detail lengkap\n(diagnosa, obat, catatan)
+Sistem --> Pasien: Tampilkan detail konsultasi
+
+alt Belum Ada Rating
+    Pasien -> Sistem: Berikan rating & komentar
+    Sistem -> Sistem: Validasi rating (1-5)
+    Sistem -> Database: Simpan rating
+    Database --> Sistem: Rating tersimpan
+    Sistem --> Pasien: "Rating berhasil diberikan"
+    
+else Sudah Ada Rating
+    Sistem --> Pasien: Tampilkan rating yang diberikan
+end
+
+@enduml

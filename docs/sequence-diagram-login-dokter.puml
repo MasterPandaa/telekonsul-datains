@@ -1,0 +1,24 @@
+@startuml Login Dokter
+!theme plain
+
+title Login Dokter
+
+actor Dokter
+participant Sistem
+database Database
+
+Dokter -> Sistem: Buka halaman login
+Sistem --> Dokter: Tampilkan form login
+
+Dokter -> Sistem: Input email & password
+Sistem -> Database: Validasi kredensial
+
+alt Login Berhasil
+    Database --> Sistem: Data user valid (Role: Dokter)
+    Sistem --> Dokter: Redirect ke Dashboard Dokter
+else Login Gagal
+    Database --> Sistem: Kredensial salah
+    Sistem --> Dokter: Tampilkan pesan error
+end
+
+@enduml

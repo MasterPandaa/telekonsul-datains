@@ -1,0 +1,24 @@
+@startuml Login Admin
+!theme plain
+
+title Login Admin
+
+actor Admin
+participant Sistem
+database Database
+
+Admin -> Sistem: Buka halaman login
+Sistem --> Admin: Tampilkan form login
+
+Admin -> Sistem: Input email & password
+Sistem -> Database: Validasi kredensial
+
+alt Login Berhasil
+    Database --> Sistem: Data user valid (Role: Admin)
+    Sistem --> Admin: Redirect ke Dashboard Admin
+else Login Gagal
+    Database --> Sistem: Kredensial salah
+    Sistem --> Admin: Tampilkan pesan error
+end
+
+@enduml

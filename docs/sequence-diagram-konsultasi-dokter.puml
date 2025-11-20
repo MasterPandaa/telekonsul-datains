@@ -1,0 +1,51 @@
+@startuml Konsultasi Dokter
+!theme plain
+
+title Aktivitas Konsultasi Dokter dengan Pasien
+
+actor Dokter
+actor Pasien
+participant Sistem
+database Database
+
+== Lihat Permintaan Konsultasi ==
+Dokter -> Sistem: Akses halaman konsultasi
+Sistem -> Database: Ambil permintaan konsultasi\n(Status: Menunggu)
+Database --> Sistem: Daftar permintaan
+Sistem --> Dokter: Tampilkan daftar permintaan
+
+Dokter -> Sistem: Lihat detail permintaan
+Sistem --> Dokter: Tampilkan detail pasien & keluhan
+
+== Konfirmasi/Tolak Konsultasi ==
+alt Dokter Konfirmasi
+    Dokter -> Sistem: Konfirmasi konsultasi
+    Sistem -> Database: Update status (Terkonfirmasi)
+    Database --> Sistem: Status diperbarui
+    Sistem --> Pasien: Notifikasi konsultasi dikonfirmasi
+    
+else Dokter Tolak
+    Dokter -> Sistem: Tolak konsultasi + alasan
+    Sistem -> Database: Update status (Ditolak)
+    Sistem --> Pasien: Notifikasi konsultasi ditolak
+end
+
+== Pelaksanaan Konsultasi ==
+Dokter -> Sistem: Masuk ruang chat konsultasi
+Pasien -> Sistem: Masuk ruang chat
+Sistem --> Dokter: Chat room aktif
+
+Pasien -> Sistem: Kirim keluhan
+Sistem --> Dokter: Tampilkan pesan
+
+Dokter -> Sistem: Kirim diagnosa & saran
+Sistem -> Database: Simpan diagnosa
+Sistem --> Pasien: Tampilkan pesan
+
+== Selesai Konsultasi ==
+Dokter -> Sistem: Input diagnosa final & akhiri konsultasi
+Sistem -> Database: Simpan diagnosa & update status (Selesai)
+Database --> Sistem: Konsultasi selesai
+Sistem --> Pasien: Notifikasi konsultasi selesai
+
+@enduml

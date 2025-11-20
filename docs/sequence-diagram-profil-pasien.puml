@@ -1,0 +1,54 @@
+@startuml Profil Pasien
+!theme plain
+
+title Lihat dan Edit Profil Pasien
+
+actor Pasien
+participant Sistem
+database Database
+
+== Lihat Profil ==
+Pasien -> Sistem: Akses halaman profil
+Sistem -> Database: Ambil data profil pasien
+Database --> Sistem: Data profil
+Sistem --> Pasien: Tampilkan profil lengkap
+
+== Edit Informasi Dasar ==
+Pasien -> Sistem: Klik edit informasi dasar
+Sistem --> Pasien: Tampilkan form edit
+
+Pasien -> Sistem: Update data (nama, alamat, no HP, dll)
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Pasien: Tampilkan pesan error
+    
+else Validasi Berhasil
+    Sistem -> Database: Update informasi dasar
+    Database --> Sistem: Data diperbarui
+    Sistem --> Pasien: "Profil berhasil diperbarui"
+end
+
+== Edit Informasi Medis ==
+Pasien -> Sistem: Klik edit informasi medis
+Sistem --> Pasien: Tampilkan form medis
+
+Pasien -> Sistem: Update data medis\n(tinggi, berat, tekanan darah, alergi)
+Sistem -> Database: Update informasi medis
+Database --> Sistem: Data diperbarui
+Sistem --> Pasien: "Informasi medis berhasil diperbarui"
+
+== Upload Foto Profil ==
+Pasien -> Sistem: Upload foto profil
+Sistem -> Sistem: Validasi file (format & ukuran)
+
+alt File Tidak Valid
+    Sistem --> Pasien: "Format/ukuran file tidak valid"
+    
+else File Valid
+    Sistem -> Database: Simpan foto profil
+    Database --> Sistem: Foto tersimpan
+    Sistem --> Pasien: "Foto profil berhasil diperbarui"
+end
+
+@enduml

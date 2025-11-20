@@ -1,0 +1,60 @@
+@startuml Profil Dokter
+!theme plain
+
+title Lihat dan Edit Profil Dokter
+
+actor Dokter
+participant Sistem
+database Database
+
+== Lihat Profil ==
+Dokter -> Sistem: Akses halaman profil
+Sistem -> Database: Ambil data profil dokter
+Database --> Sistem: Data profil
+Sistem --> Dokter: Tampilkan profil lengkap
+
+== Edit Informasi Dasar ==
+Dokter -> Sistem: Klik edit informasi dasar
+Sistem --> Dokter: Tampilkan form edit
+
+Dokter -> Sistem: Update data (nama, alamat, no HP, dll)
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Dokter: Tampilkan pesan error
+    
+else Validasi Berhasil
+    Sistem -> Database: Update informasi dasar
+    Database --> Sistem: Data diperbarui
+    Sistem --> Dokter: "Profil berhasil diperbarui"
+end
+
+== Edit Informasi Akademik ==
+Dokter -> Sistem: Klik edit informasi akademik
+Sistem --> Dokter: Tampilkan form akademik
+
+Dokter -> Sistem: Update data akademik\n(pendidikan, spesialisasi, no SIP)
+Sistem -> Database: Update informasi akademik
+Database --> Sistem: Data diperbarui
+Sistem --> Dokter: "Informasi akademik berhasil diperbarui"
+
+== Edit Keahlian & Prestasi ==
+Dokter -> Sistem: Update keahlian & prestasi
+Sistem -> Database: Simpan keahlian & prestasi
+Database --> Sistem: Data tersimpan
+Sistem --> Dokter: "Data berhasil diperbarui"
+
+== Upload Foto Profil ==
+Dokter -> Sistem: Upload foto profil
+Sistem -> Sistem: Validasi file (format & ukuran)
+
+alt File Tidak Valid
+    Sistem --> Dokter: "Format/ukuran file tidak valid"
+    
+else File Valid
+    Sistem -> Database: Simpan foto profil
+    Database --> Sistem: Foto tersimpan
+    Sistem --> Dokter: "Foto profil berhasil diperbarui"
+end
+
+@enduml

@@ -1,0 +1,42 @@
+@startuml Edit Dokter
+!theme plain
+
+title Edit Dokter (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+== Akses Form Edit ==
+Admin -> Sistem: Akses manajemen dokter
+Sistem -> Database: Ambil daftar dokter
+Database --> Sistem: Data dokter
+Sistem --> Admin: Tampilkan daftar dokter
+
+Admin -> Sistem: Pilih dokter > Klik Edit
+Sistem -> Database: Ambil data dokter terpilih
+Database --> Sistem: Data profil dokter
+Sistem --> Admin: Tampilkan form edit (pre-filled)
+
+== Submit Perubahan ==
+Admin -> Sistem: Ubah data & submit
+Sistem -> Sistem: Validasi input
+
+alt Validasi Gagal
+    Sistem --> Admin: Tampilkan pesan error
+else Validasi Berhasil
+    Sistem -> Database: Cek unik email/SIP (jika diubah)
+    
+    alt Duplikat Ditemukan
+        Database --> Sistem: Email/SIP sudah ada
+        Sistem --> Admin: "Email/SIP sudah terdaftar"
+    else Tidak Duplikat
+        Database --> Sistem: OK
+        Sistem -> Database: Update user (nama/email bila perlu)
+        Sistem -> Database: Update profil dokter (SIP, spesialisasi, kontak, dll)
+        Database --> Sistem: Data dokter diperbarui
+        Sistem --> Admin: "Perubahan berhasil disimpan"
+    end
+end
+
+@enduml

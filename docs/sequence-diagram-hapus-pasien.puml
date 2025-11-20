@@ -1,0 +1,24 @@
+@startuml Hapus Pasien
+!theme plain
+
+title Hapus Pasien (Admin)
+
+actor Admin
+participant Sistem
+database Database
+
+Admin -> Sistem: Buka manajemen pasien
+Sistem --> Admin: Tampilkan daftar pasien
+
+Admin -> Sistem: Pilih pasien > Klik Hapus
+Sistem --> Admin: Konfirmasi hapus?
+
+alt Konfirmasi Ya
+    Sistem -> Database: Hapus data pasien
+    Database --> Sistem: Berhasil dihapus
+    Sistem --> Admin: "Pasien berhasil dihapus"
+else Batal
+    Sistem --> Admin: Tutup dialog (tidak ada perubahan)
+end
+
+@enduml
