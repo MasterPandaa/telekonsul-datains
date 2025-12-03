@@ -6,6 +6,7 @@ use App\Models\Pasien;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Faker\Factory as FakerFactory;
 
 class PasienSeeder extends Seeder
 {
@@ -14,31 +15,34 @@ class PasienSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buat pasien untuk user dengan role pasien yang sudah ada
-        $user = User::where('email', 'pasien@example.com')->first();
-        
-        if ($user) {
-            Pasien::create([
-                'nik' => '3175012345678901',
-                'email' => 'pasien@example.com',
-                'alamat' => 'Jl. Kesehatan No. 123, Jakarta Selatan',
-                'no_hp' => '081234567890',
-                'jenis_kelamin' => 'Laki-laki',
-                'tempat_lahir' => 'Jakarta',
-                'tanggal_lahir' => '1985-05-15',
-                'tinggi_badan' => 175,
-                'berat_badan' => 70,
-                'tekanan_darah' => '120/80',
-                'alergi' => 'Seafood',
-                'riwayat_penyakit' => 'Tidak ada riwayat penyakit kronis',
-                'user_id' => $user->id
-            ]);
+        $faker = FakerFactory::create('id_ID');
+
+        $pasienUsers = User::where('role', 'pasien')->get();
+
+        foreach ($pasienUsers as $index => $user) {
+            Pasien::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'nik' => $this->generateNik($index + 1),
+                    'email' => $user->email,
+                    'alamat' => $faker->address(),
+                    'no_hp' => $faker->phoneNumber(),
+                    'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
+                    'tempat_lahir' => $faker->city(),
+                    'tanggal_lahir' => $faker->date('Y-m-d', '-20 years'),
+                    'foto' => 'img/pasien/default.jpg',
+                    'tinggi_badan' => $faker->numberBetween(150, 185),
+                    'berat_badan' => $faker->numberBetween(45, 90),
+                    'tekanan_darah' => $faker->randomElement(['110/70', '120/80', '130/85']),
+                    'alergi' => $faker->optional()->sentence(),
+                    'riwayat_penyakit' => $faker->optional()->sentence(),
+                ]
+            );
         }
-        
-        // Buat 15 pasien dummy dengan factory
-        Pasien::factory(15)->create();
-        
-        // Buat 5 pasien dummy dengan relasi user
-        Pasien::factory(5)->withUser()->create();
     }
-} 
+
+    private function generateNik(int $sequence): string
+    {
+        return sprintf('31750%02d%07d', now()->format('y'), $sequence * rand(10, 90));
+    }
+}

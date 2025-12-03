@@ -14,8 +14,11 @@ return new class extends Migration
         if (!Schema::hasTable('chat_rooms')) {
             Schema::create('chat_rooms', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('konsultasi_id')->constrained()->onDelete('cascade');
+                $table->foreignId('konsultasi_id')->constrained()->cascadeOnDelete();
+                $table->uuid('room_id')->unique();
                 $table->boolean('is_active')->default(true);
+                $table->timestamp('started_at')->nullable();
+                $table->timestamp('ended_at')->nullable();
                 $table->timestamps();
             });
         }

@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Dokter;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class DokterSeeder extends Seeder
 {
@@ -14,32 +15,55 @@ class DokterSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buat user untuk dokter contoh
-        $user = User::where('email', 'dokter@example.com')->first();
-        
-        // Buat dokter dari user yang sudah ada
-        $dokter = Dokter::create([
-            'no_sip' => 'SIP/123/456/2023',
-            'no_str' => '1234.5.6.7890.12.34567',
-            'email' => $user->email,
-            'alamat' => 'Jl. Merdeka No. 123, Jakarta Pusat',
-            'no_hp' => '081234567890',
-            'jenis_kelamin' => 'Perempuan',
-            'tempat_lahir' => 'Jakarta',
-            'tanggal_lahir' => '1999-05-15',
-            'foto' => 'img/dokter/default.jpg',
-            'spesialisasi' => 'Kedokteran Umum',
-            'sub_spesialisasi' => 'Kedokteran Keluarga',
-            'universitas' => 'Universitas Indonesia',
-            'tahun_lulus' => 2022,
-            'tempat_praktik' => 'Klinik Sehat Sentosa',
-            'rumah_sakit' => 'RS Umum Jakarta',
-            'status' => 'Aktif',
-            'pengalaman' => 'Memiliki pengalaman di bidang kedokteran keluarga dan telah menangani berbagai kasus umum.',
-            'user_id' => $user->id,
-        ]);
-        
-        // Buat 5 dokter lainnya dengan factory
-        Dokter::factory(5)->create();
+        $faker = fake();
+
+        $dokterUsers = User::where('role', 'dokter')->get();
+
+        foreach ($dokterUsers as $index => $user) {
+            Dokter::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'no_sip' => $this->generateSip($index + 1),
+                    'no_str' => $this->generateStr($index + 1),
+                    'email' => $user->email,
+                    'alamat' => $faker->address(),
+                    'no_hp' => $faker->phoneNumber(),
+                    'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
+                    'tempat_lahir' => $faker->city(),
+                    'tanggal_lahir' => $faker->date('Y-m-d', '-25 years'),
+                    'foto' => 'img/dokter/default.jpg',
+                    'spesialisasi' => $faker->randomElement([
+                        'Kedokteran Umum',
+                        'Penyakit Dalam',
+                        'Anak',
+                        'Bedah Umum',
+                        'Jantung',
+                    ]),
+                    'sub_spesialisasi' => $faker->optional()->word(),
+                    'universitas' => $faker->randomElement([
+                        'Universitas Indonesia',
+                        'Universitas Gadjah Mada',
+                        'Universitas Airlangga',
+                        'Universitas Padjadjaran',
+                    ]),
+                    'tahun_lulus' => $faker->numberBetween(2005, 2022),
+                    'tempat_praktik' => $faker->company() . ' Klinik',
+                    'rumah_sakit' => 'RS ' . Str::title($faker->lastName()),
+                    'status' => 'Aktif',
+                    'pengalaman' => $faker->paragraph(),
+                ]
+            );
+        }
     }
-} 
+
+    private function generateSip(int $sequence): string
+    {
+        return sprintf('SIP/%03d/%03d/%04d', $sequence, rand(100, 999), now()->year);
+    }
+
+    private function generateStr(int $sequence): string
+    {
+        return sprintf('%04d.%d.%d.%04d.%02d.%05d', rand(1000, 9999), rand(1, 9), rand(1, 9), rand(1000, 9999), rand(10, 99), $sequence * rand(10, 99));
+    }
+}
+ 

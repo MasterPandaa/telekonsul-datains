@@ -6,7 +6,7 @@ use App\Models\Dosen;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use Faker\Factory as FakerFactory;
 
 class DosenSeeder extends Seeder
 {
@@ -15,31 +15,25 @@ class DosenSeeder extends Seeder
      */
     public function run(): void
     {
-        // Cek apakah user dosen sudah ada
-        $user = User::where('email', 'dosen@example.com')->first();
-        
-        if (!$user) {
-            // Buat user untuk dosen jika belum ada
-            $user = User::create([
-                'name' => 'Dosen Supervisor',
-                'email' => 'dosen@example.com',
-                'password' => Hash::make('dosen'),
-                'role' => 'dosen',
-            ]);
-        }
+        $faker = FakerFactory::create('id_ID');
 
-        // Cek apakah data dosen sudah ada
-        $dosen = Dosen::where('user_id', $user->id)->first();
-        
-        if (!$dosen) {
-            // Buat data dosen jika belum ada
-            Dosen::create([
-                'user_id' => $user->id,
-                'nip' => '1234567890',
-                'email' => 'dosen@example.com',
-                'alamat' => 'Jl. Pendidikan No. 1',
-                'no_hp' => '081234567890',
-            ]);
+        $dosenUsers = User::where('role', 'dosen')->get();
+
+        foreach ($dosenUsers as $index => $user) {
+            Dosen::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'nip' => $this->generateNip($index + 1),
+                    'email' => $user->email,
+                    'alamat' => $faker->address(),
+                    'no_hp' => $faker->phoneNumber(),
+                ]
+            );
         }
     }
-} 
+
+    private function generateNip(int $sequence): string
+    {
+        return sprintf('%010d', $sequence * rand(10000, 99999));
+    }
+}

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,40 +14,63 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->createMandatoryUsers();
+        $this->createAdditionalUsers();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('admin'),
-            'role' => 'admin',
-        ]);
-        User::create([
-            'name' => 'Dokter',
-            'email' => 'dokter@example.com',
-            'password' => bcrypt('dokter'),
-            'role' => 'dokter',
-        ]);
-        User::create([
-            'name' => 'Pasien',
-            'email' => 'pasien@example.com',
-            'password' => bcrypt('pasien'),
-            'role' => 'pasien',
-        ]);
-        
-        // Panggil seeder lainnya
         $this->call([
-            LogSeeder::class,
             DokterSeeder::class,
-            PasienSeeder::class,
-            KonsultasiSeeder::class,
             DosenSeeder::class,
+            PasienSeeder::class,
             DummyDataSeeder::class,
         ]);
     }
+
+    private function createMandatoryUsers(): void
+    {
+        $users = [
+            ['Admin Wajib', 'admin@example.com', 'admin', 'admin'],
+            ['Dokter Wajib', 'dokter@example.com', 'dokter', 'dokter'],
+            ['Dosen Wajib', 'dosen@example.com', 'dosen', 'dosen'],
+            ['Pasien Wajib', 'pasien@example.com', 'pasien', 'pasien'],
+        ];
+
+        foreach ($users as [$name, $email, $password, $role]) {
+            User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => Hash::make($password),
+                    'role' => $role,
+                ]
+            );
+        }
+    }
+
+    private function createAdditionalUsers(): void
+    {
+        $counts = 5;
+        $roles = [
+            'admin' => 'Admin',
+            'dokter' => 'Dokter',
+            'dosen' => 'Dosen',
+            'pasien' => 'Pasien',
+        ];
+
+        foreach ($roles as $role => $label) {
+            for ($i = 2; $i <= $counts + 1; $i++) {
+                $email = strtolower($role) . $i . '@example.com';
+                $password = strtolower($role) . $i;
+
+                User::updateOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => $label . ' ' . $i,
+                        'password' => Hash::make($password),
+                        'role' => $role,
+                    ]
+                );
+            }
+        }
+    }
 }
+

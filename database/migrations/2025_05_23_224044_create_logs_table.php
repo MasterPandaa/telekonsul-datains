@@ -14,12 +14,11 @@ return new class extends Migration
         if (!Schema::hasTable('logs')) {
             Schema::create('logs', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('action');
+                $table->text('description')->nullable();
                 $table->string('ip_address')->nullable();
                 $table->string('user_agent')->nullable();
-                $table->string('action');
-                $table->string('module');
-                $table->text('details')->nullable();
                 $table->timestamps();
             });
         }

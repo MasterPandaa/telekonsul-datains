@@ -3,31 +3,36 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
-    public function up(): void {
-        if (!Schema::hasTable('database_logs')) {
-            Schema::create('database_logs', function (Blueprint $table) {
-                $table->id();
-                $table->string('action');
-                $table->string('table');
-                $table->unsignedBigInteger('row_id')->nullable();
-                $table->json('old_values')->nullable();
-                $table->json('new_values')->nullable();
-                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-                $table->string('ip_address')->nullable();
-                $table->string('user_agent')->nullable();
-                $table->timestamps();
-            });
+    public function up(): void
+    {
+        // Drop the 'database_logs' table if it exists
+        if (Schema::hasTable('database_logs')) {
+            Schema::drop('database_logs');
         }
     }
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void {
-        Schema::dropIfExists('database_logs');
+    public function down(): void
+    {
+        // Create the 'database_logs' table
+        Schema::create('database_logs', function (Blueprint $table) {
+            $table->id();
+            $table->string('action');
+            $table->string('table');
+            $table->unsignedBigInteger('row_id')->nullable();
+            $table->json('old_values')->nullable();
+            $table->json('new_values')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('ip_address')->nullable();
+            $table->string('user_agent')->nullable();
+            $table->timestamps();
+        });
     }
-}; 
+};
