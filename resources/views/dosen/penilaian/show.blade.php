@@ -29,7 +29,11 @@
             </div>
             <div class="flex justify-between">
                 <span class="text-gray-600">Waktu:</span>
-                <span class="font-medium">{{ $konsultasi->jam_mulai->format('H:i') }} - {{ $konsultasi->jam_selesai->format('H:i') }}</span>
+                <span class="font-medium">
+                    {{ $konsultasi->jam_mulai ? \Carbon\Carbon::parse($konsultasi->jam_mulai)->format('H:i') : '-' }}
+                    -
+                    {{ $konsultasi->jam_selesai ? \Carbon\Carbon::parse($konsultasi->jam_selesai)->format('H:i') : '-' }}
+                </span>
             </div>
             <div class="flex justify-between">
                 <span class="text-gray-600">Status:</span>
@@ -108,18 +112,43 @@
 <div class="bg-white rounded-lg shadow-md p-6 mb-8">
     <h3 class="text-lg font-medium text-gray-800 mb-3">Riwayat Percakapan</h3>
     <div class="bg-gray-50 p-4 rounded-lg max-h-80 overflow-y-auto">
-        @if($konsultasi->chatRoom && $konsultasi->chatRoom->messages->count() > 0)
+        @php
+            $messages = $konsultasi->chatRoom ? $konsultasi->chatRoom->messages()->orderBy('created_at')->paginate(20) : null;
+        @endphp
+
+        @if($messages && $messages->count() > 0)
             <div class="space-y-4">
-                @foreach($konsultasi->chatRoom->messages as $message)
+                @foreach($messages as $message)
                     <div class="flex {{ $message->sender_id == $konsultasi->dokter_id ? 'justify-end' : 'justify-start' }}">
                         <div class="max-w-[70%] {{ $message->sender_id == $konsultasi->dokter_id ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-800' }} rounded-lg px-4 py-2">
                             <div class="text-xs text-gray-500 mb-1">
-                                {{ $message->sender_id == $konsultasi->dokter_id ? 'Dokter' : 'Pasien' }} • {{ $message->created_at->format('H:i') }}
+                                {{ $message->sender_id == $konsultasi->dokter_id ? 'Dokter' : 'Pasien' }} • {{ \Carbon\Carbon::parse($message->created_at)->format('H:i') }}
                             </div>
                             <p>{{ $message->content }}</p>
                         </div>
                     </div>
                 @endforeach
+            </div>
+
+            <div class="mt-4">
+                <div class="flex items-center justify-between text-xs text-gray-600">
+                    <span>Menampilkan {{ $messages->firstItem() }} - {{ $messages->lastItem() }} dari {{ $messages->total() }} pesan</span>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <a href="{{ $messages->previousPageUrl() ?? '#' }}" class="relative inline-flex items-center px-2 py-1 rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 {{ $messages->onFirstPage() ? 'opacity-50 cursor-not-allowed' : '' }}">
+                            <span class="sr-only">Sebelumnya</span>
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <span class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-3 py-1 border font-medium">{{ $messages->currentPage() }}</span>
+                        <a href="{{ $messages->nextPageUrl() ?? '#' }}" class="relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 {{ !$messages->hasMorePages() ? 'opacity-50 cursor-not-allowed' : '' }}">
+                            <span class="sr-only">Selanjutnya</span>
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </nav>
+                </div>
             </div>
         @else
             <p class="text-gray-500 italic">Tidak ada riwayat percakapan</p>

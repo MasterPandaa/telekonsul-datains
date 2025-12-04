@@ -95,6 +95,69 @@ class DummyDataSeeder extends Seeder
         $scheduledCount = 0;
         $cancelledCount = 0;
 
+        // Contoh konsultasi selesai namun belum dinilai (untuk penilaian dosen)
+        if ($selectedPasien->isNotEmpty()) {
+            $examplePasien = $selectedPasien->first();
+            $exampleDokter = $dokterUsers->first();
+            $assignedDosen = $dosenRecords->first();
+
+            $exampleStart = Carbon::now()->subDays(3)->setTime(10, 0, 0);
+            $exampleEnd = (clone $exampleStart)->addMinutes(30);
+
+            $konsultasiBelumDinilai = Konsultasi::create([
+                'pasien_id' => $examplePasien->id,
+                'dokter_id' => $exampleDokter->id,
+                'dosen_id' => $assignedDosen?->id,
+                'tanggal' => $exampleStart->toDateString(),
+                'jam_mulai' => $exampleStart->format('H:i:s'),
+                'jam_selesai' => $exampleEnd->format('H:i:s'),
+                'keluhan' => 'Kontrol pasca operasi lutut dengan nyeri ringan meningkat',
+                'keterangan' => 'Pasien membutuhkan evaluasi lanjutan terhadap program fisioterapi.',
+                'diagnosa' => null,
+                'catatan' => null,
+                'status' => 'Selesai',
+                'nilai' => null,
+                'nilai_dosen' => null,
+                'nilai_komunikasi' => null,
+                'nilai_anamnesis' => null,
+                'nilai_diagnosa' => null,
+                'nilai_empati' => null,
+                'catatan_dosen' => null,
+                'rating' => null,
+                'komentar_rating' => null,
+            ]);
+
+            $sampleRoom = ChatRoom::create([
+                'konsultasi_id' => $konsultasiBelumDinilai->id,
+                'room_id' => Str::uuid(),
+                'is_active' => false,
+                'started_at' => $exampleStart,
+                'ended_at' => $exampleEnd,
+            ]);
+
+            $chatTimeline = [
+                ['sender' => 'pasien', 'message' => 'Dok, lutut kiri saya agak nyeri lagi ketika menaiki tangga.'],
+                ['sender' => 'dokter', 'message' => 'Apakah nyerinya disertai bengkak atau kemerahan?'],
+                ['sender' => 'pasien', 'message' => 'Tidak ada bengkak, hanya terasa tegang setelah latihan peregangan.'],
+                ['sender' => 'dokter', 'message' => 'Baik, nanti akan saya evaluasi ulang program fisioterapinya.'],
+            ];
+
+            $messageTime = (clone $exampleStart);
+            foreach ($chatTimeline as $entry) {
+                ChatMessage::create([
+                    'chat_room_id' => $sampleRoom->id,
+                    'user_id' => $entry['sender'] === 'dokter' ? $exampleDokter->id : $examplePasien->user_id,
+                    'message' => $entry['message'],
+                    'is_read' => true,
+                    'created_at' => $messageTime,
+                    'updated_at' => $messageTime,
+                ]);
+                $messageTime = (clone $messageTime)->addMinutes(4);
+            }
+
+            $completedCount++;
+        }
+
         foreach ($selectedPasien as $index => $pasien) {
             $dokterUser = $dokterUsers[$index % $dokterUsers->count()];
 

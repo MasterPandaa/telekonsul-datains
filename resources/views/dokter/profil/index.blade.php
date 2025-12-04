@@ -7,31 +7,36 @@
 
 <!-- We'll handle alerts with SweetAlert instead of the static alert divs -->
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+@php
+    $fotoUrl = !empty($profil['foto']) && file_exists(public_path($profil['foto']))
+        ? asset($profil['foto'])
+        : asset('img/dokter/default.jpg');
+@endphp
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
     <!-- Kolom Profil dan Foto -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden h-full">
-        <div class="p-6 text-center flex flex-col h-full">
-            <div class="w-40 h-40 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
-                @if ($profil['foto'])
-                    <img src="{{ asset($profil['foto']) }}" alt="{{ $profil['nama'] }}" class="w-full h-full object-cover">
-                @else
-                    <div class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
-                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                @endif
-            </div>
-            <div class="flex-grow">
-                <h2 class="text-xl font-bold text-gray-800">{{ $profil['nama'] }}</h2>
-                <p class="text-sm text-gray-600 mt-1">SIP: {{ $profil['no_sip'] }}</p>
-                <p class="text-sm text-gray-600 mt-1">STR: {{ $profil['no_str'] }}</p>
-                <div class="mt-2 inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    {{ $profil['spesialisasi'] }}
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div class="p-6 flex flex-col items-center text-center space-y-4">
+            <div class="relative">
+                <div class="w-40 h-40 rounded-full overflow-hidden ring-4 ring-blue-50 shadow-sm bg-white">
+                    <img src="{{ $fotoUrl }}" alt="{{ $profil['nama'] }}" class="w-full h-full object-cover">
                 </div>
+                <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" class="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-md transition" title="Ubah foto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                    </svg>
+                </button>
             </div>
-            
-            <div class="mt-6 border-t pt-4">
+            <div class="space-y-2">
+                <h2 class="text-xl font-bold text-gray-900">{{ $profil['nama'] }}</h2>
+                <p class="text-sm text-gray-600">SIP: {{ $profil['no_sip'] }}</p>
+                <p class="text-sm text-gray-600">STR: {{ $profil['no_str'] }}</p>
+                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">
+                    {{ $profil['spesialisasi'] }}
+                </span>
+            </div>
+
+            <div class="w-full pt-4 border-t border-gray-100">
                 <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition">
                     Ubah Foto Profil
                 </button>
@@ -40,8 +45,8 @@
     </div>
     
     <!-- Kolom Informasi Utama -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6 h-full">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
             <div class="p-6 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-gray-800">Informasi Dasar</h3>
@@ -53,8 +58,8 @@
                     </button>
                 </div>
             </div>
-            <div class="p-6 flex-grow">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8">
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Nama Lengkap</h4>
                         <p class="mt-1 text-sm text-gray-800">{{ $profil['nama'] }}</p>
@@ -91,7 +96,7 @@
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6 h-full">
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
             <div class="p-6 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-gray-800">Informasi Profesional</h3>
@@ -103,8 +108,8 @@
                     </button>
                 </div>
             </div>
-            <div class="p-6 flex-grow">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8">
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Spesialisasi</h4>
                         <p class="mt-1 text-sm text-gray-800">{{ $profil['spesialisasi'] }}</p>

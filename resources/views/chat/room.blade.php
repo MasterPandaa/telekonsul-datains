@@ -24,10 +24,10 @@
             overflow-y: auto;
         }
         .message-bubble-left {
-            border-radius: 20px 20px 20px 4px;
+            border-radius: 4px 20px 20px 20px;
         }
         .message-bubble-right {
-            border-radius: 20px 20px 4px 20px;
+            border-radius: 20px 4px 20px 20px;
         }
         .typing-indicator {
             display: inline-flex;
@@ -431,48 +431,45 @@
                     </div>
                     @endif
                     
-                    @if(Auth::user()->role === 'pasien' && $konsultasi->diagnosa || Auth::user()->role === 'dosen' && $konsultasi->diagnosa)
+                    @if(Auth::user()->role === 'pasien' || Auth::user()->role === 'dosen' || isset($isDosenView))
                     <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
                         <div class="flex items-center mb-2">
                             <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                                    </svg>
-                            <div class="text-xs font-semibold text-indigo-600">Hasil Diagnosa</div>
-                            </div>
-                            
-                        <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50">
-                            <div class="space-y-4">
-                            <div class="mb-3">
-                                    <div class="flex items-center mb-1">
-                                        <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            </svg>
+                            <div class="text-xs font-semibold text-indigo-600">Hasil Diagnosa & Rekomendasi Dokter</div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-indigo-100/50 space-y-4">
+                            <div>
+                                <div class="flex items-center mb-1">
+                                    <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                     </svg>
-                                        <div class="text-xs font-semibold text-indigo-600">Diagnosa:</div>
-                                    </div>
-                                    <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
-                                        {{ $konsultasi->diagnosa }}
+                                    <div class="text-xs font-semibold text-indigo-600">Diagnosa Dokter</div>
+                                </div>
+                                <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                    {{ $konsultasi->diagnosa ?? 'Belum ada diagnosa yang diisi oleh dokter.' }}
                                 </div>
                             </div>
-                            
-                            @if($konsultasi->catatan)
-                                <div class="mb-3">
-                                    <div class="flex items-center mb-1">
-                                        <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                            <div>
+                                <div class="flex items-center mb-1">
+                                    <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
-                                        <div class="text-xs font-semibold text-indigo-600">Catatan Medis:</div>
-                                    </div>
-                                    <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
-                                        {{ $konsultasi->catatan }}
-                                    </div>
+                                    <div class="text-xs font-semibold text-indigo-600">Catatan Medis / Rekomendasi</div>
                                 </div>
-                                @endif
+                                <div class="text-sm text-gray-700 p-3 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
+                                    {{ $konsultasi->catatan ?? 'Belum ada catatan atau rekomendasi tambahan.' }}
+                                </div>
                             </div>
+
                         </div>
                     </div>
                     @endif
 
-                    @if(Auth::user()->role === 'dokter' && $konsultasi->status === 'Selesai')
+                @if(Auth::user()->role === 'dokter' && $konsultasi->status === 'Selesai')
                     <div class="mb-4 transform transition-all hover:scale-[1.01] duration-300">
                         <div class="flex items-center mb-2">
                             <svg class="w-4 h-4 text-indigo-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -646,6 +643,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('message-input');
     const timeRemaining = document.getElementById('time-remaining');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const currentUserId = {{ Auth::id() }};
+    const doctorUserId = {{ $konsultasi->dokter_id ?? 'null' }};
+    const isDosenView = {{ isset($isDosenView) ? 'true' : 'false' }};
     
     // Menampilkan pesan konsultasi selesai hanya sekali
     const konsultasiSelesaiInfo = document.getElementById('konsultasi-selesai-info');
@@ -690,37 +690,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add all messages
                 messages.forEach(message => {
-                    const isCurrentUser = message.user_id === {{ Auth::id() }};
+                    const isDoctorMessage = doctorUserId !== null && message.user_id === doctorUserId;
+                    const isPerspectiveOwner = isDosenView ? isDoctorMessage : message.user_id === currentUserId;
                     const time = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
+
+                    const wrapperAlignment = isPerspectiveOwner ? 'justify-end' : 'justify-start';
+                    const contentAlignment = isPerspectiveOwner ? 'flex-row-reverse text-right' : 'text-left';
+                    const avatarClass = isPerspectiveOwner
+                        ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
+                        : 'bg-gradient-to-br from-indigo-400 to-blue-500 text-white';
+                    const bubbleClass = isPerspectiveOwner
+                        ? 'message-bubble-right bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                        : 'message-bubble-left bg-white text-gray-800 border border-gray-100';
+                    const timeAlignment = isPerspectiveOwner ? 'justify-end' : 'justify-start';
+
                     const html = `
-                        <div class="mb-4 ${isCurrentUser ? 'flex justify-end' : 'flex justify-start'}">
-                            <div class="flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[80%]">
-                                <div class="flex items-end ${isCurrentUser ? 'flex-row-reverse' : ''}">
-                                    ${!isCurrentUser ? `
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mr-2 shadow-md">
-                                        ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
-                                    </div>
-                                    ` : ''}
-                                    <div class="px-4 py-3 ${isCurrentUser ? 'message-bubble-right bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'message-bubble-left bg-white text-gray-800 border border-gray-100'} shadow-md">
+                        <div class="mb-4 flex ${wrapperAlignment}">
+                            <div class="flex items-start ${contentAlignment} max-w-[80%] gap-2">
+                                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold shadow-md ${avatarClass}">
+                                    ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                                <div>
+                                    <div class="px-4 py-3 ${bubbleClass} shadow-md">
                                         <p class="text-sm whitespace-pre-wrap leading-relaxed">${message.message}</p>
                                     </div>
-                                    ${isCurrentUser ? `
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ml-2 shadow-md">
-                                        ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
+                                    <div class="mt-1.5 text-xs text-gray-500 flex items-center ${timeAlignment}">
+                                        <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        ${time}
                                     </div>
-                                    ` : ''}
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1.5 ${isCurrentUser ? 'text-right mr-11' : 'ml-11'} flex items-center ${isCurrentUser ? 'justify-end' : ''}">
-                                    <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    ${time}
                                 </div>
                             </div>
                         </div>
                     `;
-                    
+
                     chatMessages.insertAdjacentHTML('beforeend', html);
                 });
                 
