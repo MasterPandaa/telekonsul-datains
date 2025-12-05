@@ -1,34 +1,38 @@
 @extends('layouts.dosen')
 @section('dosen-content')
+@php
+    $fotoUrl = $dosen->foto ? asset('storage/img/dosen/' . $dosen->foto) : asset('img/dokter/default.jpg');
+    $displayName = $dosen->nama ?? Auth::user()->name;
+@endphp
+
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Profil Dosen</h1>
     <p class="text-sm text-gray-600">Kelola informasi profil Anda</p>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
     <!-- Kolom Profil dan Foto -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden h-full">
-        <div class="p-6 text-center flex flex-col h-full">
-            <div class="w-40 h-40 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
-                @if ($dosen->foto)
-                    <img src="{{ asset('storage/img/dosen/' . $dosen->foto) }}" alt="{{ $dosen->nama }}" class="w-full h-full object-cover">
-                @else
-                    <div class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
-                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                @endif
-            </div>
-            <div class="flex-grow">
-                <h2 class="text-xl font-bold text-gray-800">{{ $dosen->nama }}</h2>
-                <p class="text-sm text-gray-600 mt-1">NIP: {{ $dosen->nip }}</p>
-                <div class="mt-2 inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    Dosen Pembimbing
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div class="p-6 flex flex-col items-center text-center space-y-4">
+            <div class="relative">
+                <div class="w-40 h-40 rounded-full overflow-hidden ring-4 ring-blue-50 shadow-sm bg-white">
+                    <img src="{{ $fotoUrl }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
                 </div>
+                <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" class="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-md transition" title="Ubah foto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                    </svg>
+                </button>
             </div>
-            
-            <div class="mt-6 border-t pt-4">
+            <div class="space-y-2">
+                <h2 class="text-xl font-bold text-gray-900">{{ $displayName }}</h2>
+                <p class="text-sm text-gray-600">NIP: {{ $dosen->nip }}</p>
+                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">
+                    Dosen Pembimbing
+                </span>
+            </div>
+
+            <div class="w-full pt-4 border-t border-gray-100">
                 <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition">
                     Ubah Foto Profil
                 </button>
@@ -37,24 +41,22 @@
     </div>
     
     <!-- Kolom Informasi Utama -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6 h-full">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-semibold text-gray-800">Informasi Dasar</h3>
-                    <button onclick="document.getElementById('editInformasiModal').classList.remove('hidden')" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                        </svg>
-                        Edit
-                    </button>
-                </div>
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-800">Informasi Dasar</h3>
+                <button onclick="document.getElementById('editInformasiModal').classList.remove('hidden')" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                    </svg>
+                    Edit
+                </button>
             </div>
-            <div class="p-6 flex-grow">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-8">
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Nama Lengkap</h4>
-                        <p class="mt-1 text-sm text-gray-800">{{ $dosen->nama }}</p>
+                        <p class="mt-1 text-sm text-gray-800">{{ $displayName }}</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">NIP</h4>
@@ -75,6 +77,15 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Informasi Tambahan</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600">Informasi profesional dan akademik belum tersedia untuk profil dosen.</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -88,7 +99,7 @@
                 <form action="{{ route('dosen.profil.update-foto') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="w-40 h-40 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
-                        <img id="preview-foto" src="{{ $dosen->foto ? asset('storage/img/dosen/' . $dosen->foto) : asset('img/dokter/default.jpg') }}" alt="Preview" class="w-full h-full object-cover">
+                        <img id="preview-foto" src="{{ $fotoUrl }}" alt="Preview" class="w-full h-full object-cover">
                     </div>
                     <div class="mt-3">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -122,7 +133,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                        <input type="text" name="nama" id="nama" value="{{ $dosen->nama }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                        <input type="text" name="nama" id="nama" value="{{ $displayName }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
                     </div>
                     <div>
                         <label for="nip" class="block text-sm font-medium text-gray-700">NIP</label>
@@ -157,7 +168,6 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Show SweetAlert notifications for session messages
         @if(session('success'))
         Swal.fire({
             title: 'Berhasil!',
@@ -185,7 +195,7 @@
 
     function previewImage(input) {
         if (input.files && input.files[0]) {
-            var reader = new FileReader();
+            const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('preview-foto').src = e.target.result;
             }
@@ -194,4 +204,4 @@
     }
 </script>
 @endpush
-@endsection 
+@endsection 

@@ -42,10 +42,13 @@ class DosenController extends Controller
     {
         $konsultasi = Konsultasi::findOrFail($id);
         
-        return view('dosen.penilaian.show', [
-            'title' => 'Detail Konsultasi',
-            'konsultasi' => $konsultasi
-        ]);
+        $chatRoom = $konsultasi->chatRoom;
+
+        if (!$chatRoom) {
+            return redirect()->route('dosen.penilaian.index')->with('error', 'Chat room untuk konsultasi ini tidak ditemukan.');
+        }
+
+        return redirect()->route('chat.room', $chatRoom);
     }
 
     /**

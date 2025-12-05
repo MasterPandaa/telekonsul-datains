@@ -376,12 +376,14 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <a href="{{ route('dosen.penilaian.show', $konsultasi->id) }}" class="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">
+                        <a href="{{ $konsultasi->chatRoom ? route('chat.room', $konsultasi->chatRoom) : '#' }}"
+                           class="inline-flex items-center px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition {{ !$konsultasi->chatRoom ? 'opacity-50 cursor-not-allowed' : '' }}"
+                           {{ !$konsultasi->chatRoom ? 'onclick="return false;"' : '' }}>
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
-                            Lihat
+                            Lihat Chat
                         </a>
                     </td>
                 </tr>
