@@ -690,8 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add all messages
                 messages.forEach(message => {
-                    const isDoctorMessage = doctorUserId !== null && message.user_id === doctorUserId;
-                    const isPerspectiveOwner = isDosenView ? isDoctorMessage : message.user_id === currentUserId;
+                    const isPerspectiveOwner = message.user_id === currentUserId;
                     const time = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
                     const wrapperAlignment = isPerspectiveOwner ? 'justify-end' : 'justify-start';
@@ -829,25 +828,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // If time remaining is provided from server, use it
     @if(isset($sisaWaktu))
-        timeLeft = {{ $sisaWaktu }} * 60; // convert minutes to seconds
+        timeLeft = {{ max(0, $sisaWaktu) }} * 60; // convert minutes to seconds
     @endif
-    
+
+    timeLeft = Math.max(0, Math.floor(timeLeft));
+
+    const formatTime = (totalSeconds) => {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        return minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+    };
+
     // If consultation is already finished, disable the timer
     @if($konsultasi->status === 'Selesai' || $konsultasi->status === 'Terlambat')
         timeRemaining.textContent = 'Konsultasi selesai';
         document.getElementById('timer').classList.add('bg-gray-500/20');
     @else
         // Show initial time
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        timeRemaining.textContent = minutes + ':' + seconds.toString().padStart(2, '0');
+        timeRemaining.textContent = formatTime(timeLeft);
         
         // Start countdown
         const timer = setInterval(() => {
-            timeLeft--;
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timeRemaining.textContent = minutes + ':' + seconds.toString().padStart(2, '0');
+            timeLeft = Math.max(0, timeLeft - 1);
+            timeRemaining.textContent = formatTime(timeLeft);
             
             // Highlight timer when less than 1 minute
             if (timeLeft <= 60) {

@@ -7,6 +7,7 @@ use App\Models\Pasien;
 use App\Models\Konsultasi;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use App\Services\KonsultasiService;
@@ -218,6 +219,23 @@ class PasienPageController extends Controller
                       ->whereNotNull('spesialisasi');
             })
             ->get();
+
+        $ratingCollection = Konsultasi::select(
+                'dokter_id',
+                DB::raw('AVG(rating) as avg_rating'),
+                DB::raw('COUNT(rating) as rating_count')
+            )
+            ->whereNotNull('rating')
+            ->groupBy('dokter_id')
+            ->get();
+
+        $ratingData = [];
+        foreach ($ratingCollection as $row) {
+            $ratingData[$row->dokter_id] = [
+                'avg' => round($row->avg_rating, 1),
+                'count' => (int) $row->rating_count,
+            ];
+        }
         
         // Semua slot jam konsultasi
         $semua_jam = [
@@ -346,8 +364,12 @@ class PasienPageController extends Controller
             'dokter' => $dokter,
             'tanggal_mulai' => $tanggal_mulai,
             'jam_tersedia' => $jam_tersedia,
+            'semua_jam' => $semua_jam,
             'pasien' => $pasien,
-            'jadwalTerisi' => $jadwalTerisi
+            'jadwalTerisi' => $jadwalTerisi,
+            'ratingData' => $ratingData,
+            'availableTodayKeys' => array_keys($jam_tersedia),
+            'todayDate' => $today->format('Y-m-d'),
         ]);
     }
 

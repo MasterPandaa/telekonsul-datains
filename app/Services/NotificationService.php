@@ -19,6 +19,7 @@ class NotificationService
         // Buat notifikasi untuk dokter
         Notification::create([
             'user_id' => $dokter->id,
+            'title' => 'Permintaan Konsultasi Baru',
             'type' => 'konsultasi_baru',
             'message' => "Permintaan konsultasi baru dari {$pasien->nama_lengkap}",
             'link' => route('dokter.konsultasi.index'),
@@ -42,6 +43,7 @@ class NotificationService
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->user_id,
+            'title' => 'Konsultasi Ditolak',
             'type' => 'konsultasi_ditolak',
             'message' => "Permintaan konsultasi Anda ditolak oleh {$dokter->name}",
             'link' => route('pasien.konsultasi.index'),
@@ -64,6 +66,7 @@ class NotificationService
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->user_id,
+            'title' => 'Konsultasi Terkonfirmasi',
             'type' => 'konsultasi_terkonfirmasi',
             'message' => "Permintaan konsultasi Anda telah dikonfirmasi oleh {$dokter->name}",
             'link' => route('pasien.konsultasi.index'),
@@ -87,6 +90,7 @@ class NotificationService
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->user_id,
+            'title' => 'Pengingat Konsultasi',
             'type' => 'konsultasi_akan_dimulai',
             'message' => "Konsultasi Anda dengan {$dokter->name} akan segera dimulai",
             'link' => route('pasien.konsultasi.index'),
@@ -101,6 +105,7 @@ class NotificationService
         // Buat notifikasi untuk dokter
         Notification::create([
             'user_id' => $dokter->id,
+            'title' => 'Pengingat Konsultasi',
             'type' => 'konsultasi_akan_dimulai',
             'message' => "Konsultasi Anda dengan {$pasien->nama_lengkap} akan segera dimulai",
             'link' => route('dokter.konsultasi.index'),
@@ -124,6 +129,7 @@ class NotificationService
         // Buat notifikasi untuk dokter
         Notification::create([
             'user_id' => $dokter->id,
+            'title' => 'Rating Baru Diterima',
             'type' => 'rating_baru',
             'message' => "Pasien {$pasien->nama_lengkap} memberikan rating {$konsultasi->rating} bintang",
             'link' => route('dokter.riwayat.index'),
@@ -147,6 +153,7 @@ class NotificationService
         // Buat notifikasi untuk pasien
         Notification::create([
             'user_id' => $pasien->id,
+            'title' => 'Diagnosis Baru',
             'type' => 'diagnosis_baru',
             'message' => "Dokter {$dokter->name} telah memberikan diagnosis untuk konsultasi Anda",
             'link' => route('pasien.riwayat.index'),

@@ -274,15 +274,19 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($konsultasiMendatang as $item)
                     <tr class="hover:bg-gray-50 transition-colors">
+                        @php
+                            $dokterNama = $item->dokter->name ?? 'Dokter';
+                            $dokterInitials = \App\Support\Initials::from($dokterNama, 2);
+                        @endphp
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="h-10 w-10 flex-shrink-0">
                                     <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                                        <span class="text-white font-medium">{{ strtoupper(substr($item->dokter->name ?? 'D', 0, 1)) }}</span>
+                                        <span class="text-white font-medium">{{ $dokterInitials }}</span>
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->dokter->name ?? 'Dokter' }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $dokterNama }}</div>
                                     <div class="text-sm text-gray-500">Dokter Umum</div>
                                 </div>
                             </div>

@@ -1,13 +1,38 @@
 @php
     $pasien = Auth::user()->pasien;
     $displayName = $pasien && $pasien->nama ? $pasien->nama : Auth::user()->name;
-    
-    // Foto pasien
-    if ($pasien && $pasien->foto) {
-        $fotoUrl = asset($pasien->foto);
-    } else {
-        $fotoUrl = asset('img/pasien/default.jpg');
+
+    $fotoUrl = null;
+    $hasFoto = false;
+    $candidateUrl = null;
+    $fotoValue = $pasien && $pasien->foto ? $pasien->foto : null;
+
+    if ($fotoValue) {
+        if (filter_var($fotoValue, FILTER_VALIDATE_URL)) {
+            $candidateUrl = $fotoValue;
+        } else {
+            $relativePath = ltrim($fotoValue, '/');
+            $publicPath = public_path($relativePath);
+
+            if (file_exists($publicPath)) {
+                $candidateUrl = asset($relativePath);
+            } else {
+                $storageRelative = ltrim(preg_replace('/^storage\//', '', $relativePath), '/');
+                $storagePath = storage_path('app/public/' . $storageRelative);
+
+                if (file_exists($storagePath)) {
+                    $candidateUrl = asset('storage/' . $storageRelative);
+                }
+            }
+        }
+
+        if ($candidateUrl && ! \Illuminate\Support\Str::contains(strtolower($candidateUrl), 'default')) {
+            $fotoUrl = $candidateUrl;
+            $hasFoto = true;
+        }
     }
+
+    $initials = \App\Support\Initials::from($displayName, 2);
 @endphp
 
 <header class="bg-white shadow">
@@ -33,7 +58,11 @@
                 <a href="{{ route('pasien.riwayat.index') }}" class="px-3 py-2 text-base font-medium rounded-md {{ request()->routeIs('pasien.riwayat.*') ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50' }}">
                     Riwayat
                 </a>
-                
+
+                <a href="{{ route('pasien.chatbot.index') }}" class="px-3 py-2 text-base font-medium rounded-md {{ request()->routeIs('pasien.chatbot.*') ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50' }}">
+                    Chatbot AI
+                </a>
+
                 <a href="{{ route('pasien.profil.index') }}" class="px-3 py-2 text-base font-medium rounded-md {{ request()->routeIs('pasien.profil.*') ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50' }}">
                     Profile Saya
                 </a>
@@ -91,11 +120,11 @@
                 <div class="relative" x-data="{ isOpen: false }">
                     <button @click="isOpen = !isOpen" class="flex items-center focus:outline-none group">
                         <div class="relative w-9 h-9 overflow-hidden bg-gray-200 rounded-full border-2 border-white group-hover:border-blue-200 transition-all duration-200">
-                            @if($fotoUrl && file_exists(public_path(str_replace(asset(''), '', $fotoUrl))))
+                            @if($hasFoto && $fotoUrl)
                                 <img src="{{ $fotoUrl }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium">
-                                    {{ strtoupper(substr($displayName, 0, 1)) }}
+                                    {{ $initials }}
                                 </div>
                             @endif
                         </div>
@@ -172,7 +201,11 @@
                             <a href="{{ route('pasien.riwayat.index') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->routeIs('pasien.riwayat.*') ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50' }}">
                                 Riwayat
                             </a>
-                            
+
+                            <a href="{{ route('pasien.chatbot.index') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->routeIs('pasien.chatbot.*') ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50' }}">
+                                Chatbot AI
+                            </a>
+
                             <a href="{{ route('pasien.profil.index') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->routeIs('pasien.profil.*') ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50' }}">
                                 Profile Saya
                             </a>

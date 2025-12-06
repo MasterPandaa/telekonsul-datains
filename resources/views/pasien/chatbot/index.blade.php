@@ -462,16 +462,14 @@
                     
                     // Simpan kembali setelah filtering dan penambahan userId
                     saveAllChatHistories();
-                    
-                    // Muat percakapan terakhir jika ada
-                    if (chatHistories.length > 0) {
-                        currentChatId = chatHistories[0].id;
-                        currentMessages = [...chatHistories[0].messages];
-                    }
                 }
             } catch (e) {
                 console.error('Gagal memuat riwayat percakapan:', e);
                 chatHistories = [];
+            } finally {
+                // Selalu reset konteks percakapan aktif saat halaman dimuat
+                currentChatId = null;
+                currentMessages = [];
             }
         }
 
@@ -490,13 +488,8 @@
         // Bersihkan riwayat chat yang tidak terkait dengan user saat ini
         cleanupOtherUserHistories();
         
-        // Jika belum ada riwayat atau tidak ada chat yang dipilih, mulai chat baru
-        if (chatHistories.length === 0 || !currentChatId) {
-            startNewChat();
-        } else {
-            // Jika ada riwayat, muat chat terakhir
-            loadChat(chatHistories[0].id);
-        }
+        // Selalu mulai percakapan baru ketika halaman dibuka
+        startNewChat();
         
         // Fungsi untuk membersihkan riwayat chat yang tidak terkait dengan user saat ini
         function cleanupOtherUserHistories() {
@@ -692,10 +685,9 @@
             // Perbarui UI riwayat jika perlu
             if (updateHistory) {
                 updateChatHistoriesUI();
+                // Deteksi rekomendasi telekonsultasi hanya untuk pesan baru
+                checkForTeleconsultRecommendation(message);
             }
-            
-            // Deteksi rekomendasi telekonsultasi
-            checkForTeleconsultRecommendation(message);
         }
         
         // Fungsi untuk menampilkan pesan error

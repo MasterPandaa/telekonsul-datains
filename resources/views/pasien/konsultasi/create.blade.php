@@ -78,11 +78,38 @@
                                  data-id="{{ $m->id }}">
                                 <div class="p-4 flex items-start">
                                     <div class="flex-shrink-0 mr-3">
-                                        @if($m->dokter && $m->dokter->foto)
-                                            <img class="h-16 w-16 rounded-full object-cover border-3 border-gray-100" src="{{ asset($m->dokter->foto) }}" alt="{{ $m->name }}">
+                                        @php
+                                            $dokterInitials = \App\Support\Initials::from($m->name, 2);
+                                            $dokterFoto = null;
+                                            $candidateUrl = null;
+                                            $fotoValue = $m->dokter->foto ?? null;
+
+                                            if ($fotoValue) {
+                                                if (filter_var($fotoValue, FILTER_VALIDATE_URL)) {
+                                                    $candidateUrl = $fotoValue;
+                                                } else {
+                                                    $relativePath = ltrim($fotoValue, '/');
+
+                                                    if (file_exists(public_path($relativePath))) {
+                                                        $candidateUrl = asset($relativePath);
+                                                    } else {
+                                                        $storageRelative = ltrim(preg_replace('/^storage\//', '', $relativePath), '/');
+                                                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storageRelative)) {
+                                                            $candidateUrl = asset('storage/' . $storageRelative);
+                                                        }
+                                                    }
+                                                }
+
+                                                if ($candidateUrl && ! \Illuminate\Support\Str::contains(strtolower($candidateUrl), 'default')) {
+                                                    $dokterFoto = $candidateUrl;
+                                                }
+                                            }
+                                        @endphp
+                                        @if($dokterFoto)
+                                            <img class="h-16 w-16 rounded-full object-cover border-3 border-gray-100" src="{{ $dokterFoto }}" alt="{{ $m->name }}">
                                         @else
                                             <div class="h-16 w-16 rounded-full flex items-center justify-center text-white text-lg font-semibold bg-blue-600 border-3 border-blue-100">
-                                                {{ substr($m->name, 0, 2) }}
+                                                {{ $dokterInitials }}
                                             </div>
                                         @endif
                                     </div>
@@ -98,15 +125,20 @@
                                                     <svg class="w-2.5 h-2.5 text-yellow-500 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                                                     </svg>
-                                                    @if($m->dokter && $m->dokter->rating)
-                                                        {{ number_format($m->dokter->rating, 1) }}
+                                                    @php
+                                                        $rating = $ratingData[$m->id]['avg'] ?? null;
+                                                        $ratingCount = $ratingData[$m->id]['count'] ?? 0;
+                                                    @endphp
+                                                    @if($rating)
+                                                        {{ number_format($rating, 1) }}
+                                                        <span class="text-[10px] text-gray-500 ml-1">({{ $ratingCount }})</span>
                                                     @else
                                                         <span class="text-gray-500 text-xs">Belum ada rating</span>
                                                     @endif
                                                 </div>
                                                 <div class="flex gap-1 mt-3">
                                                     <button type="button" class="px-2.5 py-1.5 bg-gray-700 text-white text-xs font-medium rounded hover:bg-gray-800 transition-colors focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-gray-500"
-                                                            onclick="showDokterDetail({{ $m->id }}, '{{ $m->name }}', '{{ $m->dokter->no_sip ?? '122123/abc' }}', '{{ $m->dokter->spesialisasi ?? 'Dokter Umum' }}', '{{ $m->dokter && $m->dokter->foto ? asset($m->dokter->foto) : 'https://ui-avatars.com/api/?name='.urlencode($m->name).'&background=4F46E5&color=fff' }}', '{{ $m->dokter->pengalaman ?? '' }}', '{{ $m->dokter->tempat_praktik ?? '' }}')">
+                                                            onclick="showDokterDetail({{ $m->id }}, '{{ e($m->name) }}', '{{ e($m->dokter->no_sip ?? '122123/abc') }}', '{{ e($m->dokter->spesialisasi ?? 'Dokter Umum') }}', '{{ $dokterFoto ?? '' }}', '{{ $dokterInitials }}', '{{ e($m->dokter->pengalaman ?? '') }}', '{{ e($m->dokter->tempat_praktik ?? '') }}')">
                                                         Detail
                                                     </button>
                                                     <button type="button" class="px-2.5 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500"
@@ -170,6 +202,7 @@
                         @endif
                     </select>
                     <input type="hidden" name="jam_selesai" id="jam_selesai" value="">
+                    <p id="schedule-helper" class="mt-1 text-xs text-blue-600">Pilih dokter terlebih dahulu untuk menampilkan jadwal yang tersedia.</p>
                     <p class="mt-1 text-xs text-gray-500">Durasi konsultasi adalah 15 menit</p>
                     @if(count($jam_tersedia) < 44)
                         <p class="mt-1 text-xs flex items-start text-amber-600">
@@ -249,7 +282,12 @@
             
         <div class="px-5 pt-5 pb-6">
             <div class="flex flex-col items-center -mt-12 mb-3">
-                <img id="modal-dokter-photo" class="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md" src="" alt="Foto Dokter">
+                <div class="relative">
+                    <img id="modal-dokter-photo" class="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md hidden" src="" alt="Foto Dokter">
+                    <div id="modal-dokter-initials" class="h-24 w-24 rounded-full flex items-center justify-center text-white text-3xl font-semibold bg-blue-600 border-4 border-white shadow-md">
+                        --
+                    </div>
+                </div>
                 <h3 id="modal-dokter-name" class="mt-3 text-xl font-medium text-gray-900"></h3>
                 <p id="modal-dokter-nim" class="text-sm text-gray-600 mt-1"></p>
             </div>
@@ -363,8 +401,44 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectSelected = customSelect.querySelector('.select-selected');
         const selectItems = customSelect.querySelector('.select-items');
         const spesialisasiList = document.getElementById('spesialisasi-list');
+        const dokterInput = document.getElementById('dokter_id');
+        const tanggalInput = document.getElementById('tanggal');
+        const jamSelect = document.getElementById('jam_mulai');
+        const scheduleHelper = document.getElementById('schedule-helper');
+        const semuaJam = @json($semua_jam);
+        const availableTodayKeys = @json($availableTodayKeys ?? []);
+        const todayDate = '{{ $todayDate }}';
         
         let selectedSpesialisasi = '';
+        const jadwalTerisi = @json($jadwalTerisi);
+
+        function toggleScheduleInputs(isEnabled) {
+            if (tanggalInput) {
+                if (isEnabled) {
+                    tanggalInput.disabled = false;
+                    tanggalInput.removeAttribute('disabled');
+                } else {
+                    tanggalInput.disabled = true;
+                    tanggalInput.setAttribute('disabled', 'disabled');
+                    tanggalInput.value = '{{ $tanggal_mulai }}';
+                }
+            }
+            if (jamSelect) {
+                if (isEnabled) {
+                    jamSelect.disabled = false;
+                    jamSelect.removeAttribute('disabled');
+                } else {
+                    jamSelect.disabled = true;
+                    jamSelect.setAttribute('disabled', 'disabled');
+                    jamSelect.value = '';
+                }
+            }
+            if (scheduleHelper) {
+                scheduleHelper.classList.toggle('hidden', isEnabled);
+            }
+        }
+
+        toggleScheduleInputs(!!(dokterInput && dokterInput.value));
         
         // Toggle dropdown with animation
         selectSelected.addEventListener('click', function(e) {
@@ -571,106 +645,160 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Initialize date input
-        const tanggalInput = document.getElementById('tanggal');
         if (tanggalInput) {
-            tanggalInput.addEventListener('change', updateJamOptions);
+            tanggalInput.addEventListener('change', function() {
+                if (!dokterInput.value) {
+                    tanggalInput.value = '{{ $tanggal_mulai }}';
+                    Swal.fire({
+                        title: 'Pilih Dokter Terlebih Dahulu',
+                        text: 'Silakan pilih dokter untuk melihat jadwal konsultasi.',
+                        icon: 'warning',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                    toggleScheduleInputs(false);
+                    return;
+                }
+                updateJamOptions();
+            });
+        }
+
+        if (jamSelect) {
+            jamSelect.addEventListener('change', function() {
+                if (!dokterInput.value) {
+                    jamSelect.value = '';
+                    Swal.fire({
+                        title: 'Pilih Dokter Terlebih Dahulu',
+                        text: 'Silakan pilih dokter sebelum memilih jam konsultasi.',
+                        icon: 'warning',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+
+        let currentDokterId = null;
+
+        function updateJamOptions() {
+            const dokterId = dokterInput ? dokterInput.value : null;
+            const tanggalValue = tanggalInput ? tanggalInput.value : null;
+
+            if (!jamSelect) {
+                return;
+            }
+
+            if (!dokterId) {
+                jamSelect.value = '';
+                toggleScheduleInputs(false);
+                return;
+            }
+
+            if (!tanggalValue) {
+                return;
+            }
+
+            const isTodaySelected = tanggalValue === todayDate;
+            const previousValue = jamSelect.value;
+
+            while (jamSelect.options.length > 1) {
+                jamSelect.remove(1);
+            }
+
+            Object.entries(semuaJam).forEach(([jamKey, label]) => {
+                if (isTodaySelected && availableTodayKeys.length > 0 && !availableTodayKeys.includes(jamKey)) {
+                    return;
+                }
+
+                const option = document.createElement('option');
+                option.value = jamKey;
+                option.textContent = label;
+
+                const slotKey = jamKey + ':00';
+                if (jadwalTerisi[tanggalValue] &&
+                    jadwalTerisi[tanggalValue][slotKey] &&
+                    jadwalTerisi[tanggalValue][slotKey].includes(parseInt(dokterId))) {
+                    option.disabled = true;
+                    option.textContent = label + ' (Sudah Terisi)';
+                }
+
+                jamSelect.appendChild(option);
+            });
+
+            const optionToSelect = Array.from(jamSelect.options).find(opt => opt.value === previousValue && !opt.disabled);
+            jamSelect.value = optionToSelect ? optionToSelect.value : '';
+        }
+
+        window.updateJamOptions = updateJamOptions;
+
+        function selectDokter(id) {
+            if (!dokterInput) return;
+            dokterInput.value = id;
+
+            document.querySelectorAll('.dokter-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            document.querySelectorAll('.dokter-card').forEach(card => {
+                if (card.dataset.id == id) {
+                    card.classList.add('selected');
+                    if (card.getBoundingClientRect().top < 0 || card.getBoundingClientRect().bottom > window.innerHeight) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+
+            toggleScheduleInputs(true);
+            updateJamOptions();
+        }
+
+        window.selectDokter = selectDokter;
+
+        function showDokterDetail(id, name, nim, spesialisasi, photo, initials, pengalaman, tempat_praktik) {
+            currentDokterId = id;
+            const modalPhoto = document.getElementById('modal-dokter-photo');
+            const modalInitials = document.getElementById('modal-dokter-initials');
+
+            if (photo) {
+                modalPhoto.src = photo;
+                modalPhoto.classList.remove('hidden');
+                modalInitials.classList.add('hidden');
+            } else {
+                modalPhoto.classList.add('hidden');
+                modalPhoto.src = '';
+                modalInitials.textContent = initials || '\\u{2013}';
+                modalInitials.classList.remove('hidden');
+            }
+            document.getElementById('modal-dokter-name').textContent = name;
+            document.getElementById('modal-dokter-nim').textContent = 'SIP/' + nim;
+            document.getElementById('modal-dokter-fakultas').textContent = spesialisasi || 'Dokter Umum';
+            document.getElementById('modal-dokter-semester').textContent = pengalaman || 'Belum diisi';
+            document.getElementById('modal-dokter-angkatan').textContent = tempat_praktik || 'Belum diisi';
+            document.getElementById('dokterDetailModal').classList.remove('hidden');
+        }
+
+        window.showDokterDetail = showDokterDetail;
+
+        function hideDokterDetail() {
+            document.getElementById('dokterDetailModal').classList.add('hidden');
+        }
+
+        window.hideDokterDetail = hideDokterDetail;
+
+        function selectDokterFromModal() {
+            if (currentDokterId) {
+                selectDokter(currentDokterId);
+                hideDokterDetail();
+            }
+        }
+
+        window.selectDokterFromModal = selectDokterFromModal;
+
+        if (dokterInput && dokterInput.value) {
+            toggleScheduleInputs(true);
+            updateJamOptions();
         }
     });
-    
-    // Variabel untuk modal
-    let currentDokterId = null;
-    
-    // Fungsi untuk menampilkan detail dokter
-    function showDokterDetail(id, name, nim, spesialisasi, photo, pengalaman, tempat_praktik) {
-        // Set current dokter id
-        currentDokterId = id;
-        
-        // Populate modal with data
-        document.getElementById('modal-dokter-photo').src = photo;
-        document.getElementById('modal-dokter-name').textContent = name;
-        document.getElementById('modal-dokter-nim').textContent = 'SIP/' + nim;
-        document.getElementById('modal-dokter-fakultas').textContent = spesialisasi || 'Dokter Umum';
-        document.getElementById('modal-dokter-semester').textContent = pengalaman || 'Belum diisi';
-        document.getElementById('modal-dokter-angkatan').textContent = tempat_praktik || 'Belum diisi';
-        
-        // Show modal
-        document.getElementById('dokterDetailModal').classList.remove('hidden');
-    }
-    
-    // Fungsi untuk menyembunyikan detail dokter
-    function hideDokterDetail() {
-        document.getElementById('dokterDetailModal').classList.add('hidden');
-    }
-    
-    // Fungsi untuk memilih dokter dari modal
-    function selectDokterFromModal() {
-        if (currentDokterId) {
-            selectDokter(currentDokterId);
-            hideDokterDetail();
-        }
-    }
-    
-    // Fungsi untuk memilih dokter
-    function selectDokter(id) {
-        document.getElementById('dokter_id').value = id;
-        
-        // Remove selected class from all cards
-        document.querySelectorAll('.dokter-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        
-        // Find the correct card and add selected class
-        const cards = document.querySelectorAll('.dokter-card');
-        cards.forEach(card => {
-            if (card.dataset.id == id) {
-                card.classList.add('selected');
-                // Scroll to the selected card if not visible
-                if (card.getBoundingClientRect().top < 0 || card.getBoundingClientRect().bottom > window.innerHeight) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        });
-        
-        // Update jam options based on selected dokter
-        updateJamOptions();
-    }
-    
-    // Fungsi untuk memperbarui opsi jam berdasarkan dokter dan tanggal yang dipilih
-    function updateJamOptions() {
-        const dokterId = document.getElementById('dokter_id').value;
-        const tanggalValue = document.getElementById('tanggal').value;
-        const jamSelect = document.getElementById('jam_mulai');
-        
-        if (!dokterId || !tanggalValue || !jamSelect) {
-            return;
-        }
-        
-        // Data jadwal terisi dari controller
-        const jadwalTerisi = @json($jadwalTerisi);
-        
-        // Reset semua opsi jam
-        for (let i = 0; i < jamSelect.options.length; i++) {
-            const option = jamSelect.options[i];
-            
-            if (option.value === "") continue; // Skip opsi default "Pilih Jam"
-            
-            // Reset disabled state dan text
-            option.disabled = false;
-            option.text = option.text.replace(' (Sudah Terisi)', '');
-            
-            // Cek apakah slot ini sudah terisi untuk dokter yang dipilih
-            const jamKey = option.value + ':00';
-            if (jadwalTerisi[tanggalValue] && 
-                jadwalTerisi[tanggalValue][jamKey] && 
-                jadwalTerisi[tanggalValue][jamKey].includes(parseInt(dokterId))) {
-                
-                option.disabled = true;
-                option.text += ' (Sudah Terisi)';
-            }
-        }
-    }
-    
     // Menampilkan notifikasi warning jika ada
     @if(session('warning'))
         Swal.fire({
