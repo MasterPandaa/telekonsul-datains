@@ -96,7 +96,7 @@
             </div>
         </form>
     </div>
-    
+
     <!-- Table Container -->
     <div class="overflow-hidden rounded-b-xl">
         <!-- Table -->
@@ -248,6 +248,26 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Legend / Deskripsi Level Log -->
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Jenis Level Log & Fungsinya</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg border border-gray-100 bg-green-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">CREATE</span></div>
+            <p class="text-sm text-gray-700">Penambahan data baru ke dalam modul tertentu. Pastikan data sesuai SOP sebelum disetujui.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-blue-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">UPDATE</span></div>
+            <p class="text-sm text-gray-700">Perubahan terhadap data yang sudah ada. Tinjau deskripsi perubahan untuk audit trail.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-gray-100 bg-red-50">
+            <div class="mb-1"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">DELETE</span></div>
+            <p class="text-sm text-gray-700">Penghapusan record dari sistem. Pastikan sudah mendapat persetujuan dan siapkan opsi pemulihan.</p>
+        </div>
+    </div>
+    <p class="mt-4 text-xs text-gray-500">Catatan: Level ditentukan otomatis berdasarkan kata kunci pada kolom Aksi/Deskripsi.</p>
 </div>
 
 <script>

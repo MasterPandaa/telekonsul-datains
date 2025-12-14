@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Log;
 use Illuminate\Http\Request;
+use App\Services\LogService;
 
 class LogController extends Controller
 {
@@ -13,12 +14,28 @@ class LogController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function system()
+    public function system(Request $request)
     {
-        $logs = Log::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-            
+        $query = Log::with('user')->orderByDesc('created_at');
+
+        if ($request->filled('action')) {
+            $query->where('action', 'like', '%' . $request->action . '%');
+        }
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('description', 'like', "%$s%")
+                  ->orWhere('action', 'like', "%$s%")
+                  ->orWhere('ip_address', 'like', "%$s%")
+                  ->orWhereHas('user', function ($uq) use ($s) {
+                      $uq->where('name', 'like', "%$s%")
+                         ->orWhere('email', 'like', "%$s%");
+                  });
+            });
+        }
+
+        $logs = $query->paginate(10)->withQueryString();
         return view('admin.log.system', compact('logs'));
     }
     
@@ -27,15 +44,33 @@ class LogController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function database()
+    public function database(Request $request)
     {
-        $logs = Log::with('user')
-            ->where('action', 'like', '%create%')
-            ->orWhere('action', 'like', '%update%')
-            ->orWhere('action', 'like', '%delete%')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-            
+        $query = Log::with('user')
+            ->where(function ($q) {
+                $q->where('action', 'like', '%create%')
+                  ->orWhere('action', 'like', '%update%')
+                  ->orWhere('action', 'like', '%delete%');
+            })
+            ->orderByDesc('created_at');
+
+        if ($request->filled('action')) {
+            $query->where('action', 'like', '%' . $request->action . '%');
+        }
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('description', 'like', "%$s%")
+                  ->orWhere('action', 'like', "%$s%")
+                  ->orWhereHas('user', function ($uq) use ($s) {
+                      $uq->where('name', 'like', "%$s%")
+                         ->orWhere('email', 'like', "%$s%");
+                  });
+            });
+        }
+
+        $logs = $query->paginate(10)->withQueryString();
         return view('admin.log.database', compact('logs'));
     }
     
@@ -134,5 +169,35 @@ class LogController extends Controller
             'actionLabels' => $actionTypes,
             'actionCounts' => $actionCounts
         ]);
+    }
+
+    /**
+     * Generate sample logs to validate level parsing and CRUD capture
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function generateSamples()
+    {
+        $levels = [
+            'INFO' => 'Informasi umum untuk pengujian',
+            'DEBUG' => 'Detail debugging untuk pengujian',
+            'WARN' => 'Peringatan potensi masalah',
+            'ERROR' => 'Kesalahan yang perlu ditangani',
+            'CRITICAL' => 'Masalah kritikal butuh perhatian segera',
+            'FATAL' => 'Kegagalan fatal menghentikan proses',
+            'TRACE' => 'Jejak eksekusi sangat detail',
+            'NOTICE' => 'Peristiwa penting tanpa masalah',
+        ];
+
+        foreach ($levels as $lvl => $msg) {
+            LogService::record('system_test', $lvl . ': ' . $msg);
+        }
+
+        // CRUD samples
+        LogService::record('create_sample', 'INFO: Menambahkan data sample, took 25ms');
+        LogService::record('update_sample', 'NOTICE: Memperbarui data sample, duration: 12 ms');
+        LogService::record('delete_sample', 'WARN: Menghapus data sample, waktu=5ms');
+
+        return back()->with('success', 'Sample log berhasil dibuat untuk pengujian.');
     }
 }

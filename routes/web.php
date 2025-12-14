@@ -50,6 +50,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('log/destroy', [LogController::class, 'destroy'])->name('log.destroy');
         Route::delete('log/clear', [LogController::class, 'clear'])->name('log.clear');
         Route::get('log/activity-data', [LogController::class, 'getUserActivityData'])->name('log.activity-data');
+        // Generate sample logs (for testing)
+        Route::get('log/generate-samples', [LogController::class, 'generateSamples'])->name('log.generate-samples');
         
         // Konsultasi status update
         Route::get('konsultasi/update-status', [AdminController::class, 'updateKonsultasiStatus'])->name('konsultasi.update-status');
