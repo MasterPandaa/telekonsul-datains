@@ -24,31 +24,20 @@ class HealsAiController extends Controller
         $history = $request->history ?? [];
         $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
-        // 1. Coba kirim ke workflow n8n terlebih dahulu
         $n8nResult = $this->forwardToN8nAgent($message, $history, $isNewConversation);
 
         if ($n8nResult['success']) {
             return response()->json($n8nResult);
         }
 
-        // 2. Jika gagal atau tidak terkonfigurasi, gunakan HealsAI sebagai cadangan
-        $healsResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
+        $errorMessage = $n8nResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses. Silakan coba lagi beberapa saat.';
 
-        if ($healsResult['success'] && $n8nResult['attempted']) {
-            $shouldAddIntro = ($healsResult['source'] ?? '') !== 'healsai-maintenance';
-            $fallbackIntro = $this->buildFallbackIntro($n8nResult['message'] ?? null);
-            if ($shouldAddIntro) {
-                $healsResult['response'] = $fallbackIntro . "\n\n" . $healsResult['response'];
-            }
-            $healsResult['fallback_used'] = true;
-            $healsResult['fallback_message'] = $fallbackIntro;
-            $healsResult['fallback_reason'] = $n8nResult['message'] ?? 'Sistem agent utama tidak dapat dihubungi.';
-        } elseif (!$healsResult['success'] && $n8nResult['attempted']) {
-            $healsResult['message'] = $healsResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses.';
-            $healsResult['fallback_reason'] = $n8nResult['message'] ?? null;
-        }
-
-        return response()->json($healsResult, $healsResult['success'] ? 200 : 500);
+        return response()->json([
+            'success' => false,
+            'message' => $errorMessage,
+            'source' => 'n8n',
+            'attempted' => $n8nResult['attempted'] ?? false,
+        ], 502);
     }
 
     /**
@@ -67,7 +56,7 @@ class HealsAiController extends Controller
         }
 
         $method = strtoupper($settings->method ?? 'POST');
-        $timeout = (int) ($settings->timeout ?? 60);
+        $timeout = (int) ($settings->timeout ?? 15);
 
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
