@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\Admin\LogController;
+use App\Http\Controllers\Admin\ChatbotSettingController;
 use App\Http\Controllers\DokterPageController;
 use App\Http\Controllers\PasienPageController;
 use App\Http\Controllers\PasienProfilController;
@@ -43,6 +44,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('dokter', DokterController::class);
         Route::resource('pasien', PasienController::class);
         Route::resource('dosen', AdminDosenController::class);
+        
+        // Chatbot API settings
+        Route::get('chatbot/settings', [ChatbotSettingController::class, 'index'])->name('chatbot.settings');
+        Route::post('chatbot/settings', [ChatbotSettingController::class, 'update'])->name('chatbot.settings.update');
         
         // Log routes
         Route::get('log/database', [LogController::class, 'database'])->name('log.database');

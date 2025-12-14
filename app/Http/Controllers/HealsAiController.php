@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChatbotSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -34,8 +35,11 @@ class HealsAiController extends Controller
         $healsResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
 
         if ($healsResult['success'] && $n8nResult['attempted']) {
+            $shouldAddIntro = ($healsResult['source'] ?? '') !== 'healsai-maintenance';
             $fallbackIntro = $this->buildFallbackIntro($n8nResult['message'] ?? null);
-            $healsResult['response'] = $fallbackIntro . "\n\n" . $healsResult['response'];
+            if ($shouldAddIntro) {
+                $healsResult['response'] = $fallbackIntro . "\n\n" . $healsResult['response'];
+            }
             $healsResult['fallback_used'] = true;
             $healsResult['fallback_message'] = $fallbackIntro;
             $healsResult['fallback_reason'] = $n8nResult['message'] ?? 'Sistem agent utama tidak dapat dihubungi.';
@@ -52,19 +56,19 @@ class HealsAiController extends Controller
      */
     private function forwardToN8nAgent(string $message, array $history, bool $isNewConversation): array
     {
-        $webhookUrl = env('CHATBOT_N8N_WEBHOOK_URL');
+        $settings = ChatbotSetting::first();
 
-        if (empty($webhookUrl)) {
+        if (!$settings || empty($settings->webhook_url)) {
             return [
                 'success' => false,
                 'attempted' => false,
-                'message' => 'Webhook n8n belum dikonfigurasi.'
+                'message' => 'Fitur Chatbot API belum dikonfigurasi.'
             ];
         }
 
-        $method = strtoupper(env('CHATBOT_N8N_METHOD', 'POST'));
-        $timeout = (int) env('CHATBOT_N8N_TIMEOUT', 15);
-        $allowInsecure = filter_var(env('CHATBOT_N8N_ALLOW_INSECURE_SSL', false), FILTER_VALIDATE_BOOLEAN);
+        $method = strtoupper($settings->method ?? 'POST');
+        $timeout = (int) ($settings->timeout ?? 15);
+        $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
             $client = Http::timeout($timeout)->acceptJson();
@@ -74,27 +78,27 @@ class HealsAiController extends Controller
             }
 
             // Authentication handling
-            $authType = strtolower(env('CHATBOT_N8N_AUTH_TYPE', 'none'));
+            $authType = strtolower($settings->auth_type ?? 'none');
             switch ($authType) {
                 case 'basic':
                     $client = $client->withBasicAuth(
-                        env('CHATBOT_N8N_BASIC_USER', ''),
-                        env('CHATBOT_N8N_BASIC_PASS', '')
+                        $settings->basic_user ?? '',
+                        $settings->basic_pass ?? ''
                     );
                     break;
                 case 'bearer':
-                    $client = $client->withToken(env('CHATBOT_N8N_BEARER_TOKEN', ''));
+                    $client = $client->withToken($settings->bearer_token ?? '');
                     break;
                 case 'header':
-                    $headerKey = env('CHATBOT_N8N_HEADER_KEY');
-                    $headerValue = env('CHATBOT_N8N_HEADER_VALUE');
+                    $headerKey = $settings->header_key;
+                    $headerValue = $settings->header_value;
                     if ($headerKey && $headerValue) {
                         $client = $client->withHeaders([$headerKey => $headerValue]);
                     }
                     break;
                 case 'jwt':
                     $client = $client->withHeaders([
-                        'Authorization' => 'Bearer ' . env('CHATBOT_N8N_JWT_TOKEN', '')
+                        'Authorization' => 'Bearer ' . ($settings->jwt_token ?? '')
                     ]);
                     break;
                 default:
@@ -117,7 +121,7 @@ class HealsAiController extends Controller
                 ],
             ];
 
-            $response = $client->send($method, $webhookUrl, ['json' => $payload]);
+            $response = $client->send($method, $settings->webhook_url, ['json' => $payload]);
 
             if (!$response->successful()) {
                 Log::warning('n8n webhook error', [
@@ -169,9 +173,12 @@ class HealsAiController extends Controller
      */
     private function buildFallbackIntro(?string $reason = null): string
     {
-        $reasonText = $reason ? " (Detail: {$reason})" : '';
-        return "Maaf ya, sistem agent AI utama kami sedang tidak tersedia{$reasonText}. HealsAI akan membantu Anda sementara. "
-            . "Jika ingin melanjutkan konsultasi, tetap feel free untuk bertanya ya!";
+        if ($reason) {
+            Log::info('HealsAI fallback reason', ['reason' => $reason]);
+        }
+
+        return "Maaf ya, sistem AI utama kami sedang sedikit sibuk. HealsAI akan bantu kamu sementara. "
+            . "Silakan lanjutkan chat, aku siap bantu! 😊";
     }
 
     /**
@@ -632,11 +639,12 @@ Saya di sini untuk mendukung perjalanan kesehatan Anda dan memberikan informasi 
 
     private function buildMaintenanceResponse(?string $reason = null): array
     {
-        $reasonText = $reason ? " (Detail teknis: {$reason})" : '';
-        $message = "Maaf ya, sistem AI utama kami sedang dalam pemeliharaan{$reasonText}. "
-            . "Untuk saat ini saya bisa memberikan informasi kesehatan umum dan membantu Anda "
-            . "mengevaluasi gejala yang Anda rasakan. Jika butuh tindakan spesifik, "
-            . "Anda bisa langsung menuju menu Telekonsultasi untuk berbicara dengan dokter.";
+        if ($reason) {
+            Log::info('HealsAI maintenance mode', ['reason' => $reason]);
+        }
+
+        $message = "Halo! Sistem AI utama kami sedang dijeda sebentar, tapi saya tetap siap bantu menjawab pertanyaan kesehatan umum Anda. "
+            . "Silakan lanjutkan chat ya, dan jika butuh konsultasi lebih lanjut, fitur Telekonsultasi selalu tersedia.";
 
         return [
             'success' => true,
