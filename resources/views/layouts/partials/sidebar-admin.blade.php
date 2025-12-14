@@ -39,6 +39,12 @@
 
         <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-4">Monitoring</div>
         <ul class="space-y-1">
+            <li>
+                <a href="{{ route('admin.chatbot.settings') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('admin.chatbot.settings')) bg-blue-100 font-medium text-blue-700 @endif">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.5 0-4 .75-4 2.25V14h8v-1.75C16 10.75 13.5 10 12 10zm0 4c-1.657 0-3 1.119-3 2.5V20h6v-3.5c0-1.381-1.343-2.5-3-2.5z"/></svg>
+                    Chatbot API
+                </a>
+            </li>
             <li x-data="{ open: false }" class="relative">
                 <button @click="open = !open" class="flex items-center w-full px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition focus:outline-none @if(request()->routeIs('admin.log.*')) bg-blue-100 font-medium text-blue-700 @endif">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -110,6 +116,12 @@
 
             <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-2">Monitoring</div>
             <ul class="space-y-1">
+                <li>
+                    <a href="{{ route('admin.chatbot.settings') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('admin.chatbot.settings')) bg-blue-100 font-medium text-blue-700 @endif">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.5 0-4 .75-4 2.25V14h8v-1.75C16 10.75 13.5 10 12 10zm0 4c-1.657 0-3 1.119-3 2.5V20h6v-3.5c0-1.381-1.343-2.5-3-2.5z"/></svg>
+                        Chatbot API
+                    </a>
+                </li>
                 <li>
                     <a href="{{ route('admin.log.database') }}" class="flex items-center px-4 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 transition @if(request()->routeIs('admin.log.database')) bg-blue-100 font-medium text-blue-700 @endif">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
