@@ -1391,103 +1391,73 @@
         
         // Fungsi untuk menampilkan popup konfirmasi telekonsultasi
         function showTeleconsultConfirmation() {
-            // Hapus dialog lama jika ada
-            const oldDialog = document.getElementById('teleconsult-confirm-dialog');
-            const oldBackdrop = document.getElementById('teleconsult-confirm-backdrop');
-            if (oldDialog) {
-                oldDialog.remove();
-            }
-            if (oldBackdrop) {
-                oldBackdrop.remove();
+            // Hapus banner lama jika ada
+            const existingBanner = document.getElementById('teleconsult-banner');
+            if (existingBanner) {
+                existingBanner.remove();
             }
             
-            // Buat backdrop
-            const backdrop = document.createElement('div');
-            backdrop.id = 'teleconsult-confirm-backdrop';
-            backdrop.className = 'fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm z-40 flex items-center justify-center transition-opacity duration-300 opacity-0';
-            
-            // Buat dialog
-            const dialog = document.createElement('div');
-            dialog.id = 'teleconsult-confirm-dialog';
-            dialog.className = 'bg-white rounded-xl shadow-xl p-6 max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0';
-            dialog.innerHTML = `
-                <div class="text-center">
-                    <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            const banner = document.createElement('div');
+            banner.id = 'teleconsult-banner';
+            banner.className = 'fixed bottom-4 right-4 left-4 sm:left-auto z-40 max-w-sm sm:w-96 bg-white border border-blue-100 shadow-2xl rounded-2xl p-4 space-y-3 transform transition-all duration-300 translate-y-4 opacity-0';
+            banner.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Rekomendasi Telekonsultasi</h3>
-                    <p class="text-gray-600 mb-6">HealsAI merekomendasikan Anda untuk berkonsultasi dengan dokter profesional. Apakah Anda ingin melakukan telekonsultasi dengan dokter sekarang?</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button id="teleconsult-cancel" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl transition-colors flex items-center justify-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-                            </svg>
-                            Lanjutkan Chat
-                        </button>
-                        <button id="teleconsult-ok" class="px-4 py-3 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white rounded-xl transition-colors flex items-center justify-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                            Konsultasi Dokter
-                        </button>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-900">HealsAI menyarankan Telekonsultasi</p>
+                        <p class="text-xs text-gray-600 mt-1">Kondisi Anda sebaiknya ditangani oleh dokter. Lanjutkan chat atau buka halaman telekonsultasi sekarang.</p>
                     </div>
+                    <button id="teleconsult-banner-close" class="text-gray-400 hover:text-gray-600 ml-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button id="teleconsult-banner-cancel" class="px-4 py-2.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl transition-colors">Lanjutkan chat</button>
+                    <button id="teleconsult-banner-ok" class="px-4 py-2.5 text-sm bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white rounded-xl transition-colors flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        Konsultasi Dokter
+                    </button>
                 </div>
             `;
             
-            // Tambahkan ke DOM
-            backdrop.appendChild(dialog);
-            document.body.appendChild(backdrop);
+            document.body.appendChild(banner);
             
-            // Tampilkan dengan animasi
-            setTimeout(() => {
-                backdrop.classList.remove('opacity-0');
-                dialog.classList.remove('scale-95', 'opacity-0');
-                dialog.classList.add('scale-100', 'opacity-100');
-            }, 10);
+            requestAnimationFrame(() => {
+                banner.classList.remove('translate-y-4', 'opacity-0');
+                banner.classList.add('translate-y-0', 'opacity-100');
+            });
             
-            // Event listeners
-            document.getElementById('teleconsult-ok').addEventListener('click', function() {
-                closeDialog();
-                // Arahkan ke halaman telekonsultasi
+            const removeBanner = () => {
+                banner.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => {
+                    if (banner && banner.parentNode) {
+                        banner.parentNode.removeChild(banner);
+                    }
+                }, 200);
+            };
+            
+            document.getElementById('teleconsult-banner-ok').addEventListener('click', () => {
+                removeBanner();
                 window.location.href = '/pasien/konsultasi/create';
             });
             
-            document.getElementById('teleconsult-cancel').addEventListener('click', function() {
-                closeDialog();
-                // Tampilkan notifikasi
+            document.getElementById('teleconsult-banner-cancel').addEventListener('click', () => {
+                removeBanner();
                 showNotification('Anda dapat melakukan telekonsultasi kapan saja melalui menu Telekonsultasi', 'info');
             });
             
-            // Tambahkan click handler untuk backdrop (untuk menutup dialog saat klik di luar)
-            backdrop.addEventListener('click', function(e) {
-                if (e.target === backdrop) {
-                    closeDialog();
-                }
-            });
+            document.getElementById('teleconsult-banner-close').addEventListener('click', removeBanner);
             
-            // Fungsi untuk menutup dialog
-            function closeDialog() {
-                try {
-                    backdrop.classList.add('opacity-0');
-                    dialog.classList.add('scale-95', 'opacity-0');
-                    dialog.classList.remove('scale-100', 'opacity-100');
-                    
-                    setTimeout(() => {
-                        if (backdrop && backdrop.parentNode) {
-                            backdrop.parentNode.removeChild(backdrop);
-                        }
-                    }, 300);
-                } catch (error) {
-                    console.error('Error menutup dialog:', error);
-                    // Fallback: coba hapus dialog langsung jika terjadi error
-                    const backdropElement = document.getElementById('teleconsult-confirm-backdrop');
-                    if (backdropElement && backdropElement.parentNode) {
-                        backdropElement.parentNode.removeChild(backdropElement);
-                    }
+            // Auto close jika user tidak berinteraksi dalam 15 detik
+            setTimeout(() => {
+                if (document.getElementById('teleconsult-banner')) {
+                    removeBanner();
                 }
-            }
+            }, 15000);
         }
     });
     
