@@ -608,22 +608,25 @@
                 // Sembunyikan loading state
                 setLoadingState(false);
                 
-                if (data.success) {
+                const aiReply = (data && (data.response ?? data.output ?? data.answer ?? data.message)) || null;
+
+                if (data.success && aiReply) {
                     // Tampilkan respons AI
-                    addAIMessage(data.response);
+                    addAIMessage(aiReply);
                     
                     // Tambahkan ke messages saat ini
                     currentMessages.push({
                         role: 'assistant',
-                        content: data.response
+                        content: aiReply
                     });
                     
                     // Simpan ke localStorage
                     saveCurrentChat();
                 } else {
                     // Tampilkan pesan error
-                    addErrorMessage(data.message || 'Terjadi kesalahan saat memproses permintaan Anda.');
-                    showNotification(data.message || 'Terjadi kesalahan saat memproses permintaan Anda.', 'error');
+                    const errorMessage = data.message || 'Terjadi kesalahan saat memproses permintaan Anda.';
+                    addErrorMessage(errorMessage);
+                    showNotification(errorMessage, 'error');
                 }
             })
             .catch(error => {

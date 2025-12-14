@@ -127,11 +127,41 @@ class HealsAiController extends Controller
             }
 
             $data = $response->json();
-            $answer = $data['response']
-                ?? data_get($data, 'data.response')
-                ?? data_get($data, 'answer')
-                ?? $data['output']
-                ?? data_get($data, 'data.output');
+
+            if (is_null($data)) {
+                $rawAnswer = $this->extractAnswerFromPayload($response->body());
+
+                if ($rawAnswer !== null) {
+                    return [
+                        'success' => true,
+                        'response' => $rawAnswer,
+                        'source' => 'n8n',
+                        'attempted' => true,
+                    ];
+                }
+
+                Log::warning('n8n webhook invalid JSON response', [
+                    'body' => $response->body(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => 'Format respons webhook tidak valid.'
+                ];
+            }
+
+            $successFlag = data_get($data, 'success');
+
+            if ($successFlag === false) {
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => data_get($data, 'message') ?? 'Sistem agent utama melaporkan kegagalan.'
+                ];
+            }
+
+            $answer = $this->extractAnswerFromPayload($data);
 
             if (is_string($answer) && trim($answer) !== '') {
                 return [
@@ -158,6 +188,119 @@ class HealsAiController extends Controller
                 'message' => 'Tidak dapat terhubung ke sistem agent utama.'
             ];
         }
+    }
+
+    /**
+     * Ambil jawaban teks dari berbagai struktur payload webhook.
+     */
+    private function extractAnswerFromPayload($payload): ?string
+    {
+        if (is_null($payload)) {
+            return null;
+        }
+
+        if ($payload instanceof \Stringable) {
+            $payload = (string) $payload;
+        }
+
+        if (is_string($payload)) {
+            $trimmed = trim($payload);
+            return $trimmed === '' ? null : $trimmed;
+        }
+
+        if ($payload instanceof \JsonSerializable) {
+            $payload = $payload->jsonSerialize();
+        }
+
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        $candidatePaths = [
+            'response',
+            'data.response',
+            'result.response',
+            'payload.response',
+            'answer',
+            'output',
+            'data.output',
+            'result.output',
+            'payload.output',
+            'message',
+            'body.response',
+            'body.output',
+            'body',
+            '*.response',
+            '*.output',
+            '*.message',
+            '*.json.response',
+            '*.json.output',
+            '*.body.output',
+        ];
+
+        foreach ($candidatePaths as $path) {
+            $value = data_get($payload, $path);
+
+            if ($value instanceof \Stringable) {
+                $value = (string) $value;
+            }
+
+            if (is_array($value)) {
+                $value = $this->extractAnswerFromPayload($value);
+            }
+
+            if (is_string($value)) {
+                $trimmed = trim($value);
+                if ($trimmed !== '') {
+                    return $trimmed;
+                }
+            } elseif (is_iterable($value)) {
+                foreach ($value as $item) {
+                    $nested = $this->extractAnswerFromPayload($item);
+                    if ($nested !== null) {
+                        return $nested;
+                    }
+                }
+            }
+        }
+
+        if ($this->isListArray($payload)) {
+            foreach ($payload as $item) {
+                $nested = $this->extractAnswerFromPayload($item);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+
+        foreach ($payload as $value) {
+            if ($value instanceof \Stringable) {
+                $value = (string) $value;
+            }
+
+            if (is_string($value)) {
+                $trimmed = trim($value);
+                if ($trimmed !== '') {
+                    return $trimmed;
+                }
+            } elseif (is_array($value)) {
+                $nested = $this->extractAnswerFromPayload($value);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function isListArray(array $array): bool
+    {
+        if (function_exists('array_is_list')) {
+            return array_is_list($array);
+        }
+
+        return array_values($array) === $array;
     }
 
     /**
