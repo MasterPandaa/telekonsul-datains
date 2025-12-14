@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class HealsAiController extends Controller
 {
     /**
-     * Mengirim pesan ke API HealsAI (yang menggunakan Gemini di backend)
+     * Mengirim pesan ke AI Agent (n8n) dengan fallback ke HealsAI internal.
      */
     public function getResponse(Request $request)
     {
@@ -21,26 +21,186 @@ class HealsAiController extends Controller
 
         $message = $request->message;
         $history = $request->history ?? [];
-        $isNewConversation = $request->is_new_conversation ?? false;
+        $isNewConversation = (bool) ($request->is_new_conversation ?? false);
+
+        // 1. Coba kirim ke workflow n8n terlebih dahulu
+        $n8nResult = $this->forwardToN8nAgent($message, $history, $isNewConversation);
+
+        if ($n8nResult['success']) {
+            return response()->json($n8nResult);
+        }
+
+        // 2. Jika gagal atau tidak terkonfigurasi, gunakan HealsAI sebagai cadangan
+        $healsResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
+
+        if ($healsResult['success'] && $n8nResult['attempted']) {
+            $fallbackIntro = $this->buildFallbackIntro($n8nResult['message'] ?? null);
+            $healsResult['response'] = $fallbackIntro . "\n\n" . $healsResult['response'];
+            $healsResult['fallback_used'] = true;
+            $healsResult['fallback_message'] = $fallbackIntro;
+            $healsResult['fallback_reason'] = $n8nResult['message'] ?? 'Sistem agent utama tidak dapat dihubungi.';
+        } elseif (!$healsResult['success'] && $n8nResult['attempted']) {
+            $healsResult['message'] = $healsResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses.';
+            $healsResult['fallback_reason'] = $n8nResult['message'] ?? null;
+        }
+
+        return response()->json($healsResult, $healsResult['success'] ? 200 : 500);
+    }
+
+    /**
+     * Kirim pesan ke workflow n8n (agent AI utama).
+     */
+    private function forwardToN8nAgent(string $message, array $history, bool $isNewConversation): array
+    {
+        $webhookUrl = env('CHATBOT_N8N_WEBHOOK_URL');
+
+        if (empty($webhookUrl)) {
+            return [
+                'success' => false,
+                'attempted' => false,
+                'message' => 'Webhook n8n belum dikonfigurasi.'
+            ];
+        }
+
+        $method = strtoupper(env('CHATBOT_N8N_METHOD', 'POST'));
+        $timeout = (int) env('CHATBOT_N8N_TIMEOUT', 15);
+        $allowInsecure = filter_var(env('CHATBOT_N8N_ALLOW_INSECURE_SSL', false), FILTER_VALIDATE_BOOLEAN);
 
         try {
-            // Gunakan nilai dari .env untuk keamanan
+            $client = Http::timeout($timeout)->acceptJson();
+
+            if ($allowInsecure) {
+                $client = $client->withoutVerifying();
+            }
+
+            // Authentication handling
+            $authType = strtolower(env('CHATBOT_N8N_AUTH_TYPE', 'none'));
+            switch ($authType) {
+                case 'basic':
+                    $client = $client->withBasicAuth(
+                        env('CHATBOT_N8N_BASIC_USER', ''),
+                        env('CHATBOT_N8N_BASIC_PASS', '')
+                    );
+                    break;
+                case 'bearer':
+                    $client = $client->withToken(env('CHATBOT_N8N_BEARER_TOKEN', ''));
+                    break;
+                case 'header':
+                    $headerKey = env('CHATBOT_N8N_HEADER_KEY');
+                    $headerValue = env('CHATBOT_N8N_HEADER_VALUE');
+                    if ($headerKey && $headerValue) {
+                        $client = $client->withHeaders([$headerKey => $headerValue]);
+                    }
+                    break;
+                case 'jwt':
+                    $client = $client->withHeaders([
+                        'Authorization' => 'Bearer ' . env('CHATBOT_N8N_JWT_TOKEN', '')
+                    ]);
+                    break;
+                default:
+                    // none
+                    break;
+            }
+
+            $payload = [
+                'message' => $message,
+                'history' => $history,
+                'is_new_conversation' => $isNewConversation,
+                'user' => [
+                    'id' => optional(auth()->user())->id,
+                    'name' => optional(auth()->user())->name,
+                    'email' => optional(auth()->user())->email,
+                ],
+                'context' => [
+                    'source' => 'telekonsul-web',
+                    'timestamp' => now()->toIso8601String(),
+                ],
+            ];
+
+            $response = $client->send($method, $webhookUrl, ['json' => $payload]);
+
+            if (!$response->successful()) {
+                Log::warning('n8n webhook error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => 'Sistem agent utama tidak merespons dengan benar.'
+                ];
+            }
+
+            $data = $response->json();
+            $answer = $data['response']
+                ?? data_get($data, 'data.response')
+                ?? data_get($data, 'answer');
+
+            if (is_string($answer) && trim($answer) !== '') {
+                return [
+                    'success' => true,
+                    'response' => $answer,
+                    'source' => 'n8n',
+                    'attempted' => true,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Format respons webhook tidak valid.'
+            ];
+        } catch (\Throwable $th) {
+            Log::error('n8n webhook exception', [
+                'message' => $th->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Tidak dapat terhubung ke sistem agent utama.'
+            ];
+        }
+    }
+
+    /**
+     * Bangun pesan pembuka ketika fallback dipakai.
+     */
+    private function buildFallbackIntro(?string $reason = null): string
+    {
+        $reasonText = $reason ? " (Detail: {$reason})" : '';
+        return "Maaf ya, sistem agent AI utama kami sedang tidak tersedia{$reasonText}. HealsAI akan membantu Anda sementara. "
+            . "Jika ingin melanjutkan konsultasi, tetap feel free untuk bertanya ya!";
+    }
+
+    /**
+     * Jalankan HealsAI internal (simulasi atau Gemini).
+     */
+    private function generateHealsAiResponse(string $message, array $history, bool $isNewConversation): array
+    {
+        try {
+            $simulationMode = filter_var(env('HEALSAI_SIMULATION_MODE', true), FILTER_VALIDATE_BOOLEAN);
+
+            if ($simulationMode) {
+                $simulated = $this->getSimulatedResponse($message, $isNewConversation);
+                $simulated['source'] = 'healsai-simulation';
+                return $simulated;
+            }
+
             $apiKey = env('HEALSAI_API_KEY');
             $model = env('HEALSAI_MODEL');
-            
-            // Mode simulasi dari .env
-            $simulationMode = env('HEALSAI_SIMULATION_MODE', true);
-            
-            // Jika dalam mode simulasi, berikan respons langsung tanpa memanggil API
-            if ($simulationMode) {
-                return $this->getSimulatedResponse($message, $isNewConversation);
+
+            if (!$apiKey || !$model) {
+                return [
+                    'success' => false,
+                    'message' => 'Konfigurasi HealsAI belum lengkap.',
+                ];
             }
-            
-            // Format pesan dengan riwayat percakapan
+
             $promptText = $this->formatPromptWithHistory($message, $history, $isNewConversation);
-            
-            // Format data untuk API Gemini 2.0 Flash
-            $data = [
+
+            $payload = [
                 "contents" => [
                     [
                         "parts" => [
@@ -75,61 +235,58 @@ class HealsAiController extends Controller
                     ]
                 ]
             ];
-            
-            // Panggil API Gemini (tapi tetap dengan label HealsAI)
+
             $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
-            
+
             $response = Http::withHeaders([
-                    'Content-Type' => 'application/json'
-                ])
-                ->post($url, $data);
-            
+                'Content-Type' => 'application/json'
+            ])->post($url, $payload);
+
             if ($response->successful()) {
                 $result = $response->json();
-                
-                // Ekstrak teks respons dari hasil Gemini
-                $responseText = $result['candidates'][0]['content']['parts'][0]['text'] ?? 'Maaf, saya tidak dapat memproses permintaan Anda saat ini.';
-                
-                return response()->json([
+                $responseText = $result['candidates'][0]['content']['parts'][0]['text']
+                    ?? 'Maaf, saya tidak dapat memproses permintaan Anda saat ini.';
+
+                return [
                     'success' => true,
-                    'response' => $responseText
-                ]);
-            } else {
-                Log::error('HealsAI API Error', [
-                    'status' => $response->status(),
-                    'response' => $response->json()
-                ]);
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal terhubung dengan layanan AI',
-                    'error' => $response->json()
-                ], 500);
+                    'response' => $responseText,
+                    'source' => 'healsai',
+                ];
             }
-        } catch (\Exception $e) {
-            Log::error('HealsAI API Exception', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+
+            Log::error('HealsAI API Error', [
+                'status' => $response->status(),
+                'response' => $response->json(),
             ]);
-            
-            return response()->json([
+
+            return [
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Gagal terhubung dengan layanan AI',
+                'error' => $response->json(),
+            ];
+        } catch (\Throwable $th) {
+            Log::error('HealsAI API Exception', [
+                'message' => $th->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+            ];
         }
     }
-    
+
     /**
      * Format prompt dengan riwayat percakapan
      */
     private function formatPromptWithHistory($message, $history, $isNewConversation)
     {
         $prompt = "Kamu adalah HealsAI, asisten kesehatan pintar. Berikut adalah pedoman penting yang HARUS kamu ikuti:\n\n";
-        
+
         // Pedoman dasar
         $prompt .= "1. Berikan jawaban yang RAMAH, EXCITED, INTERAKTIF, akurat, dan informatif dalam Bahasa Indonesia yang natural seperti dokter profesional yang bersahabat.\n";
         $prompt .= "2. Fokus HANYA pada informasi kesehatan yang dapat dipercaya dan berbasis bukti ilmiah terkini.\n";
-        
+
         // Format dan kreativitas
         $prompt .= "3. FORMAT JAWABAN DAN KREATIVITAS:\n";
         $prompt .= "   a. SANGAT PENTING: Gunakan DUA baris kosong (dua kali Enter) untuk memisahkan paragraf, sehingga jawabanmu terlihat lebih rapi dan mudah dibaca. Selalu berikan jarak kosong yang cukup antar paragraf. Contoh format yang benar:\n";
@@ -157,7 +314,7 @@ class HealsAiController extends Controller
         $prompt .= "   h. Berikan apresiasi atau semangat kepada pasien (\"Pertanyaan bagus!\", \"Keren sekali Anda sudah memperhatikan ini\", \"Anda sudah melakukan langkah tepat\").\n";
         $prompt .= "   i. Gunakan beberapa kalimat pendek di antara kalimat panjang untuk menciptakan ritme dalam percakapan.\n";
         $prompt .= "   j. Mulai jawaban dengan berbagai variasi pembuka yang ramah dan excited (\"Hai! Pertanyaan yang menarik!\", \"Wah, topik yang penting nih!\", \"Senang Anda bertanya tentang ini!\").\n";
-        
+
         // Batasan penting
         $prompt .= "4. BATASAN PENTING:\n";
         $prompt .= "   a. Kamu HANYA boleh menjawab pertanyaan tentang kesehatan, kedokteran, anatomi tubuh, penyakit, gejala, cara pencegahan, dan topik terkait kesehatan lainnya.\n";
@@ -165,7 +322,7 @@ class HealsAiController extends Controller
         $prompt .= "   c. Untuk pertanyaan non-kesehatan (politik, hiburan, berita, dll), jawab dengan sopan bahwa kamu hanya dapat membantu dengan informasi kesehatan.\n";
         $prompt .= "   d. Jika pasien meminta resep obat, diagnosis, atau konsultasi medis spesifik, selalu gunakan kalimat: \"Sebagai gantinya, saya sarankan Anda untuk segera berkonsultasi dengan dokter melalui fitur Telekonsultasi yang tersedia di platform ini.\" Kalimat ini penting untuk memicu popup telekonsultasi.\n";
         $prompt .= "   e. Kamu boleh menjelaskan informasi umum tentang obat-obatan (fungsi, jenis, cara kerja) tapi JANGAN memberikan rekomendasi spesifik.\n\n";
-        
+
         if ($isNewConversation) {
             // Untuk percakapan baru, fokus pada pertanyaan saat ini tanpa referensi konteks sebelumnya
             $prompt .= "5. Ini adalah PERCAKAPAN BARU, jadi berikan informasi umum tanpa mengasumsikan pasien memiliki kondisi yang sedang dibicarakan sebelumnya.\n";
@@ -182,14 +339,14 @@ class HealsAiController extends Controller
             $prompt .= "10. Jangan memberikan diagnosis pasti, tetapi berikan informasi dan saran yang membantu.\n";
             $prompt .= "11. Jika ada kondisi serius, selalu sarankan untuk berkonsultasi dengan dokter melalui fitur Telekonsultasi di platform ini.\n\n";
         }
-        
+
         // Tambahkan riwayat percakapan jika ada
         if (!empty($history)) {
             $prompt .= "Berikut adalah riwayat percakapan dengan pasien:\n\n";
-            
+
             // Tambahkan maksimal 10 pesan terakhir untuk konteks yang relevan
             $recentHistory = array_slice($history, -10);
-            
+
             foreach ($recentHistory as $entry) {
                 if ($entry['role'] === 'user') {
                     $prompt .= "Pasien: " . $entry['content'] . "\n\n";
@@ -198,36 +355,36 @@ class HealsAiController extends Controller
                 }
             }
         }
-        
+
         // Tambahkan pertanyaan saat ini
         $prompt .= "Pertanyaan/keluhan terkini dari pasien: " . $message . "\n\n";
-        
+
         if ($isNewConversation) {
             $prompt .= "Jawablah pertanyaan ini sebagai awal percakapan baru, tanpa mengacu pada konteks sebelumnya yang mungkin tidak relevan. Tunjukkan keramahan dan antusiasme dalam jawabanmu!\n\n";
         } else {
             $prompt .= "Jawablah dengan mempertimbangkan seluruh riwayat percakapan dan berikan respons yang personal, natural, ramah, dan berkesinambungan, seolah-olah kamu adalah seorang dokter yang bersahabat yang sedang berkonsultasi dengan pasien secara langsung.\n\n";
         }
-        
+
         $prompt .= "PENGINGAT PENTING: Jangan pernah memberikan diagnosis pasti atau resep obat. Jika pasien membutuhkan konsultasi spesifik, gunakan kalimat: \"Sebagai gantinya, saya sarankan Anda untuk segera berkonsultasi dengan dokter melalui fitur Telekonsultasi yang tersedia di platform ini.\" untuk memicu popup telekonsultasi.\n\n";
         $prompt .= "INGAT TENTANG FORMAT: Gunakan DUA BARIS KOSONG (dua kali Enter) di antara paragraf untuk memisahkan paragraf dengan jelas. Berikan indentasi yang tepat untuk daftar atau poin-poin. Gunakan nada yang ramah, excited, dan supportive dalam setiap jawabanmu.\n\n";
-        
+
         $prompt .= "Jawaban HealsAI:";
-        
+
         return $prompt;
     }
-    
+
     /**
      * Mendapatkan respons simulasi untuk testing
      */
-    private function getSimulatedResponse($message, $isNewConversation)
+    private function getSimulatedResponse($message, $isNewConversation): array
     {
         // Pilih respons berdasarkan keyword dan konteks
         $aiResponse = '';
         $messageLower = strtolower($message);
-        
+
         // Cek apakah pertanyaan di luar topik kesehatan
-        if (stripos($messageLower, 'politik') !== false || 
-            stripos($messageLower, 'presiden') !== false || 
+        if (stripos($messageLower, 'politik') !== false ||
+            stripos($messageLower, 'presiden') !== false ||
             stripos($messageLower, 'partai') !== false ||
             stripos($messageLower, 'pilpres') !== false ||
             stripos($messageLower, 'film') !== false ||
@@ -239,27 +396,27 @@ class HealsAiController extends Controller
             stripos($messageLower, 'investasi') !== false ||
             stripos($messageLower, 'game') !== false ||
             stripos($messageLower, 'kode program') !== false) {
-            
-            return response()->json([
+
+            return [
                 'success' => true,
                 'response' => 'Hai! Mohon maaf ya, saya adalah HealsAI yang berfokus khusus pada informasi kesehatan. Saya tidak dapat membantu dengan pertanyaan di luar topik kesehatan.
 
 
 Silakan ajukan pertanyaan seputar kesehatan, kedokteran, gejala penyakit, atau informasi medis lainnya, dan saya akan dengan senang hati membantu Anda! 😊'
-            ]);
+            ];
         }
-        
+
         // Cek permintaan untuk resep obat atau diagnosis
-        if (stripos($messageLower, 'berikan saya resep') !== false || 
-            stripos($messageLower, 'resepkan saya') !== false || 
+        if (stripos($messageLower, 'berikan saya resep') !== false ||
+            stripos($messageLower, 'resepkan saya') !== false ||
             stripos($messageLower, 'butuh resep') !== false ||
             stripos($messageLower, 'minta resep') !== false ||
             stripos($messageLower, 'obat apa yang harus') !== false ||
             stripos($messageLower, 'resep obat') !== false ||
             stripos($messageLower, 'diagnosa penyakit saya') !== false ||
             stripos($messageLower, 'diagnosis penyakit saya') !== false) {
-            
-            return response()->json([
+
+            return [
                 'success' => true,
                 'response' => 'Hai! Saya memahami kekhawatiran Anda dan keinginan untuk mendapatkan solusi segera. Namun sebagai HealsAI, saya tidak dapat memberikan resep obat atau diagnosis pasti.
 
@@ -268,9 +425,9 @@ Untuk mendapatkan penanganan yang tepat dan aman, Anda memerlukan pemeriksaan la
 
 
 Sebagai gantinya, saya sarankan Anda untuk segera berkonsultasi dengan dokter melalui fitur Telekonsultasi yang tersedia di platform ini.'
-            ]);
+            ];
         }
-        
+
         // Tanggapan untuk percakapan baru vs lanjutan
         if ($isNewConversation) {
             // Respons untuk percakapan baru - lebih umum
@@ -475,10 +632,10 @@ Untuk memberikan saran yang lebih tepat dan membantu, bisakah Anda memberitahu s
 Saya di sini untuk mendukung perjalanan kesehatan Anda dan memberikan informasi yang Anda butuhkan! 💪';
             }
         }
-        
-        return response()->json([
+
+        return [
             'success' => true,
             'response' => $aiResponse
-        ]);
+        ];
     }
-} 
+}
