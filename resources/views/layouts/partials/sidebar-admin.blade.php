@@ -1,7 +1,7 @@
 <aside class="w-64 bg-white shadow-lg flex flex-col py-6 px-4 min-h-screen hidden md:flex">
     <!-- Logo -->
     <div class="px-4 mb-6 flex justify-center border-b-2 border-gray-100 pb-6">
-        <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
+        <img src="{{ asset('img/BLUE_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
     </div>
     
     <nav class="flex-1">
@@ -68,7 +68,7 @@
     <div class="absolute inset-y-0 left-0 w-64 bg-white shadow-lg py-6 px-4 overflow-y-auto">
         <!-- Logo for Mobile -->
         <div class="flex items-center justify-between mb-6 border-b-2 border-gray-300 pb-6">
-            <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
+            <img src="{{ asset('img/BLUE_ASSRI.png') }}" alt="ASSRI Logo" class="h-7 w-auto">
             <button class="text-gray-600" onclick="document.getElementById('sidebar-mobile').classList.add('hidden')">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>

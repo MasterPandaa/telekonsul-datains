@@ -3,7 +3,8 @@
         <div class="flex justify-between h-16">
             <div class="flex items-center">
                 <a href="/" class="flex items-center">
-                    <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-8">
+                    <img src="{{ asset('img/BLUE_ASSRI.png') }}" alt="ASSRI Logo" class="h-8">
+
                 </a>
                 <div class="hidden space-x-8 sm:ml-10 sm:flex">
                     <a href="/" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">

@@ -41,7 +41,7 @@
             <!-- Logo (Desktop) -->
             <div class="flex items-center">
                 <a href="{{ route('pasien.dashboard') }}" class="flex items-center no-underline">
-                    <img src="{{ asset('img/Blue_ASSRI.png') }}" alt="ASSRI Logo" class="h-6 md:h-8">
+                    <img src="{{ asset('img/BLUE_ASSRI.png') }}" alt="ASSRI Logo" class="h-6 md:h-8">
                 </a>
             </div>
             
