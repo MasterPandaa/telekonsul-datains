@@ -56,7 +56,7 @@ class HealsAiController extends Controller
         }
 
         $method = strtoupper($settings->method ?? 'POST');
-        $timeout = (int) ($settings->timeout ?? 15);
+        $timeout = (int) ($settings->timeout ?? 60);
 
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
@@ -129,7 +129,9 @@ class HealsAiController extends Controller
             $data = $response->json();
             $answer = $data['response']
                 ?? data_get($data, 'data.response')
-                ?? data_get($data, 'answer');
+                ?? data_get($data, 'answer')
+                ?? $data['output']
+                ?? data_get($data, 'data.output');
 
             if (is_string($answer) && trim($answer) !== '') {
                 return [
