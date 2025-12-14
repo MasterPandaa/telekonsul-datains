@@ -67,7 +67,8 @@ class HealsAiController extends Controller
         }
 
         $method = strtoupper($settings->method ?? 'POST');
-        $timeout = (int) ($settings->timeout ?? 15);
+        $timeout = (int) ($settings->timeout ?? 60);
+
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
