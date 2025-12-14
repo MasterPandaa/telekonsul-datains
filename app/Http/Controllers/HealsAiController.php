@@ -192,10 +192,8 @@ class HealsAiController extends Controller
             $model = env('HEALSAI_MODEL');
 
             if (!$apiKey || !$model) {
-                return [
-                    'success' => false,
-                    'message' => 'Konfigurasi HealsAI belum lengkap.',
-                ];
+                Log::warning('HealsAI config incomplete', ['has_key' => (bool) $apiKey, 'model' => $model]);
+                return $this->buildMaintenanceResponse('Konfigurasi HealsAI belum lengkap.');
             }
 
             $promptText = $this->formatPromptWithHistory($message, $history, $isNewConversation);
@@ -259,20 +257,13 @@ class HealsAiController extends Controller
                 'response' => $response->json(),
             ]);
 
-            return [
-                'success' => false,
-                'message' => 'Gagal terhubung dengan layanan AI',
-                'error' => $response->json(),
-            ];
+            return $this->buildMaintenanceResponse('Gagal terhubung dengan layanan AI');
         } catch (\Throwable $th) {
             Log::error('HealsAI API Exception', [
                 'message' => $th->getMessage(),
             ]);
 
-            return [
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
-            ];
+            return $this->buildMaintenanceResponse('Terjadi kesalahan: ' . $th->getMessage());
         }
     }
 
@@ -636,6 +627,22 @@ Saya di sini untuk mendukung perjalanan kesehatan Anda dan memberikan informasi 
         return [
             'success' => true,
             'response' => $aiResponse
+        ];
+    }
+
+    private function buildMaintenanceResponse(?string $reason = null): array
+    {
+        $reasonText = $reason ? " (Detail teknis: {$reason})" : '';
+        $message = "Maaf ya, sistem AI utama kami sedang dalam pemeliharaan{$reasonText}. "
+            . "Untuk saat ini saya bisa memberikan informasi kesehatan umum dan membantu Anda "
+            . "mengevaluasi gejala yang Anda rasakan. Jika butuh tindakan spesifik, "
+            . "Anda bisa langsung menuju menu Telekonsultasi untuk berbicara dengan dokter.";
+
+        return [
+            'success' => true,
+            'response' => $message,
+            'source' => 'healsai-maintenance',
+            'fallback_used' => true,
         ];
     }
 }
