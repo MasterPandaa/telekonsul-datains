@@ -27,19 +27,26 @@ class HealsAiController extends Controller
         $history = $request->history ?? [];
         $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
+<<<<<<< HEAD
         if ($isNewConversation) {
             $request->session()->forget('chatbot_conversation_id');
             $request->session()->forget('chatbot_started_at');
         }
 
         $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
+=======
+        // 1. Coba kirim ke workflow n8n terlebih dahulu
+        $n8nResult = $this->forwardToN8nAgent($message, $history, $isNewConversation);
+>>>>>>> parent of 18517e9 (Push)
 
         if ($n8nResult['success']) {
             return response()->json($n8nResult);
         }
 
-        $errorMessage = $n8nResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses. Silakan coba lagi beberapa saat.';
+        // 2. Jika gagal atau tidak terkonfigurasi, gunakan HealsAI sebagai cadangan
+        $healsResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
 
+<<<<<<< HEAD
         return response()->json([
             'success' => false,
             'message' => $errorMessage,
@@ -48,6 +55,23 @@ class HealsAiController extends Controller
             'error_code' => $n8nResult['error_code'] ?? null,
             'error_detail' => $n8nResult['error_detail'] ?? null,
         ], 502);
+=======
+        if ($healsResult['success'] && $n8nResult['attempted']) {
+            $shouldAddIntro = ($healsResult['source'] ?? '') !== 'healsai-maintenance';
+            $fallbackIntro = $this->buildFallbackIntro($n8nResult['message'] ?? null);
+            if ($shouldAddIntro) {
+                $healsResult['response'] = $fallbackIntro . "\n\n" . $healsResult['response'];
+            }
+            $healsResult['fallback_used'] = true;
+            $healsResult['fallback_message'] = $fallbackIntro;
+            $healsResult['fallback_reason'] = $n8nResult['message'] ?? 'Sistem agent utama tidak dapat dihubungi.';
+        } elseif (!$healsResult['success'] && $n8nResult['attempted']) {
+            $healsResult['message'] = $healsResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses.';
+            $healsResult['fallback_reason'] = $n8nResult['message'] ?? null;
+        }
+
+        return response()->json($healsResult, $healsResult['success'] ? 200 : 500);
+>>>>>>> parent of 18517e9 (Push)
     }
 
     /**
@@ -67,7 +91,12 @@ class HealsAiController extends Controller
             );
         }
 
+<<<<<<< HEAD
         $webhookUrl = trim($settings->webhook_url ?? '');
+=======
+        $method = strtoupper($settings->method ?? 'POST');
+        $timeout = (int) ($settings->timeout ?? 60);
+>>>>>>> parent of 18517e9 (Push)
 
         if ($webhookUrl === '' || !filter_var($webhookUrl, FILTER_VALIDATE_URL)) {
             Log::warning('Chatbot settings invalid url', ['webhook_url' => $webhookUrl]);
