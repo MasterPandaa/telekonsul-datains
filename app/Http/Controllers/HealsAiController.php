@@ -24,7 +24,7 @@ class HealsAiController extends Controller
         $history = $request->history ?? [];
         $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
-        $n8nResult = $this->forwardToN8nAgent($message, $history, $isNewConversation);
+        $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
 
         if ($n8nResult['success']) {
             return response()->json($n8nResult);
@@ -43,7 +43,7 @@ class HealsAiController extends Controller
     /**
      * Kirim pesan ke workflow n8n (agent AI utama).
      */
-    private function forwardToN8nAgent(string $message, array $history, bool $isNewConversation): array
+    private function forwardToN8nAgent(Request $request, string $message, array $history, bool $isNewConversation): array
     {
         $settings = ChatbotSetting::first();
 
@@ -105,8 +105,9 @@ class HealsAiController extends Controller
 
             $payload = [
                 'message' => $message,
-                'history' => $history,
+                'history' => $this->sanitizeHistory($history),
                 'is_new_conversation' => $isNewConversation,
+                'conversation_id' => $request->input('conversation_id') ?? $request->input('chat_id'),
                 'user' => [
                     'id' => optional(auth()->user())->id,
                     'name' => optional(auth()->user())->name,
@@ -117,6 +118,7 @@ class HealsAiController extends Controller
                     'timestamp' => now()->toIso8601String(),
                     'execution_mode' => app()->environment('production') ? 'production' : 'test',
                 ],
+                'session' => $this->buildSessionMetadata($request),
             ];
 
             $response = $client->send($method, $settings->webhook_url, [
@@ -198,6 +200,62 @@ class HealsAiController extends Controller
                 'message' => 'Tidak dapat terhubung ke sistem agent utama.'
             ];
         }
+    }
+
+    /**
+     * Hilangkan entri history default / tidak valid.
+     */
+    private function sanitizeHistory(array $history): array
+    {
+        $filtered = [];
+
+        foreach ($history as $index => $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $role = $entry['role'] ?? null;
+            $content = isset($entry['content']) ? trim((string) $entry['content']) : '';
+
+            if ($role === null || $content === '') {
+                continue;
+            }
+
+            $isDefaultGreeting = $role === 'assistant'
+                && $index === 0
+                && stripos($content, 'Halo! Saya HealsAI') === 0;
+
+            if ($isDefaultGreeting) {
+                continue;
+            }
+
+            $filtered[] = [
+                'role' => $role,
+                'content' => $content,
+            ];
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * Bangun metadata sesi untuk konteks chatbot.
+     */
+    private function buildSessionMetadata(Request $request): array
+    {
+        $session = $request->session();
+
+        if (!$session->has('healsai_session_started_at')) {
+            $session->put('healsai_session_started_at', now()->toIso8601String());
+        }
+
+        return [
+            'id' => $session->getId(),
+            'started_at' => $session->get('healsai_session_started_at'),
+            'is_authenticated' => auth()->check(),
+            'ip_address' => $request->getClientIp(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+        ];
     }
 
     /**
