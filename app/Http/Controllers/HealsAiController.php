@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\ChatbotSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class HealsAiController extends Controller
 {
@@ -24,7 +26,12 @@ class HealsAiController extends Controller
         $history = $request->history ?? [];
         $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
-        $n8nResult = $this->forwardToN8nAgent($message, $history, $isNewConversation);
+        if ($isNewConversation) {
+            $request->session()->forget('chatbot_conversation_id');
+            $request->session()->forget('chatbot_started_at');
+        }
+
+        $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
 
         if ($n8nResult['success']) {
             return response()->json($n8nResult);
@@ -43,7 +50,7 @@ class HealsAiController extends Controller
     /**
      * Kirim pesan ke workflow n8n (agent AI utama).
      */
-    private function forwardToN8nAgent(string $message, array $history, bool $isNewConversation): array
+    private function forwardToN8nAgent(Request $request, string $message, array $history, bool $isNewConversation): array
     {
         $settings = ChatbotSetting::first();
 
@@ -59,6 +66,26 @@ class HealsAiController extends Controller
         $timeout = (int) ($settings->timeout ?? 60);
 
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
+        $session = $request->session();
+        $sessionId = $session->getId();
+        $conversationId = $session->get('chatbot_conversation_id');
+
+        if ($isNewConversation || empty($conversationId)) {
+            $conversationId = (string) Str::uuid();
+            $session->put('chatbot_conversation_id', $conversationId);
+            $session->put('chatbot_started_at', now()->toIso8601String());
+        }
+
+        $chatStartedAt = $session->get('chatbot_started_at');
+        $user = auth()->user();
+        $pasien = optional($user)->pasien;
+        $birthDate = null;
+
+        if ($pasien && $pasien->tanggal_lahir) {
+            $birthDate = $pasien->tanggal_lahir instanceof \DateTimeInterface
+                ? $pasien->tanggal_lahir->format('Y-m-d')
+                : Carbon::parse($pasien->tanggal_lahir)->toDateString();
+        }
 
         try {
             $client = Http::timeout($timeout)->acceptJson();
@@ -101,13 +128,35 @@ class HealsAiController extends Controller
                 'history' => $history,
                 'is_new_conversation' => $isNewConversation,
                 'user' => [
-                    'id' => optional(auth()->user())->id,
-                    'name' => optional(auth()->user())->name,
-                    'email' => optional(auth()->user())->email,
+                    'id' => optional($user)->id,
+                    'name' => optional($user)->name,
+                    'email' => optional($user)->email,
+                    'role' => optional($user)->role,
+                    'gender' => optional($pasien)->jenis_kelamin,
+                    'phone' => optional($pasien)->no_hp,
+                    'birth_place' => optional($pasien)->tempat_lahir,
+                    'birth_date' => $birthDate,
+                ],
+                'patient_profile' => [
+                    'height_cm' => optional($pasien)->tinggi_badan,
+                    'weight_kg' => optional($pasien)->berat_badan,
+                    'bmi' => optional($pasien)->bmi,
+                    'blood_pressure' => optional($pasien)->tekanan_darah,
+                    'allergies' => optional($pasien)->alergi,
+                    'medical_history' => optional($pasien)->riwayat_penyakit,
+                ],
+                'session' => [
+                    'id' => $sessionId,
+                    'conversation_id' => $conversationId,
+                    'started_at' => $chatStartedAt,
+                    'history_count' => count($history),
                 ],
                 'context' => [
                     'source' => 'telekonsul-web',
                     'timestamp' => now()->toIso8601String(),
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'referer' => $request->headers->get('referer'),
                 ],
             ];
 
