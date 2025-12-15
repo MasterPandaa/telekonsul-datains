@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChatbotSetting;
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class HealsAiController extends Controller
 {
@@ -27,151 +24,106 @@ class HealsAiController extends Controller
         $history = $request->history ?? [];
         $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
-<<<<<<< HEAD
-        if ($isNewConversation) {
-            $request->session()->forget('chatbot_conversation_id');
-            $request->session()->forget('chatbot_started_at');
-        }
-
-        $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
-=======
-        // 1. Coba kirim ke workflow n8n terlebih dahulu
         $n8nResult = $this->forwardToN8nAgent($message, $history, $isNewConversation);
->>>>>>> parent of 18517e9 (Push)
 
         if ($n8nResult['success']) {
             return response()->json($n8nResult);
         }
 
-        // 2. Jika gagal atau tidak terkonfigurasi, gunakan HealsAI sebagai cadangan
-        $healsResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
+        $errorMessage = $n8nResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses. Silakan coba lagi beberapa saat.';
 
-<<<<<<< HEAD
         return response()->json([
             'success' => false,
             'message' => $errorMessage,
             'source' => 'n8n',
             'attempted' => $n8nResult['attempted'] ?? false,
-            'error_code' => $n8nResult['error_code'] ?? null,
-            'error_detail' => $n8nResult['error_detail'] ?? null,
         ], 502);
-=======
-        if ($healsResult['success'] && $n8nResult['attempted']) {
-            $shouldAddIntro = ($healsResult['source'] ?? '') !== 'healsai-maintenance';
-            $fallbackIntro = $this->buildFallbackIntro($n8nResult['message'] ?? null);
-            if ($shouldAddIntro) {
-                $healsResult['response'] = $fallbackIntro . "\n\n" . $healsResult['response'];
-            }
-            $healsResult['fallback_used'] = true;
-            $healsResult['fallback_message'] = $fallbackIntro;
-            $healsResult['fallback_reason'] = $n8nResult['message'] ?? 'Sistem agent utama tidak dapat dihubungi.';
-        } elseif (!$healsResult['success'] && $n8nResult['attempted']) {
-            $healsResult['message'] = $healsResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses.';
-            $healsResult['fallback_reason'] = $n8nResult['message'] ?? null;
-        }
-
-        return response()->json($healsResult, $healsResult['success'] ? 200 : 500);
->>>>>>> parent of 18517e9 (Push)
     }
 
     /**
      * Kirim pesan ke workflow n8n (agent AI utama).
      */
-    private function forwardToN8nAgent(Request $request, string $message, array $history, bool $isNewConversation): array
+    private function forwardToN8nAgent(string $message, array $history, bool $isNewConversation): array
     {
         $settings = ChatbotSetting::first();
 
-        if (!$settings) {
-            Log::warning('Chatbot settings missing');
-            return $this->buildFailure(
-                'CHATBOT_CONFIG_MISSING',
-                'Fitur Chatbot AI belum dikonfigurasi di menu Admin.',
-                null,
-                false
-            );
+        if (!$settings || empty($settings->webhook_url)) {
+            return [
+                'success' => false,
+                'attempted' => false,
+                'message' => 'Fitur Chatbot API belum dikonfigurasi.'
+            ];
         }
 
-<<<<<<< HEAD
-        $webhookUrl = trim($settings->webhook_url ?? '');
-=======
         $method = strtoupper($settings->method ?? 'POST');
         $timeout = (int) ($settings->timeout ?? 60);
->>>>>>> parent of 18517e9 (Push)
 
-        if ($webhookUrl === '' || !filter_var($webhookUrl, FILTER_VALIDATE_URL)) {
-            Log::warning('Chatbot settings invalid url', ['webhook_url' => $webhookUrl]);
-            return $this->buildFailure(
-                'CHATBOT_URL_INVALID',
-                'URL webhook AI tidak valid. Mohon periksa konfigurasi di menu Admin.',
-                $webhookUrl,
-                false
-            );
-        }
-
-        $method = $this->sanitizeHttpMethod($settings->method ?? 'POST');
-        $timeout = max(5, (int) ($settings->timeout ?? 60));
-
-        $session = $request->session();
-        $sessionId = $session->getId();
-        $conversationId = $session->get('chatbot_conversation_id');
-
-        if ($isNewConversation || empty($conversationId)) {
-            $conversationId = (string) Str::uuid();
-            $session->put('chatbot_conversation_id', $conversationId);
-            $session->put('chatbot_started_at', now()->toIso8601String());
-        }
-
-        $chatStartedAt = $session->get('chatbot_started_at');
-        $user = auth()->user();
-        $pasien = optional($user)->pasien;
-        $birthDate = null;
-
-        if ($pasien && $pasien->tanggal_lahir) {
-            $birthDate = $pasien->tanggal_lahir instanceof \DateTimeInterface
-                ? $pasien->tanggal_lahir->format('Y-m-d')
-                : Carbon::parse($pasien->tanggal_lahir)->toDateString();
-        }
+        $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
             $client = Http::timeout($timeout)->acceptJson();
 
-            if ((bool) $settings->allow_insecure_ssl) {
+            if ($allowInsecure) {
                 $client = $client->withoutVerifying();
             }
 
-            $client = $this->applyAuthentication($client, $settings);
+            // Authentication handling
+            $authType = strtolower($settings->auth_type ?? 'none');
+            switch ($authType) {
+                case 'basic':
+                    $client = $client->withBasicAuth(
+                        $settings->basic_user ?? '',
+                        $settings->basic_pass ?? ''
+                    );
+                    break;
+                case 'bearer':
+                    $client = $client->withToken($settings->bearer_token ?? '');
+                    break;
+                case 'header':
+                    $headerKey = $settings->header_key;
+                    $headerValue = $settings->header_value;
+                    if ($headerKey && $headerValue) {
+                        $client = $client->withHeaders([$headerKey => $headerValue]);
+                    }
+                    break;
+                case 'jwt':
+                    $client = $client->withHeaders([
+                        'Authorization' => 'Bearer ' . ($settings->jwt_token ?? '')
+                    ]);
+                    break;
+                default:
+                    // none
+                    break;
+            }
 
-            $payload = $this->buildWebhookPayload(
-                $message,
-                $history,
-                $isNewConversation,
-                $user,
-                $pasien,
-                $birthDate,
-                $sessionId,
-                $conversationId,
-                $chatStartedAt,
-                $request->ip(),
-                $request->userAgent(),
-                $request->headers->get('referer')
-            );
+            $payload = [
+                'message' => $message,
+                'history' => $history,
+                'is_new_conversation' => $isNewConversation,
+                'user' => [
+                    'id' => optional(auth()->user())->id,
+                    'name' => optional(auth()->user())->name,
+                    'email' => optional(auth()->user())->email,
+                ],
+                'context' => [
+                    'source' => 'telekonsul-web',
+                    'timestamp' => now()->toIso8601String(),
+                ],
+            ];
 
-            $response = $client->send($method, $webhookUrl, ['json' => $payload]);
+            $response = $client->send($method, $settings->webhook_url, ['json' => $payload]);
 
             if (!$response->successful()) {
                 Log::warning('n8n webhook error', [
-                    'url' => $webhookUrl,
-                    'method' => $method,
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
 
-                $status = $response->status();
-                return $this->buildFailure(
-                    'CHATBOT_HTTP_ERROR',
-                    'Sistem agent utama menolak permintaan.',
-                    "HTTP {$status}: {$response->body()}"
-                );
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => 'Sistem agent utama tidak merespons dengan benar.'
+                ];
             }
 
             $data = $response->json();
@@ -192,22 +144,21 @@ class HealsAiController extends Controller
                     'body' => $response->body(),
                 ]);
 
-                return $this->buildFailure(
-                    'CHATBOT_INVALID_JSON',
-                    'Format respons webhook tidak valid.',
-                    $response->body()
-                );
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => 'Format respons webhook tidak valid.'
+                ];
             }
 
             $successFlag = data_get($data, 'success');
 
             if ($successFlag === false) {
-                $detail = data_get($data, 'message') ?? json_encode($data);
-                return $this->buildFailure(
-                    'CHATBOT_REPORTED_FAILURE',
-                    'Sistem agent utama melaporkan kegagalan.',
-                    $detail
-                );
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => data_get($data, 'message') ?? 'Sistem agent utama melaporkan kegagalan.'
+                ];
             }
 
             $answer = $this->extractAnswerFromPayload($data);
@@ -221,25 +172,21 @@ class HealsAiController extends Controller
                 ];
             }
 
-            return $this->buildFailure(
-                'CHATBOT_EMPTY_RESPONSE',
-                'Sistem agent utama tidak mengembalikan jawaban.',
-                json_encode($data)
-            );
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Format respons webhook tidak valid.'
+            ];
         } catch (\Throwable $th) {
             Log::error('n8n webhook exception', [
-                'url' => $webhookUrl ?? null,
-                'method' => $method ?? null,
                 'message' => $th->getMessage(),
-                'line' => $th->getLine(),
-                'file' => $th->getFile(),
             ]);
 
-            return $this->buildFailure(
-                'CHATBOT_EXCEPTION',
-                'Tidak dapat terhubung ke sistem agent utama.',
-                $th->getMessage()
-            );
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Tidak dapat terhubung ke sistem agent utama.'
+            ];
         }
     }
 
@@ -248,26 +195,118 @@ class HealsAiController extends Controller
      */
     private function extractAnswerFromPayload($payload): ?string
     {
-        // ... (tidak ada perubahan)
+        if (is_null($payload)) {
+            return null;
+        }
+
+        if ($payload instanceof \Stringable) {
+            $payload = (string) $payload;
+        }
+
+        if (is_string($payload)) {
+            $trimmed = trim($payload);
+            return $trimmed === '' ? null : $trimmed;
+        }
+
+        if ($payload instanceof \JsonSerializable) {
+            $payload = $payload->jsonSerialize();
+        }
+
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        $candidatePaths = [
+            'response',
+            'data.response',
+            'result.response',
+            'payload.response',
+            'answer',
+            'output',
+            'data.output',
+            'result.output',
+            'payload.output',
+            'message',
+            'body.response',
+            'body.output',
+            'body',
+            '*.response',
+            '*.output',
+            '*.message',
+            '*.json.response',
+            '*.json.output',
+            '*.body.output',
+        ];
+
+        foreach ($candidatePaths as $path) {
+            $value = data_get($payload, $path);
+
+            if ($value instanceof \Stringable) {
+                $value = (string) $value;
+            }
+
+            if (is_array($value)) {
+                $value = $this->extractAnswerFromPayload($value);
+            }
+
+            if (is_string($value)) {
+                $trimmed = trim($value);
+                if ($trimmed !== '') {
+                    return $trimmed;
+                }
+            } elseif (is_iterable($value)) {
+                foreach ($value as $item) {
+                    $nested = $this->extractAnswerFromPayload($item);
+                    if ($nested !== null) {
+                        return $nested;
+                    }
+                }
+            }
+        }
+
+        if ($this->isListArray($payload)) {
+            foreach ($payload as $item) {
+                $nested = $this->extractAnswerFromPayload($item);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+
+        foreach ($payload as $value) {
+            if ($value instanceof \Stringable) {
+                $value = (string) $value;
+            }
+
+            if (is_string($value)) {
+                $trimmed = trim($value);
+                if ($trimmed !== '') {
+                    return $trimmed;
+                }
+            } elseif (is_array($value)) {
+                $nested = $this->extractAnswerFromPayload($value);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function isListArray(array $array): bool
+    {
+        if (function_exists('array_is_list')) {
+            return array_is_list($array);
+        }
+
+        return array_values($array) === $array;
     }
 
     /**
-     * Bangun payload webhook agar konsisten.
+     * Bangun pesan pembuka ketika fallback dipakai.
      */
-    private function buildWebhookPayload(
-        string $message,
-        array $history,
-        bool $isNewConversation,
-        ?\App\Models\User $user,
-        $pasien,
-        ?string $birthDate,
-        string $sessionId,
-        string $conversationId,
-        ?string $chatStartedAt,
-        ?string $ip,
-        ?string $userAgent,
-        ?string $referer
-    ): array
+    private function buildFallbackIntro(?string $reason = null): string
     {
         if ($reason) {
             Log::info('HealsAI fallback reason', ['reason' => $reason]);
