@@ -74,6 +74,22 @@ class HealsAiController extends Controller
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
+            $webhookHost = null;
+            try {
+                $webhookHost = parse_url($webhookUrl, PHP_URL_HOST);
+            } catch (\Throwable $e) {
+                $webhookHost = null;
+            }
+
+            Log::info('n8n webhook request', [
+                'mode' => $mode,
+                'method' => $method,
+                'timeout' => $timeout,
+                'allow_insecure_ssl' => $allowInsecure,
+                'auth_type' => strtolower($settings->auth_type ?? 'none'),
+                'webhook_host' => $webhookHost,
+            ]);
+
             $client = Http::timeout($timeout)
                 ->acceptJson()
                 ->withHeaders([
@@ -155,7 +171,9 @@ class HealsAiController extends Controller
             if (!$response->successful()) {
                 Log::warning('n8n webhook error', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => mb_substr($response->body(), 0, 2000),
+                    'mode' => $mode,
+                    'webhook_host' => $webhookHost,
                 ]);
 
                 return [
@@ -218,7 +236,9 @@ class HealsAiController extends Controller
             ];
         } catch (\Throwable $th) {
             Log::error('n8n webhook exception', [
+                'exception_class' => get_class($th),
                 'message' => $th->getMessage(),
+                'mode' => $mode ?? null,
             ]);
 
             return [
