@@ -18,5 +18,7 @@ class ChatbotSetting extends Model
         'header_key',
         'header_value',
         'jwt_token',
+        'webhook_url_prod',
+        'webhook_url_test',
     ];
 }

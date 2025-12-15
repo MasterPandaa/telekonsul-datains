@@ -38,12 +38,32 @@
                 <p class="text-sm text-gray-500">Masukkan URL webhook n8n atau layanan eksternal lain yang menerima request chatbot.</p>
             </div>
 
-            <div class="grid gap-5 md:grid-cols-2">
+            <div class="grid gap-5">
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Webhook Production</label>
+                        <input type="url" name="webhook_url_prod"
+                            value="{{ old('webhook_url_prod', $setting->webhook_url_prod ?? $setting->webhook_url) }}"
+                            placeholder="https://flow.n8n.cloud/webhook/chatbot-prod"
+                            class="w-full rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-2 text-xs text-gray-500">Digunakan otomatis ketika aplikasi berjalan di environment
+                            <span class="font-semibold text-gray-700">production</span>.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Webhook Testing</label>
+                        <input type="url" name="webhook_url_test"
+                            value="{{ old('webhook_url_test', $setting->webhook_url_test ?? $setting->webhook_url) }}"
+                            placeholder="https://flow.n8n.cloud/webhook/chatbot-test"
+                            class="w-full rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-2 text-xs text-gray-500">Dipakai saat aplikasi berjalan di environment local/staging.</p>
+                    </div>
+                </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Webhook Default (opsional)</label>
                     <input type="url" name="webhook_url" value="{{ old('webhook_url', $setting->webhook_url) }}"
-                        placeholder="https://flow.n8n.cloud/webhook/..."
+                        placeholder="Fallback URL jika salah satu mode belum diisi"
                         class="w-full rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                    <p class="mt-2 text-xs text-gray-500">Jika Production/Testing kosong, sistem akan memakai URL ini.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -58,9 +78,10 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Timeout (detik)</label>
-                        <input type="number" name="timeout" min="5" max="60"
+                        <input type="number" name="timeout" min="5" max="300"
                             value="{{ old('timeout', $setting->timeout ?? 15) }}"
                             class="w-full rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-2 text-xs text-gray-500">Maksimal 300 detik (5 menit).</p>
                     </div>
                 </div>
             </div>

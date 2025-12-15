@@ -47,11 +47,24 @@ class HealsAiController extends Controller
     {
         $settings = ChatbotSetting::first();
 
-        if (!$settings || empty($settings->webhook_url)) {
+        if (!$settings) {
             return [
                 'success' => false,
                 'attempted' => false,
                 'message' => 'Fitur Chatbot API belum dikonfigurasi.'
+            ];
+        }
+
+        $mode = app()->environment('production') ? 'production' : 'test';
+        $webhookUrl = $mode === 'production'
+            ? ($settings->webhook_url_prod ?? $settings->webhook_url)
+            : ($settings->webhook_url_test ?? $settings->webhook_url);
+
+        if (empty($webhookUrl)) {
+            return [
+                'success' => false,
+                'attempted' => false,
+                'message' => 'Webhook URL untuk mode ' . $mode . ' belum disetel.'
             ];
         }
 
@@ -61,7 +74,14 @@ class HealsAiController extends Controller
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
-            $client = Http::timeout($timeout)->acceptJson();
+            $client = Http::timeout($timeout)
+                ->acceptJson()
+                ->withHeaders([
+                    'User-Agent' => sprintf(
+                        'Telekonsul-HealsAI/%s',
+                        config('app.version', config('app.name'))
+                    ),
+                ]);
 
             if ($allowInsecure) {
                 $client = $client->withoutVerifying();
@@ -108,10 +128,29 @@ class HealsAiController extends Controller
                 'context' => [
                     'source' => 'telekonsul-web',
                     'timestamp' => now()->toIso8601String(),
+                    'execution_mode' => app()->environment('production') ? 'production' : 'test',
                 ],
             ];
 
-            $response = $client->send($method, $settings->webhook_url, ['json' => $payload]);
+            $payload = [
+                'message' => $message,
+                'history' => $history,
+                'is_new_conversation' => $isNewConversation,
+                'user' => [
+                    'id' => optional(auth()->user())->id,
+                    'name' => optional(auth()->user())->name,
+                    'email' => optional(auth()->user())->email,
+                ],
+                'context' => [
+                    'source' => 'telekonsul-web',
+                    'timestamp' => now()->toIso8601String(),
+                    'execution_mode' => $mode,
+                ],
+            ];
+
+            $response = $client->send($method, $webhookUrl, [
+                'json' => $payload,
+            ]);
 
             if (!$response->successful()) {
                 Log::warning('n8n webhook error', [

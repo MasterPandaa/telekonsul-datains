@@ -10,6 +10,9 @@ class ChatbotSettingController extends Controller
 {
     public function index()
     {
+        $data['webhook_url_prod'] = $data['webhook_url_prod'] ?? $data['webhook_url'] ?? null;
+        $data['webhook_url_test'] = $data['webhook_url_test'] ?? $data['webhook_url'] ?? null;
+
         $setting = ChatbotSetting::first();
 
         return view('admin.chatbot.settings', [
@@ -28,9 +31,11 @@ class ChatbotSettingController extends Controller
     public function update(Request $request)
     {
         $data = $request->validate([
-            'webhook_url' => ['nullable', 'url'],
+            'webhook_url_prod' => ['nullable', 'url'],
+            'webhook_url_test' => ['nullable', 'url'],
+            'webhook_url' => ['nullable', 'url'], // legacy field support
             'method' => ['required', 'in:GET,POST'],
-            'timeout' => ['required', 'integer', 'min:5', 'max:60'],
+            'timeout' => ['required', 'integer', 'min:5', 'max:300'],
             'allow_insecure_ssl' => ['nullable', 'boolean'],
             'auth_type' => ['required', 'in:none,basic,bearer,header,jwt'],
             'basic_user' => ['nullable', 'string', 'max:255'],
@@ -41,6 +46,8 @@ class ChatbotSettingController extends Controller
             'jwt_token' => ['nullable', 'string'],
         ], [
             'webhook_url.url' => 'Format URL webhook tidak valid.',
+            'webhook_url_prod.url' => 'Format URL webhook produksi tidak valid.',
+            'webhook_url_test.url' => 'Format URL webhook testing tidak valid.',
         ]);
 
         $data['allow_insecure_ssl'] = $request->boolean('allow_insecure_ssl');
