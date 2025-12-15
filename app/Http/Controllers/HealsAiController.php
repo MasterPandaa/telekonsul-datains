@@ -47,24 +47,11 @@ class HealsAiController extends Controller
     {
         $settings = ChatbotSetting::first();
 
-        if (!$settings) {
+        if (!$settings || empty($settings->webhook_url)) {
             return [
                 'success' => false,
                 'attempted' => false,
                 'message' => 'Fitur Chatbot API belum dikonfigurasi.'
-            ];
-        }
-
-        $mode = app()->environment('production') ? 'production' : 'test';
-        $webhookUrl = $mode === 'production'
-            ? ($settings->webhook_url_prod ?? $settings->webhook_url)
-            : ($settings->webhook_url_test ?? $settings->webhook_url);
-
-        if (empty($webhookUrl)) {
-            return [
-                'success' => false,
-                'attempted' => false,
-                'message' => 'Webhook URL untuk mode ' . $mode . ' belum disetel.'
             ];
         }
 
@@ -74,22 +61,6 @@ class HealsAiController extends Controller
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
-            $webhookHost = null;
-            try {
-                $webhookHost = parse_url($webhookUrl, PHP_URL_HOST);
-            } catch (\Throwable $e) {
-                $webhookHost = null;
-            }
-
-            Log::info('n8n webhook request', [
-                'mode' => $mode,
-                'method' => $method,
-                'timeout' => $timeout,
-                'allow_insecure_ssl' => $allowInsecure,
-                'auth_type' => strtolower($settings->auth_type ?? 'none'),
-                'webhook_host' => $webhookHost,
-            ]);
-
             $client = Http::timeout($timeout)
                 ->acceptJson()
                 ->withHeaders([
@@ -148,32 +119,14 @@ class HealsAiController extends Controller
                 ],
             ];
 
-            $payload = [
-                'message' => $message,
-                'history' => $history,
-                'is_new_conversation' => $isNewConversation,
-                'user' => [
-                    'id' => optional(auth()->user())->id,
-                    'name' => optional(auth()->user())->name,
-                    'email' => optional(auth()->user())->email,
-                ],
-                'context' => [
-                    'source' => 'telekonsul-web',
-                    'timestamp' => now()->toIso8601String(),
-                    'execution_mode' => $mode,
-                ],
-            ];
-
-            $response = $client->send($method, $webhookUrl, [
+            $response = $client->send($method, $settings->webhook_url, [
                 'json' => $payload,
             ]);
 
             if (!$response->successful()) {
                 Log::warning('n8n webhook error', [
                     'status' => $response->status(),
-                    'body' => mb_substr($response->body(), 0, 2000),
-                    'mode' => $mode,
-                    'webhook_host' => $webhookHost,
+                    'body' => $response->body(),
                 ]);
 
                 return [
@@ -236,9 +189,7 @@ class HealsAiController extends Controller
             ];
         } catch (\Throwable $th) {
             Log::error('n8n webhook exception', [
-                'exception_class' => get_class($th),
                 'message' => $th->getMessage(),
-                'mode' => $mode ?? null,
             ]);
 
             return [
