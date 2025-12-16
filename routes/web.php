@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PasienController;
@@ -24,6 +25,17 @@ use App\Http\Controllers\DosenPasswordController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+/**
+ * Fallback handler untuk file di storage/public ketika symlink tidak tersedia.
+ */
+Route::get('storage/{path}', function (string $path) {
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return Storage::disk('public')->response($path);
+})->where('path', '.*');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -160,7 +172,11 @@ Route::middleware(['auth', 'can:isPasien'])->prefix('pasien')->name('pasien.')->
 });
 
 // Tambahkan route untuk profil pasien
-Route::middleware(['auth', 'can:isPasien'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+    require __DIR__.'/admin.php';
+    require __DIR__.'/chat.php';
+    require __DIR__.'/dokter.php';
+    require __DIR__.'/dosen.php';
     // Profil pasien
     Route::get('/pasien/profil', [PasienProfilController::class, 'index'])->name('pasien.profil.index');
     Route::post('/pasien/profil/update-informasi', [PasienProfilController::class, 'updateInformasiDasar'])->name('pasien.profil.update-informasi');
