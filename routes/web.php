@@ -173,10 +173,13 @@ Route::middleware(['auth', 'can:isPasien'])->prefix('pasien')->name('pasien.')->
 
 // Tambahkan route untuk profil pasien
 Route::middleware(['auth', 'verified'])->group(function () {
-    require __DIR__.'/admin.php';
-    require __DIR__.'/chat.php';
-    require __DIR__.'/dokter.php';
-    require __DIR__.'/dosen.php';
+    foreach (['admin', 'chat', 'dokter', 'dosen'] as $routeFile) {
+        $path = __DIR__ . "/{$routeFile}.php";
+        if (file_exists($path)) {
+            require $path;
+        }
+    }
+
     // Profil pasien
     Route::get('/pasien/profil', [PasienProfilController::class, 'index'])->name('pasien.profil.index');
     Route::post('/pasien/profil/update-informasi', [PasienProfilController::class, 'updateInformasiDasar'])->name('pasien.profil.update-informasi');
