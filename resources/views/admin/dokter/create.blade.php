@@ -27,13 +27,12 @@
         @endif
 
         <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
-            <p class="font-semibold mb-2">Panduan pengisian:</p>
+            <p class="font-semibold mb-2">Panduan pengisian data awal:</p>
             <ul class="list-disc list-inside space-y-1">
-                <li>No. SIP hanya huruf kapital, angka, atau simbol <code class="bg-white px-1 rounded">/ . -</code> (5-50 karakter).</li>
-                <li>No. STR wajib 13 digit angka tanpa spasi atau tanda baca.</li>
-                <li>Email harus aktif dan unik, contoh: <strong>nama@institusi.ac.id</strong>.</li>
-                <li>Password min. 8 karakter, wajib huruf besar, huruf kecil, dan angka.</li>
+                <li>No. SIP gunakan huruf kapital + angka/simbol <code class="bg-white px-1 rounded">/ . -</code> (5-50 karakter).</li>
+                <li>No. STR wajib 13 digit angka tanpa spasi.</li>
                 <li>Nomor HP diawali 08 dan berisi 10-13 digit angka.</li>
+                <li>Password minimal 8 karakter serta kombinasi huruf besar, huruf kecil, dan angka.</li>
             </ul>
         </div>
 
@@ -67,13 +66,8 @@
                 <!-- No SIP -->
                 <div>
                     <label for="no_sip" class="block text-sm font-medium text-gray-700 mb-1">No. SIP <span class="text-red-500">*</span></label>
-                    <div class="flex space-x-2">
-                        <input type="text" name="no_sip" id="no_sip" value="{{ old('no_sip') }}" required 
-                               class="flex-1 px-3 py-2 border @error('no_sip') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase">
-                        <button type="button" id="btn-check-sip" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition">
-                            Periksa
-                        </button>
-                    </div>
+                    <input type="text" name="no_sip" id="no_sip" value="{{ old('no_sip') }}" required 
+                           class="w-full px-3 py-2 border @error('no_sip') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase">
                     <p class="text-xs text-gray-500 mt-1">Contoh: <span class="font-semibold">SIP/123/456/2025</span></p>
                     <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_sip"></p>
                     @error('no_sip')
@@ -84,13 +78,8 @@
                 <!-- No STR -->
                 <div>
                     <label for="no_str" class="block text-sm font-medium text-gray-700 mb-1">No. STR <span class="text-red-500">*</span></label>
-                    <div class="flex space-x-2">
-                        <input type="text" name="no_str" id="no_str" value="{{ old('no_str') }}" 
-                               class="flex-1 px-3 py-2 border @error('no_str') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="13">
-                        <button type="button" id="btn-check-str" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition">
-                            Periksa
-                        </button>
-                    </div>
+                    <input type="text" name="no_str" id="no_str" value="{{ old('no_str') }}" required 
+                           class="w-full px-3 py-2 border @error('no_str') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="13">
                     <p class="text-xs text-gray-500 mt-1">Isi 13 digit angka tanpa spasi atau tanda baca.</p>
                     <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_str"></p>
                     @error('no_str')
@@ -111,82 +100,12 @@
                 
                 <!-- Nomor HP -->
                 <div>
-                    <label for="no_hp" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label>
-                    <input type="text" name="no_hp" id="no_hp" value="{{ old('no_hp') }}" 
+                    <label for="no_hp" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP <span class="text-red-500">*</span></label>
+                    <input type="text" name="no_hp" id="no_hp" value="{{ old('no_hp') }}" required
                            class="w-full px-3 py-2 border @error('no_hp') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <p class="text-xs text-gray-500 mt-1">Contoh: 081234567890 (10-13 digit, diawali 08).</p>
                     <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_hp"></p>
                     @error('no_hp')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-                
-                <!-- Tempat Lahir -->
-                <div>
-                    <label for="tempat_lahir" class="block text-sm font-medium text-gray-700 mb-1">Tempat Lahir <span class="text-red-500">*</span></label>
-                    <input type="text" name="tempat_lahir" id="tempat_lahir" value="{{ old('tempat_lahir') }}" required 
-                           class="w-full px-3 py-2 border @error('tempat_lahir') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    @error('tempat_lahir')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Tanggal Lahir -->
-                <div>
-                    <label for="tanggal_lahir" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                    <input type="date" name="tanggal_lahir" id="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required 
-                           class="w-full px-3 py-2 border @error('tanggal_lahir') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    @error('tanggal_lahir')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Universitas -->
-                <div>
-                    <label for="universitas" class="block text-sm font-medium text-gray-700 mb-1">Universitas <span class="text-red-500">*</span></label>
-                    <input type="text" name="universitas" id="universitas" value="{{ old('universitas') }}" required 
-                           class="w-full px-3 py-2 border @error('universitas') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    @error('universitas')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Tahun Lulus -->
-                <div>
-                    <label for="tahun_lulus" class="block text-sm font-medium text-gray-700 mb-1">Tahun Lulus <span class="text-red-500">*</span></label>
-                    <input type="number" name="tahun_lulus" id="tahun_lulus" value="{{ old('tahun_lulus') }}" min="1950" max="{{ now()->year }}" required 
-                           class="w-full px-3 py-2 border @error('tahun_lulus') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    @error('tahun_lulus')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Spesialisasi -->
-                <div>
-                    <label for="spesialisasi" class="block text-sm font-medium text-gray-700 mb-1">Spesialisasi</label>
-                    <input type="text" name="spesialisasi" id="spesialisasi" value="{{ old('spesialisasi') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Tempat Praktik -->
-                <div>
-                    <label for="tempat_praktik" class="block text-sm font-medium text-gray-700 mb-1">Tempat Praktik</label>
-                    <input type="text" name="tempat_praktik" id="tempat_praktik" value="{{ old('tempat_praktik') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Rumah Sakit -->
-                <div>
-                    <label for="rumah_sakit" class="block text-sm font-medium text-gray-700 mb-1">Rumah Sakit</label>
-                    <input type="text" name="rumah_sakit" id="rumah_sakit" value="{{ old('rumah_sakit') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Alamat -->
-                <div class="md:col-span-2">
-                    <label for="alamat" class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
-                    <textarea name="alamat" id="alamat" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ old('alamat') }}</textarea>
-                    @error('alamat')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -268,68 +187,6 @@
             input.classList.add('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
         }
     };
-
-    const checkConfig = {
-        sip: {
-            input: document.getElementById('no_sip'),
-            button: document.getElementById('btn-check-sip'),
-            url: '{{ route("admin.dokter.check-sip") }}',
-            param: 'no_sip',
-            emptyMessage: 'Masukkan Nomor SIP terlebih dahulu.'
-        },
-        str: {
-            input: document.getElementById('no_str'),
-            button: document.getElementById('btn-check-str'),
-            url: '{{ route("admin.dokter.check-str") }}',
-            param: 'no_str',
-            emptyMessage: 'Masukkan Nomor STR terlebih dahulu.'
-        }
-    };
-
-    Object.values(checkConfig).forEach(({ button, input, url, param, emptyMessage }) => {
-        button.addEventListener('click', async () => {
-            const value = input.value.trim();
-            if (!value) {
-                Swal.fire('Informasi', emptyMessage, 'info');
-                return;
-            }
-
-            button.disabled = true;
-            button.classList.add('opacity-60', 'cursor-not-allowed');
-            try {
-                const query = new URLSearchParams({ [param]: value });
-                const response = await fetch(`${url}?${query.toString()}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'same-origin'
-                });
-                const data = await response.json().catch(() => {
-                    throw new Error('Respons server tidak valid');
-                });
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Permintaan gagal diproses');
-                }
-
-                showFieldError(input, param, data.available ? '' : data.message);
-
-                Swal.fire({
-                    title: data.available ? 'Nomor tersedia' : 'Nomor sudah terpakai',
-                    text: data.message ?? '',
-                    icon: data.available ? 'success' : 'warning',
-                    confirmButtonColor: data.available ? '#10b981' : '#f97316'
-                });
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Terjadi Kesalahan', 'Tidak dapat memeriksa saat ini. Coba beberapa saat lagi.', 'error');
-            } finally {
-                button.disabled = false;
-                button.classList.remove('opacity-60', 'cursor-not-allowed');
-            }
-        });
-    });
 
     const fieldValidators = {
         no_sip: value => {

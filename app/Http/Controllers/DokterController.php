@@ -6,6 +6,7 @@ use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class DokterController extends Controller
@@ -61,22 +62,16 @@ class DokterController extends Controller
     public function store(Request $request) {
         $validatedData = $request->validate([
             'nama' => 'required|string|max:255',
+            'jenis_kelamin' => ['required','in:Laki-laki,Perempuan'],
             'no_sip' => ['required','string','max:50','regex:/^[A-Z0-9\/\.\-]{5,50}$/','unique:dokters,no_sip'],
             'no_str' => ['required','digits:13','unique:dokters,no_str'],
             'email' => ['required','email:rfc,dns','max:255','unique:users,email','unique:dokters,email'],
-            'jenis_kelamin' => ['required','in:Laki-laki,Perempuan'],
-            'tempat_lahir' => 'required|string|max:100',
-            'tanggal_lahir' => 'required|date|before:today',
-            'universitas' => 'required|string|max:150',
-            'tahun_lulus' => ['required','integer','between:1950,' . now()->year],
-            'alamat' => 'nullable|string|max:255',
-            'no_hp' => ['nullable','regex:/^08[0-9]{8,11}$/'],
-            'spesialisasi' => 'nullable|string|max:100',
-            'tempat_praktik' => 'nullable|string|max:255',
-            'rumah_sakit' => 'nullable|string|max:255',
+            'no_hp' => ['required','regex:/^08[0-9]{8,11}$/'],
             'password' => ['required','confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dokter wajib diisi',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
             'no_sip.required' => 'Nomor SIP wajib diisi',
             'no_sip.regex' => 'Format Nomor SIP terdiri dari kombinasi huruf kapital, angka, atau karakter /. -',
             'no_sip.unique' => 'Nomor SIP sudah terdaftar',
@@ -86,14 +81,7 @@ class DokterController extends Controller
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
-            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
-            'tempat_lahir.required' => 'Tempat lahir wajib diisi',
-            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi',
-            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini',
-            'universitas.required' => 'Universitas wajib diisi',
-            'tahun_lulus.required' => 'Tahun lulus wajib diisi',
-            'tahun_lulus.between' => 'Tahun lulus harus antara 1950 dan ' . now()->year,
+            'no_hp.required' => 'Nomor HP wajib diisi',
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
@@ -159,24 +147,42 @@ class DokterController extends Controller
     public function update(Request $request, Dokter $dokter) {
         $validatedData = $request->validate([
             'nama' => 'required|string|max:255',
-            'no_sip' => 'required|string|max:50|unique:dokters,no_sip,'.$dokter->id,
-            'no_str' => 'required|string|max:50|unique:dokters,no_str,'.$dokter->id,
-            'email' => 'required|email|max:255|unique:dokters,email,'.$dokter->id,
+            'jenis_kelamin' => ['required','in:Laki-laki,Perempuan'],
+            'no_sip' => ['required','string','max:50','regex:/^[A-Z0-9\/\.\-]{5,50}$/','unique:dokters,no_sip,'.$dokter->id],
+            'no_str' => ['required','digits:13','unique:dokters,no_str,'.$dokter->id],
+            'email' => ['required','email:rfc,dns','max:255','unique:users,email,' . ($dokter->user_id ?? 'null') . ',id','unique:dokters,email,'.$dokter->id],
+            'no_hp' => ['required','regex:/^08[0-9]{8,11}$/'],
             'alamat' => 'nullable|string|max:255',
-            'no_hp' => 'nullable|string|max:15',
+            'tempat_lahir' => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|date|before:today',
+            'universitas' => 'nullable|string|max:150',
+            'tahun_lulus' => ['nullable','integer','between:1950,' . now()->year],
             'spesialisasi' => 'nullable|string|max:100',
             'tempat_praktik' => 'nullable|string|max:255',
             'rumah_sakit' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'password' => ['nullable','confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dokter wajib diisi',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
             'no_sip.required' => 'Nomor SIP wajib diisi',
+            'no_sip.regex' => 'Format Nomor SIP terdiri dari kombinasi huruf kapital, angka, atau karakter /. -',
             'no_sip.unique' => 'Nomor SIP sudah terdaftar',
             'no_str.required' => 'Nomor STR wajib diisi',
+            'no_str.digits' => 'Nomor STR harus berisi 13 digit angka',
             'no_str.unique' => 'Nomor STR sudah terdaftar',
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'no_hp.required' => 'Nomor HP wajib diisi',
+            'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'foto.image' => 'Foto harus berupa gambar',
         ]);
+        
+        $validatedData['no_sip'] = strtoupper($validatedData['no_sip']);
+        $validatedData['no_str'] = preg_replace('/\D+/', '', $validatedData['no_str']);
         
         $oldData = $dokter->toArray();
         
@@ -184,14 +190,37 @@ class DokterController extends Controller
         try {
             // Update user name
             if ($dokter->user) {
-                $dokter->user->update([
+                $userUpdates = [
                     'name' => $validatedData['nama'],
                     'email' => $validatedData['email']
-                ]);
+                ];
+
+                if (!empty($validatedData['password'])) {
+                    $userUpdates['password'] = Hash::make($validatedData['password']);
+                }
+
+                $dokter->user->update($userUpdates);
             }
             
             // Update dokter data
-            $dokterData = collect($validatedData)->except(['nama'])->toArray();
+            $dokterData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
+            foreach (['tempat_lahir','tanggal_lahir','universitas','tahun_lulus','alamat','spesialisasi','tempat_praktik','rumah_sakit'] as $nullableField) {
+                if (array_key_exists($nullableField, $dokterData) && $dokterData[$nullableField] === '') {
+                    $dokterData[$nullableField] = null;
+                }
+            }
+
+            if ($request->hasFile('foto')) {
+                $photoPath = $request->file('foto')->store('dokters', 'public');
+
+                if ($dokter->foto && str_starts_with($dokter->foto, 'storage/')) {
+                    $existingPath = substr($dokter->foto, strlen('storage/'));
+                    Storage::disk('public')->delete($existingPath);
+                }
+
+                $dokterData['foto'] = 'storage/' . $photoPath;
+            }
+
             $dokter->update($dokterData);
             
             DB::commit();
