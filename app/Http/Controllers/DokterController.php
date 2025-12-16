@@ -64,6 +64,11 @@ class DokterController extends Controller
             'no_sip' => ['required','string','max:50','regex:/^[A-Z0-9\/\.\-]{5,50}$/','unique:dokters,no_sip'],
             'no_str' => ['required','digits:13','unique:dokters,no_str'],
             'email' => ['required','email:rfc,dns','max:255','unique:users,email','unique:dokters,email'],
+            'jenis_kelamin' => ['required','in:Laki-laki,Perempuan'],
+            'tempat_lahir' => 'required|string|max:100',
+            'tanggal_lahir' => 'required|date|before:today',
+            'universitas' => 'required|string|max:150',
+            'tahun_lulus' => ['required','integer','between:1950,' . now()->year],
             'alamat' => 'nullable|string|max:255',
             'no_hp' => ['nullable','regex:/^08[0-9]{8,11}$/'],
             'spesialisasi' => 'nullable|string|max:100',
@@ -81,6 +86,14 @@ class DokterController extends Controller
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
+            'tempat_lahir.required' => 'Tempat lahir wajib diisi',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi',
+            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini',
+            'universitas.required' => 'Universitas wajib diisi',
+            'tahun_lulus.required' => 'Tahun lulus wajib diisi',
+            'tahun_lulus.between' => 'Tahun lulus harus antara 1950 dan ' . now()->year,
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
@@ -235,7 +248,7 @@ class DokterController extends Controller
     public function checkStr(Request $request)
     {
         $validated = $request->validate([
-            'no_str' => ['required', 'string', 'max:50'],
+            'no_str' => ['required', 'string', 'regex:/^\d{13}$/'],
         ]);
 
         $value = preg_replace('/\D+/', '', $validated['no_str']);
