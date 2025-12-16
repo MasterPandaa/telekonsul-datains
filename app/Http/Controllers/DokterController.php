@@ -6,6 +6,7 @@ use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class DokterController extends Controller
 {
@@ -60,24 +61,34 @@ class DokterController extends Controller
     public function store(Request $request) {
         $validatedData = $request->validate([
             'nama' => 'required|string|max:255',
-            'no_sip' => 'required|string|max:50|unique:dokters',
-            'no_str' => 'required|string|max:50|unique:dokters',
-            'email' => 'required|email|max:255|unique:dokters|unique:users',
+            'no_sip' => ['required','string','max:50','regex:/^[A-Z0-9\/\.\-]{5,50}$/','unique:dokters,no_sip'],
+            'no_str' => ['required','digits:13','unique:dokters,no_str'],
+            'email' => ['required','email:rfc,dns','max:255','unique:users,email','unique:dokters,email'],
             'alamat' => 'nullable|string|max:255',
-            'no_hp' => 'nullable|string|max:15',
+            'no_hp' => ['nullable','regex:/^08[0-9]{8,11}$/'],
             'spesialisasi' => 'nullable|string|max:100',
             'tempat_praktik' => 'nullable|string|max:255',
             'rumah_sakit' => 'nullable|string|max:255',
+            'password' => ['required','confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dokter wajib diisi',
             'no_sip.required' => 'Nomor SIP wajib diisi',
+            'no_sip.regex' => 'Format Nomor SIP terdiri dari kombinasi huruf kapital, angka, atau karakter /. -',
             'no_sip.unique' => 'Nomor SIP sudah terdaftar',
             'no_str.required' => 'Nomor STR wajib diisi',
+            'no_str.digits' => 'Nomor STR harus berisi 13 digit angka',
             'no_str.unique' => 'Nomor STR sudah terdaftar',
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
+            'password.required' => 'Password wajib diisi',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai',
         ]);
+        
+        // Normalisasi data penting
+        $validatedData['no_sip'] = strtoupper($validatedData['no_sip']);
+        $validatedData['no_str'] = preg_replace('/\D+/', '', $validatedData['no_str']);
         
         // Buat user terlebih dahulu
         DB::beginTransaction();
@@ -85,12 +96,12 @@ class DokterController extends Controller
             $user = User::create([
                 'name' => $validatedData['nama'],
                 'email' => $validatedData['email'],
-                'password' => Hash::make('dokter123'), // Default password
+                'password' => Hash::make($validatedData['password']),
                 'role' => 'dokter'
             ]);
             
             // Buat dokter dengan relasi ke user
-            $dokterData = collect($validatedData)->except(['nama'])->toArray();
+            $dokterData = collect($validatedData)->except(['nama', 'password'])->toArray();
             $dokterData['user_id'] = $user->id;
             
             $dokter = Dokter::create($dokterData);
@@ -194,6 +205,46 @@ class DokterController extends Controller
                 ->withInput()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Cek ketersediaan nomor SIP
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkSip(Request $request)
+    {
+        $validated = $request->validate([
+            'no_sip' => ['required', 'string', 'max:50'],
+        ]);
+
+        $value = strtoupper(trim($validated['no_sip']));
+        $exists = Dokter::whereRaw('LOWER(no_sip) = ?', [strtolower($value)])->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Nomor SIP sudah terdaftar' : 'Nomor SIP tersedia untuk digunakan',
+        ]);
+    }
+
+    /**
+     * Cek ketersediaan nomor STR
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkStr(Request $request)
+    {
+        $validated = $request->validate([
+            'no_str' => ['required', 'string', 'max:50'],
+        ]);
+
+        $value = preg_replace('/\D+/', '', $validated['no_str']);
+        $exists = Dokter::where('no_str', $value)->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Nomor STR sudah terdaftar' : 'Nomor STR tersedia untuk digunakan',
+        ]);
     }
 
     public function destroy(Dokter $dokter) {

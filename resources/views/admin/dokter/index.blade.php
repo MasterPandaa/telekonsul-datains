@@ -148,10 +148,12 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                @if($dokter->foto && file_exists(public_path($dokter->foto)))
-                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ asset($dokter->foto) }}" alt="{{ $dokter->nama }}">
+                                @if($dokter->has_photo)
+                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ $dokter->foto_url }}" alt="{{ $dokter->nama }}">
                                 @else
-                                    <img class="h-10 w-10 rounded-full bg-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode($dokter->nama) }}&background=3b82f6&color=fff" alt="{{ $dokter->nama }}">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold">
+                                        {{ $dokter->initials }}
+                                    </div>
                                 @endif
                             </div>
                             <div class="ml-4">
@@ -160,9 +162,7 @@
                             </div>
                         </div>
                     </td>
-                    <td class="px-4 py-3">
-                        <div class="text-sm text-gray-900">{{ $dokter->no_sip }}</div>
-                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ $dokter->no_sip }}</td>
                     <td class="px-4 py-3">
                         <div class="text-sm text-gray-900">{{ $dokter->email }}</div>
                         <div class="text-sm text-gray-500">{{ $dokter->no_hp }}</div>

@@ -1,7 +1,9 @@
 <?php
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Dokter extends Model
 {
@@ -28,10 +30,36 @@ class Dokter extends Model
 
     public function getFotoUrlAttribute()
     {
-        if ($this->foto && file_exists(public_path($this->foto))) {
-            return asset($this->foto);
+        if ($this->has_photo) {
+            return Str::startsWith($this->foto, ['http://', 'https://'])
+                ? $this->foto
+                : asset($this->foto);
         }
+
         return asset('img/dokter/default.jpg');
+    }
+
+    public function getHasPhotoAttribute(): bool
+    {
+        return !empty($this->foto) && !Str::contains($this->foto, 'default');
+    }
+
+    public function getInitialsAttribute(): string
+    {
+        $nameSource = trim($this->nama ?? $this->user->name ?? '');
+
+        if ($nameSource === '') {
+            return 'DK';
+        }
+
+        $words = preg_split('/\s+/', $nameSource);
+        $initials = collect($words)
+            ->filter(fn ($word) => $word !== '')
+            ->take(2)
+            ->map(fn ($word) => Str::substr($word, 0, 1))
+            ->implode('');
+
+        return Str::upper($initials ?: Str::substr($nameSource, 0, 2));
     }
     
     // Accessor untuk mendapatkan nama dari user
@@ -39,4 +67,5 @@ class Dokter extends Model
     {
         return $this->user ? $this->user->name : null;
     }
-} 
+}
+ 

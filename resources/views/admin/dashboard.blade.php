@@ -197,7 +197,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Fetch data aktivitas pengguna
-        fetch('{{ route("admin.log.activity-data") }}')
+        fetch('{{ route("admin.log.activity-data", [], false) }}')
             .then(response => response.json())
             .then(data => {
                 // Inisialisasi grafik aktivitas berdasarkan tanggal

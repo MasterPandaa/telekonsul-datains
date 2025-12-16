@@ -26,11 +26,11 @@
         <!-- Profil / Sidebar -->
         <div class="md:w-1/4 bg-gray-50 p-6 border-r border-gray-200">
             <div class="flex flex-col items-center">
-                <div class="w-32 h-32 rounded-full overflow-hidden bg-gray-100 mb-4">
-                    @if($dokter->foto && file_exists(public_path($dokter->foto)))
-                        <img src="{{ asset($dokter->foto) }}" alt="{{ $dokter->nama }}" class="w-full h-full object-cover">
+                <div class="w-32 h-32 rounded-full overflow-hidden bg-gray-100 mb-4 flex items-center justify-center text-3xl font-semibold text-blue-700">
+                    @if($dokter->has_photo)
+                        <img src="{{ $dokter->foto_url }}" alt="{{ $dokter->nama }}" class="w-full h-full object-cover">
                     @else
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($dokter->nama) }}&background=3b82f6&color=fff&size=128" alt="{{ $dokter->nama }}" class="w-full h-full object-cover">
+                        {{ $dokter->initials }}
                     @endif
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 text-center">{{ $dokter->nama }}</h3>

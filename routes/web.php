@@ -58,6 +58,10 @@ Route::middleware('auth')->group(function () {
         // Generate sample logs (for testing)
         Route::get('log/generate-samples', [LogController::class, 'generateSamples'])->name('log.generate-samples');
         
+        // Dokter utility routes
+        Route::get('dokter/check-sip', [DokterController::class, 'checkSip'])->name('dokter.check-sip');
+        Route::get('dokter/check-str', [DokterController::class, 'checkStr'])->name('dokter.check-str');
+        
         // Konsultasi status update
         Route::get('konsultasi/update-status', [AdminController::class, 'updateKonsultasiStatus'])->name('konsultasi.update-status');
     });
