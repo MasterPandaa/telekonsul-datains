@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Dokter extends Model
@@ -28,15 +29,34 @@ class Dokter extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getFotoUrlAttribute()
+    public function getFotoUrlAttribute(): string
     {
-        if ($this->has_photo) {
-            return Str::startsWith($this->foto, ['http://', 'https://'])
-                ? $this->foto
-                : asset($this->foto);
+        if (!$this->has_photo) {
+            return asset('img/dokter/default.jpg');
         }
 
-        return asset('img/dokter/default.jpg');
+        $foto = $this->foto;
+
+        if (Str::startsWith($foto, ['http://', 'https://'])) {
+            return $foto;
+        }
+
+        if (Str::startsWith($foto, 'storage/')) {
+            return asset($foto);
+        }
+
+        if (Str::startsWith($foto, 'dokters/')) {
+            return asset('storage/' . ltrim($foto, '/'));
+        }
+
+        if (Str::startsWith($foto, 'img/')) {
+            return asset($foto);
+        }
+
+        // Asumsikan path relatif terhadap disk public
+        return Storage::disk('public')->exists($foto)
+            ? asset('storage/' . ltrim($foto, '/'))
+            : asset($foto);
     }
 
     public function getHasPhotoAttribute(): bool

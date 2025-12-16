@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class DokterController extends Controller
@@ -213,12 +214,19 @@ class DokterController extends Controller
             if ($request->hasFile('foto')) {
                 $photoPath = $request->file('foto')->store('dokters', 'public');
 
-                if ($dokter->foto && str_starts_with($dokter->foto, 'storage/')) {
-                    $existingPath = substr($dokter->foto, strlen('storage/'));
-                    Storage::disk('public')->delete($existingPath);
+                if ($dokter->foto && !Str::contains($dokter->foto, 'default')) {
+                    $existingPath = Str::startsWith($dokter->foto, 'storage/')
+                        ? Str::after($dokter->foto, 'storage/')
+                        : ltrim($dokter->foto, '/');
+
+                    if ($existingPath && Storage::disk('public')->exists($existingPath)) {
+                        Storage::disk('public')->delete($existingPath);
+                    } elseif (file_exists(public_path($dokter->foto))) {
+                        @unlink(public_path($dokter->foto));
+                    }
                 }
 
-                $dokterData['foto'] = 'storage/' . $photoPath;
+                $dokterData['foto'] = $photoPath;
             }
 
             $dokter->update($dokterData);
