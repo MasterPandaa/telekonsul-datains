@@ -22,7 +22,6 @@ class PasienController extends Controller
             })->orWhere(function($q) use ($searchTerm) {
                 $q->where('nik', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('alamat', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('no_hp', 'LIKE', "%{$searchTerm}%");
             });
         }
@@ -59,7 +58,6 @@ class PasienController extends Controller
             'nama' => 'required|string|max:255',
             'nik' => 'required|string|max:50|unique:pasiens,nik',
             'email' => 'required|email|max:255|unique:users,email|unique:pasiens,email',
-            'alamat' => 'nullable|string|max:1000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
@@ -86,9 +84,6 @@ class PasienController extends Controller
             
             // Buat pasien dengan relasi ke user
             $pasienData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
-            if (array_key_exists('alamat', $pasienData) && $pasienData['alamat'] === '') {
-                $pasienData['alamat'] = null;
-            }
             if (array_key_exists('no_hp', $pasienData) && $pasienData['no_hp'] === '') {
                 $pasienData['no_hp'] = null;
             }
@@ -121,8 +116,14 @@ class PasienController extends Controller
             'nama' => 'required|string|max:255',
             'nik' => 'required|string|max:50|unique:pasiens,nik,' . $pasien->id,
             'email' => 'required|email|max:255|unique:users,email,' . ($pasien->user_id ?? 'null') . ',id|unique:pasiens,email,' . $pasien->id,
-            'alamat' => 'nullable|string|max:1000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
+            'tempat_lahir' => 'nullable|string|max:255',
+            'tanggal_lahir' => 'nullable|date',
+            'tinggi_badan' => 'nullable|integer|min:1|max:300',
+            'berat_badan' => 'nullable|integer|min:1|max:500',
+            'tekanan_darah' => 'nullable|string|max:50',
+            'alergi' => 'nullable|string|max:2000',
+            'riwayat_penyakit' => 'nullable|string|max:2000',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
@@ -157,7 +158,7 @@ class PasienController extends Controller
             
             // Update pasien data
             $pasienData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
-            foreach (['alamat', 'no_hp', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'tinggi_badan', 'berat_badan', 'tekanan_darah', 'alergi', 'riwayat_penyakit'] as $nullableField) {
+            foreach (['no_hp', 'tempat_lahir', 'tanggal_lahir', 'tinggi_badan', 'berat_badan', 'tekanan_darah', 'alergi', 'riwayat_penyakit'] as $nullableField) {
                 if (array_key_exists($nullableField, $pasienData) && $pasienData[$nullableField] === '') {
                     $pasienData[$nullableField] = null;
                 }

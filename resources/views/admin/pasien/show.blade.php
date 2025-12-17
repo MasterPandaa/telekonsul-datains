@@ -66,10 +66,6 @@
                             <p class="text-gray-800">{{ $pasien->email }}</p>
                         </div>
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 mb-1">Jenis Kelamin</h4>
-                            <p class="text-gray-800">{{ $pasien->jenis_kelamin }}</p>
-                        </div>
-                        <div>
                             <h4 class="text-sm font-medium text-gray-500 mb-1">Nomor Telepon</h4>
                             <p class="text-gray-800">{{ $pasien->no_hp ?? 'Belum diisi' }}</p>
                         </div>
@@ -91,10 +87,6 @@
                                     Belum diisi
                                 @endif
                             </p>
-                        </div>
-                        <div class="md:col-span-2">
-                            <h4 class="text-sm font-medium text-gray-500 mb-1">Alamat</h4>
-                            <p class="text-gray-800">{{ $pasien->alamat ?? 'Belum diisi' }}</p>
                         </div>
                     </div>
                 </div>

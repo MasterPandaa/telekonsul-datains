@@ -39,6 +39,7 @@
                 <div>
                     <label for="nip" class="block text-sm font-medium text-gray-700 mb-1">NIP <span class="text-red-500">*</span></label>
                     <input type="text" id="nip" name="nip" value="{{ old('nip', $dosen->nip) }}" required class="w-full px-3 py-2 border @error('nip') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="nip"></p>
                     @error('nip')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -53,14 +54,9 @@
                 <div>
                     <label for="no_hp" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label>
                     <input type="text" id="no_hp" name="no_hp" value="{{ old('no_hp', $dosen->no_hp) }}" class="w-full px-3 py-2 border @error('no_hp') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">Contoh: 081234567890 (10-13 digit, diawali 08).</p>
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_hp"></p>
                     @error('no_hp')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div class="md:col-span-2">
-                    <label for="alamat" class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
-                    <textarea id="alamat" name="alamat" rows="3" class="w-full px-3 py-2 border @error('alamat') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ old('alamat', $dosen->alamat) }}</textarea>
-                    @error('alamat')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -85,6 +81,7 @@
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru (opsional)</label>
                     <input type="password" id="password" name="password" class="w-full px-3 py-2 border @error('password') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <p class="mt-1 text-xs text-gray-500">Kosongkan jika tidak ingin mengubah password</p>
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="password"></p>
                     @error('password')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -93,6 +90,7 @@
                 <div>
                     <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
                     <input type="password" id="password_confirmation" name="password_confirmation" class="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="password_confirmation"></p>
                 </div>
             </div>
 
@@ -106,4 +104,72 @@
     </div>
 </div>
 @endsection
- 
+
+@push('scripts')
+<script>
+    const showFieldError = (input, field, message) => {
+        const errorEl = document.querySelector(`[data-error-for="${field}"]`);
+        if (!errorEl) {
+            return;
+        }
+
+        if (message) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            input.classList.add('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            input.classList.remove('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
+        } else {
+            errorEl.textContent = '';
+            errorEl.classList.add('hidden');
+            input.classList.remove('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            input.classList.add('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
+        }
+    };
+
+    const fieldValidators = {
+        nip: value => {
+            if (!value) return 'NIP wajib diisi';
+            return value.length <= 50 ? '' : 'NIP maksimal 50 karakter';
+        },
+        no_hp: value => {
+            if (!value) return '';
+            return /^08\d{8,11}$/.test(value) ? '' : 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit';
+        },
+        password: value => {
+            if (!value) return '';
+            if (value.length < 8) return 'Password minimal 8 karakter';
+            if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) {
+                return 'Gunakan kombinasi huruf besar, huruf kecil, dan angka';
+            }
+            return '';
+        },
+        password_confirmation: (value, allValues) => {
+            if (!allValues.password && !value) return '';
+            if (!allValues.password && value) return 'Isi password terlebih dahulu';
+            if (allValues.password && !value) return 'Konfirmasi password wajib diisi';
+            return value === allValues.password ? '' : 'Konfirmasi password tidak sama';
+        }
+    };
+
+    const watchFields = ['nip', 'no_hp', 'password', 'password_confirmation'];
+
+    const getAllValues = () => ({
+        password: document.getElementById('password')?.value ?? '',
+        password_confirmation: document.getElementById('password_confirmation')?.value ?? ''
+    });
+
+    watchFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input) return;
+
+        const handler = () => {
+            const values = getAllValues();
+            const message = fieldValidators[field] ? fieldValidators[field](input.value.trim(), values) : '';
+            showFieldError(input, field, message);
+        };
+
+        input.addEventListener('input', handler);
+        input.addEventListener('blur', handler);
+    });
+</script>
+@endpush

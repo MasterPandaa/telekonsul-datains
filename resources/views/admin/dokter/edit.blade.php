@@ -56,6 +56,7 @@
                     <label for="no_sip" class="block text-sm font-medium text-gray-700 mb-1">No. SIP <span class="text-red-500">*</span></label>
                     <input type="text" name="no_sip" id="no_sip" value="{{ old('no_sip', $dokter->no_sip) }}" required 
                            class="w-full px-3 py-2 border @error('no_sip') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_sip"></p>
                     @error('no_sip')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -66,6 +67,7 @@
                     <label for="no_str" class="block text-sm font-medium text-gray-700 mb-1">No. STR</label>
                     <input type="text" name="no_str" id="no_str" value="{{ old('no_str', $dokter->no_str) }}" 
                            class="w-full px-3 py-2 border @error('no_str') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_str"></p>
                     @error('no_str')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -90,6 +92,7 @@
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                     <p class="mt-1 text-xs text-gray-500">Format: 08xxxxxxxxxx</p>
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="no_hp"></p>
                 </div>
                 
                 <!-- Tempat Lahir -->
@@ -216,6 +219,7 @@
                     <input type="password" name="password" id="password"
                            class="w-full px-3 py-2 border @error('password') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <p class="mt-1 text-xs text-gray-500">Kosongkan jika tidak ingin mengubah password</p>
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="password"></p>
                     @error('password')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -226,6 +230,7 @@
                     <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
                     <input type="password" name="password_confirmation" id="password_confirmation"
                            class="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-red-600 mt-1 hidden" data-error-for="password_confirmation"></p>
                 </div>
             </div>
             
@@ -242,4 +247,77 @@
         </form>
     </div>
 </div>
-@endsection 
+
+@push('scripts')
+<script>
+    const showFieldError = (input, field, message) => {
+        const errorEl = document.querySelector(`[data-error-for="${field}"]`);
+        if (!errorEl) {
+            return;
+        }
+
+        if (message) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            input.classList.add('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            input.classList.remove('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
+        } else {
+            errorEl.textContent = '';
+            errorEl.classList.add('hidden');
+            input.classList.remove('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            input.classList.add('border-gray-300', 'focus:ring-blue-500', 'focus:border-blue-500');
+        }
+    };
+
+    const fieldValidators = {
+        no_sip: value => {
+            if (!value) return 'Nomor SIP wajib diisi';
+            return /^[A-Z0-9\/.\-]{5,50}$/.test(value.toUpperCase()) ? '' : 'Format SIP hanya huruf kapital, angka, dan /. -';
+        },
+        no_str: value => {
+            if (!value) return '';
+            return /^\d{13}$/.test(value) ? '' : 'Nomor STR harus berisi 13 digit angka';
+        },
+        no_hp: value => {
+            if (!value) return 'Nomor HP wajib diisi';
+            return /^08\d{8,11}$/.test(value) ? '' : 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit';
+        },
+        password: value => {
+            if (!value) return '';
+            if (value.length < 8) return 'Password minimal 8 karakter';
+            if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) {
+                return 'Gunakan kombinasi huruf besar, huruf kecil, dan angka';
+            }
+            return '';
+        },
+        password_confirmation: (value, allValues) => {
+            if (!allValues.password && !value) return '';
+            if (!allValues.password && value) return 'Isi password terlebih dahulu';
+            if (allValues.password && !value) return 'Konfirmasi password wajib diisi';
+            return value === allValues.password ? '' : 'Konfirmasi password tidak sama';
+        }
+    };
+
+    const watchFields = ['no_sip', 'no_str', 'no_hp', 'password', 'password_confirmation'];
+
+    const getAllValues = () => ({
+        password: document.getElementById('password')?.value ?? '',
+        password_confirmation: document.getElementById('password_confirmation')?.value ?? ''
+    });
+
+    watchFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input) return;
+
+        const handler = () => {
+            const values = getAllValues();
+            const message = fieldValidators[field] ? fieldValidators[field](input.value.trim(), values) : '';
+            showFieldError(input, field, message);
+        };
+
+        input.addEventListener('input', handler);
+        input.addEventListener('blur', handler);
+    });
+</script>
+@endpush
+@endsection

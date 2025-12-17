@@ -25,7 +25,6 @@ class DosenController extends Controller
             })->orWhere(function ($q) use ($searchTerm) {
                 $q->where('nip', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('alamat', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('no_hp', 'LIKE', "%{$searchTerm}%");
             });
         }
@@ -65,7 +64,6 @@ class DosenController extends Controller
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:50|unique:dosens',
             'email' => 'required|email|max:255|unique:dosens|unique:users,email',
-            'alamat' => 'nullable|string|max:1000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
@@ -90,9 +88,6 @@ class DosenController extends Controller
             ]);
 
             $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
-            if (array_key_exists('alamat', $dosenData) && $dosenData['alamat'] === '') {
-                $dosenData['alamat'] = null;
-            }
             if (array_key_exists('no_hp', $dosenData) && $dosenData['no_hp'] === '') {
                 $dosenData['no_hp'] = null;
             }
@@ -137,7 +132,6 @@ class DosenController extends Controller
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:50|unique:dosens,nip,' . $dosen->id,
             'email' => 'required|email|max:255|unique:users,email,' . ($dosen->user_id ?? 'null') . ',id|unique:dosens,email,' . $dosen->id,
-            'alamat' => 'nullable|string|max:1000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
@@ -171,9 +165,6 @@ class DosenController extends Controller
             }
 
             $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
-            if (array_key_exists('alamat', $dosenData) && $dosenData['alamat'] === '') {
-                $dosenData['alamat'] = null;
-            }
             if (array_key_exists('no_hp', $dosenData) && $dosenData['no_hp'] === '') {
                 $dosenData['no_hp'] = null;
             }
