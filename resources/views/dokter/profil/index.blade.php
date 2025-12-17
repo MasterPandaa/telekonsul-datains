@@ -8,7 +8,7 @@
 <!-- We'll handle alerts with SweetAlert instead of the static alert divs -->
 
 @php
-    $fotoUrl = $dokter ? $dokter->foto_url : asset('img/dokter/default.jpg');
+    $fotoUrl = $dokter ? $dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
 @endphp
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

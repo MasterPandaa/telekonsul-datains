@@ -2,37 +2,7 @@
     $pasien = Auth::user()->pasien;
     $displayName = $pasien && $pasien->nama ? $pasien->nama : Auth::user()->name;
 
-    $fotoUrl = null;
-    $hasFoto = false;
-    $candidateUrl = null;
-    $fotoValue = $pasien && $pasien->foto ? $pasien->foto : null;
-
-    if ($fotoValue) {
-        if (filter_var($fotoValue, FILTER_VALIDATE_URL)) {
-            $candidateUrl = $fotoValue;
-        } else {
-            $relativePath = ltrim($fotoValue, '/');
-            $publicPath = public_path($relativePath);
-
-            if (file_exists($publicPath)) {
-                $candidateUrl = asset($relativePath);
-            } else {
-                $storageRelative = ltrim(preg_replace('/^storage\//', '', $relativePath), '/');
-                $storagePath = storage_path('app/public/' . $storageRelative);
-
-                if (file_exists($storagePath)) {
-                    $candidateUrl = asset('storage/' . $storageRelative);
-                }
-            }
-        }
-
-        if ($candidateUrl && ! \Illuminate\Support\Str::contains(strtolower($candidateUrl), 'default')) {
-            $fotoUrl = $candidateUrl;
-            $hasFoto = true;
-        }
-    }
-
-    $initials = \App\Support\Initials::from($displayName, 2);
+    $fotoUrl = $pasien ? $pasien->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
 @endphp
 
 <header class="bg-white shadow">
@@ -120,13 +90,7 @@
                 <div class="relative" x-data="{ isOpen: false }">
                     <button @click="isOpen = !isOpen" class="flex items-center focus:outline-none group">
                         <div class="relative w-9 h-9 overflow-hidden bg-gray-200 rounded-full border-2 border-white group-hover:border-blue-200 transition-all duration-200">
-                            @if($hasFoto && $fotoUrl)
-                                <img src="{{ $fotoUrl }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium">
-                                    {{ $initials }}
-                                </div>
-                            @endif
+                            <img src="{{ $fotoUrl }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
                         </div>
                         <span class="ml-2 hidden md:block text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors duration-200">{{ $displayName }}</span>
                         <svg class="ml-1 h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

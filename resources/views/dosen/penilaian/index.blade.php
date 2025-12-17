@@ -198,7 +198,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->dokter->name) }}&background=4F46E5&color=fff" alt="{{ $konsultasi->dokter->name }}">
+                                <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $konsultasi->dokter->dokter->foto_url ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $konsultasi->dokter->name }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $konsultasi->dokter->name }}</div>
@@ -208,7 +208,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->pasien->nama ?? 'Tidak ada nama') }}&background=4F46E5&color=fff" alt="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}">
+                                <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $konsultasi->pasien->foto_url ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}</div>
@@ -352,7 +352,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->dokter->name) }}&background=4F46E5&color=fff" alt="{{ $konsultasi->dokter->name }}">
+                                <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $konsultasi->dokter->dokter->foto_url ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $konsultasi->dokter->name }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $konsultasi->dokter->name }}</div>
@@ -362,7 +362,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($konsultasi->pasien->nama ?? 'Tidak ada nama') }}&background=4F46E5&color=fff" alt="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}">
+                                <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $konsultasi->pasien->foto_url ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $konsultasi->pasien->nama ?? 'Tidak ada nama' }}</div>

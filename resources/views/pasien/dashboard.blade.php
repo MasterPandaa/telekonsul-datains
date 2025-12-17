@@ -275,15 +275,14 @@
                     @forelse($konsultasiMendatang as $item)
                     <tr class="hover:bg-gray-50 transition-colors">
                         @php
-                            $dokterNama = $item->dokter->name ?? 'Dokter';
-                            $dokterInitials = \App\Support\Initials::from($dokterNama, 2);
+                            $dokterUser = $item->dokter;
+                            $dokterNama = $dokterUser->name ?? 'Dokter';
+                            $dokterFotoUrl = $dokterUser && $dokterUser->dokter ? $dokterUser->dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
                         @endphp
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="h-10 w-10 flex-shrink-0">
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                                        <span class="text-white font-medium">{{ $dokterInitials }}</span>
-                                    </div>
+                                    <img src="{{ $dokterFotoUrl }}" alt="{{ $dokterNama }}" class="h-10 w-10 rounded-full object-cover bg-gray-100">
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900">{{ $dokterNama }}</div>

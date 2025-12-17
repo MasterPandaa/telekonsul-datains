@@ -84,13 +84,9 @@
                     }
                 @endphp
                 
-                @if($fotoUrl && $fotoUrl != asset('img/dokter/default.jpg'))
-                    <div class="w-9 h-9 rounded-full bg-cover bg-center shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200" style="background-image: url('{{ $fotoUrl }}')"></div>
-                @else
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200">
-                        {{ $dokter ? $dokter->initials : \App\Support\Initials::from($displayName, 2) }}
-                    </div>
-                @endif
+                <div class="w-9 h-9 rounded-full overflow-hidden shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200 bg-gray-100">
+                    <img src="{{ $fotoUrl ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
+                </div>
                 
                 <span class="ml-2 hidden md:block font-medium text-gray-700 group-hover:text-blue-600 transition-colors duration-200 truncate max-w-[100px]">{{ $displayName }}</span>
                 <svg class="ml-1 h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

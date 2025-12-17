@@ -187,17 +187,24 @@ class DosenController extends Controller
         }
 
         $dosen = Auth::user()->dosen;
-        
-        if ($request->hasFile('foto')) {
-            $foto = $request->file('foto');
-            ProfilePhoto::deleteByValue($dosen->foto, (int) Auth::id());
-            $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) Auth::id());
 
-            $dosen->foto = $relativePath;
-            $dosen->save();
+        try {
+            if ($request->hasFile('foto')) {
+                $foto = $request->file('foto');
+                ProfilePhoto::deleteByValue($dosen->foto, (int) Auth::id());
+                $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) Auth::id());
+
+                $dosen->foto = $relativePath;
+                $dosen->save();
+            }
+
+            return redirect()->back()->with('success', 'Foto profil berhasil diperbarui');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal mengunggah foto. Penyebab: ' . $e->getMessage());
         }
-
-        return redirect()->back()->with('success', 'Foto profil berhasil diperbarui');
     }
 
     /**

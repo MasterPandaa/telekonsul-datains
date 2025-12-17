@@ -57,6 +57,7 @@ class DokterPageController extends Controller
                 'tanggal' => $item->tanggal ? $item->tanggal->format('d F Y') : '-',
                 'jam' => $item->jam_mulai . ' - ' . $item->jam_selesai,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::transparentDataUrl(),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'status' => $item->status
@@ -174,6 +175,7 @@ class DokterPageController extends Controller
                 'id' => $item->id,
                 'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::transparentDataUrl(),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'tanggal_tampil' => $item->tanggal,
@@ -208,6 +210,7 @@ class DokterPageController extends Controller
                 'id' => $item->id,
                 'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::transparentDataUrl(),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'tanggal_tampil' => $item->tanggal,
@@ -298,6 +301,7 @@ class DokterPageController extends Controller
                 'id' => $item->id,
                 'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::transparentDataUrl(),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'tanggal' => $tanggalFormat,
@@ -458,15 +462,21 @@ class DokterPageController extends Controller
         // Ambil data dokter
         $dokter = Dokter::where('user_id', Auth::id())->firstOrFail();
 
-        $fotoFile = $request->file('foto');
-        ProfilePhoto::deleteByValue($dokter->foto, (int) Auth::id());
-        $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) Auth::id());
+        try {
+            $fotoFile = $request->file('foto');
+            ProfilePhoto::deleteByValue($dokter->foto, (int) Auth::id());
+            $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) Auth::id());
 
-        $dokter->foto = $relativePath;
-        $dokter->save();
-        
-        return redirect()->route('dokter.profil.index')
-            ->with('success', 'Foto profil berhasil diperbarui');
+            $dokter->foto = $relativePath;
+            $dokter->save();
+
+            return redirect()->route('dokter.profil.index')
+                ->with('success', 'Foto profil berhasil diperbarui');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengunggah foto. Penyebab: ' . $e->getMessage());
+        }
     }
 
     public function updateInformasi(Request $request)

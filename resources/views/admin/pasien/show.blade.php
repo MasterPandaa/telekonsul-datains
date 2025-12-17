@@ -31,13 +31,7 @@
         <div class="md:w-1/4 bg-gray-50 p-6 border-r border-gray-200">
             <div class="flex flex-col items-center">
                 <div class="w-32 h-32 rounded-full overflow-hidden bg-gray-100 mb-4">
-                    @if($pasien->has_photo)
-                        <img src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}" class="w-full h-full object-cover">
-                    @else
-                        <div class="w-full h-full flex items-center justify-center bg-gray-900 text-white font-semibold text-3xl">
-                            {{ $pasien->initials }}
-                        </div>
-                    @endif
+                    <img src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}" class="w-full h-full object-cover">
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 text-center">{{ $pasien->nama }}</h3>
                 
@@ -131,13 +125,7 @@
                     <p class="mb-2">Apakah Anda yakin ingin menghapus data pasien:</p>
                     <div class="flex items-center p-3 bg-red-50 rounded-lg border border-red-200">
                         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-3">
-                            @if($pasien->has_photo)
-                                <img src="{{ $pasien->foto_url }}" class="w-12 h-12 rounded-full object-cover">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center bg-gray-900 text-white font-semibold text-3xl">
-                                    {{ $pasien->initials }}
-                                </div>
-                            @endif
+                            <img src="{{ $pasien->foto_url }}" class="w-12 h-12 rounded-full object-cover" alt="{{ $pasien->nama }}">
                         </div>
                         <div>
                             <p class="font-semibold text-gray-800">{{ $pasien->nama }}</p>

@@ -27,11 +27,7 @@
         <div class="md:w-1/4 bg-gray-50 p-6 border-r border-gray-200">
             <div class="flex flex-col items-center">
                 <div class="w-32 h-32 rounded-full overflow-hidden bg-gray-100 mb-4 flex items-center justify-center text-3xl font-semibold text-blue-700">
-                    @if($dokter->has_photo)
-                        <img src="{{ $dokter->foto_url }}" alt="{{ $dokter->nama }}" class="w-full h-full object-cover">
-                    @else
-                        {{ $dokter->initials }}
-                    @endif
+                    <img src="{{ $dokter->foto_url }}" alt="{{ $dokter->nama }}" class="w-full h-full object-cover">
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 text-center">{{ $dokter->nama }}</h3>
                 <p class="text-blue-600 font-medium text-center">{{ $dokter->spesialisasi }}</p>
@@ -146,7 +142,7 @@
                 <div class="text-left mb-4">
                     <p class="mb-2">Apakah Anda yakin ingin menghapus data dokter:</p>
                     <div class="flex items-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($dokter->nama) }}&background=ef4444&color=fff&size=48" class="w-12 h-12 rounded-full mr-3">
+                        <img src="{{ $dokter->foto_url ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" class="w-12 h-12 rounded-full object-cover bg-gray-100 mr-3">
                         <div>
                             <p class="font-semibold text-gray-800">{{ $dokter->nama }}</p>
                             <p class="text-sm text-gray-600">{{ $dokter->no_sip }}</p>

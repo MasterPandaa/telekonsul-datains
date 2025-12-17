@@ -160,14 +160,27 @@
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold">
+                        @php
+                            $chatFotoUrl = \App\Support\ProfilePhoto::transparentDataUrl();
+                            if (!isset($isDosenView)) {
+                                if (Auth::user()->role === 'dokter') {
+                                    $chatFotoUrl = $konsultasi->pasien ? $konsultasi->pasien->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                                } else {
+                                    $chatFotoUrl = $konsultasi->dokter && $konsultasi->dokter->dokter ? $konsultasi->dokter->dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                                }
+                            }
+                        @endphp
+
+                        <div class="w-10 h-10 rounded-full overflow-hidden bg-white/20">
                             @if(isset($isDosenView))
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
+                                <div class="w-10 h-10 flex items-center justify-center text-white">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </div>
                             @else
-                                {{ strtoupper(substr(Auth::user()->role === 'dokter' ? $konsultasi->pasien->nama : $konsultasi->dokter->name, 0, 1)) }}
+                                <img src="{{ $chatFotoUrl }}" alt="Avatar" class="w-10 h-10 object-cover bg-gray-100">
                             @endif
                         </div>
                     <div>
@@ -697,9 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const wrapperAlignment = isPerspectiveOwner ? 'justify-end' : 'justify-start';
                     const contentAlignment = isPerspectiveOwner ? 'flex-row-reverse text-right' : 'text-left';
-                    const avatarClass = isPerspectiveOwner
-                        ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
-                        : 'bg-gradient-to-br from-indigo-400 to-blue-500 text-white';
+                    const avatarClass = 'bg-gray-100';
                     const bubbleClass = isPerspectiveOwner
                         ? 'message-bubble-right bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
                         : 'message-bubble-left bg-white text-gray-800 border border-gray-100';
@@ -708,9 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const html = `
                         <div class="mb-4 flex ${wrapperAlignment}">
                             <div class="flex items-start ${contentAlignment} max-w-[80%] gap-2">
-                                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold shadow-md ${avatarClass}">
-                                    ${message.user ? message.user.name.charAt(0).toUpperCase() : 'U'}
-                                </div>
+                                <div class="w-10 h-10 rounded-full flex-shrink-0 shadow-md ${avatarClass}"></div>
                                 <div>
                                     <div class="px-4 py-3 ${bubbleClass} shadow-md">
                                         <p class="text-sm whitespace-pre-wrap leading-relaxed">${message.message}</p>

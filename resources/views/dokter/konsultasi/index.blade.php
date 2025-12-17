@@ -138,7 +138,7 @@
                     <td class="px-6 py-4">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ str_replace(' ', '+', $item['pasien_nama']) }}&background=4F46E5&color=fff" alt="">
+                                <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $item['pasien_foto_url'] ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $item['pasien_nama'] }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $item['pasien_nama'] }}</div>
@@ -301,7 +301,7 @@
                     <td class="px-6 py-4">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ str_replace(' ', '+', $item['pasien_nama']) }}&background=4F46E5&color=fff" alt="">
+                                <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $item['pasien_foto_url'] ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $item['pasien_nama'] }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $item['pasien_nama'] }}</div>

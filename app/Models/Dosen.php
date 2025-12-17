@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Support\Initials;
 use App\Support\ProfilePhoto;
 use Illuminate\Support\Str;
 
@@ -40,7 +39,7 @@ class Dosen extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        $default = asset('img/dokter/default.jpg');
+        $default = ProfilePhoto::transparentDataUrl();
 
         if (empty($this->foto)) {
             return $default;
@@ -62,22 +61,12 @@ class Dosen extends Model
         }
 
         $foto = (string) $this->foto;
-        if (Str::contains(strtolower($foto), 'default')) {
-            return false;
-        }
 
         if (Str::startsWith($foto, ['http://', 'https://'])) {
             return true;
         }
 
         return ProfilePhoto::exists($foto);
-    }
-
-    public function getInitialsAttribute(): string
-    {
-        $nameSource = $this->nama ?? ($this->user ? $this->user->name : null);
-
-        return Initials::from($nameSource, 2);
     }
 
     /**

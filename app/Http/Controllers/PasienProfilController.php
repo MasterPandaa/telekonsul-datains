@@ -129,13 +129,20 @@ class PasienProfilController extends Controller
             return redirect()->back()->with('error', 'Data pasien tidak ditemukan');
         }
 
-        $foto = $request->file('foto');
-        ProfilePhoto::deleteByValue($pasien->foto, (int) $user->id);
-        $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) $user->id);
+        try {
+            $foto = $request->file('foto');
+            ProfilePhoto::deleteByValue($pasien->foto, (int) $user->id);
+            $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) $user->id);
 
-        $pasien->foto = $relativePath;
-        $pasien->save();
-        
-        return redirect()->route('pasien.profil.index')->with('success', 'Foto profil berhasil diperbarui');
+            $pasien->foto = $relativePath;
+            $pasien->save();
+
+            return redirect()->route('pasien.profil.index')->with('success', 'Foto profil berhasil diperbarui');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal mengunggah foto. Penyebab: ' . $e->getMessage());
+        }
     }
 } 

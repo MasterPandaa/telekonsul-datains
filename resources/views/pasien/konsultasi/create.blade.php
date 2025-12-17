@@ -79,39 +79,9 @@
                                 <div class="p-4 flex items-start">
                                     <div class="flex-shrink-0 mr-3">
                                         @php
-                                            $dokterInitials = \App\Support\Initials::from($m->name, 2);
-                                            $dokterFoto = null;
-                                            $candidateUrl = null;
-                                            $fotoValue = $m->dokter->foto ?? null;
-
-                                            if ($fotoValue) {
-                                                if (filter_var($fotoValue, FILTER_VALIDATE_URL)) {
-                                                    $candidateUrl = $fotoValue;
-                                                } else {
-                                                    $relativePath = ltrim($fotoValue, '/');
-
-                                                    if (file_exists(public_path($relativePath))) {
-                                                        $candidateUrl = asset($relativePath);
-                                                    } else {
-                                                        $storageRelative = ltrim(preg_replace('/^storage\//', '', $relativePath), '/');
-                                                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storageRelative)) {
-                                                            $candidateUrl = asset('storage/' . $storageRelative);
-                                                        }
-                                                    }
-                                                }
-
-                                                if ($candidateUrl && ! \Illuminate\Support\Str::contains(strtolower($candidateUrl), 'default')) {
-                                                    $dokterFoto = $candidateUrl;
-                                                }
-                                            }
+                                            $dokterFoto = $m->dokter ? $m->dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
                                         @endphp
-                                        @if($dokterFoto)
-                                            <img class="h-16 w-16 rounded-full object-cover border-3 border-gray-100" src="{{ $dokterFoto }}" alt="{{ $m->name }}">
-                                        @else
-                                            <div class="h-16 w-16 rounded-full flex items-center justify-center text-white text-lg font-semibold bg-blue-600 border-3 border-blue-100">
-                                                {{ $dokterInitials }}
-                                            </div>
-                                        @endif
+                                        <img class="h-16 w-16 rounded-full object-cover border-3 border-gray-100 bg-gray-100" src="{{ $dokterFoto }}" alt="{{ $m->name }}">
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex justify-between items-start">
@@ -138,7 +108,7 @@
                                                 </div>
                                                 <div class="flex gap-1 mt-3">
                                                     <button type="button" class="px-2.5 py-1.5 bg-gray-700 text-white text-xs font-medium rounded hover:bg-gray-800 transition-colors focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-gray-500"
-                                                            onclick="showDokterDetail({{ $m->id }}, '{{ e($m->name) }}', '{{ e($m->dokter->no_sip ?? '122123/abc') }}', '{{ e($m->dokter->spesialisasi ?? 'Dokter Umum') }}', '{{ $dokterFoto ?? '' }}', '{{ $dokterInitials }}', '{{ e($m->dokter->pengalaman ?? '') }}', '{{ e($m->dokter->tempat_praktik ?? '') }}')">
+                                                            onclick="showDokterDetail({{ $m->id }}, '{{ e($m->name) }}', '{{ e($m->dokter->no_sip ?? '122123/abc') }}', '{{ e($m->dokter->spesialisasi ?? 'Dokter Umum') }}', '{{ $dokterFoto }}', '{{ e($m->dokter->pengalaman ?? '') }}', '{{ e($m->dokter->tempat_praktik ?? '') }}')">
                                                         Detail
                                                     </button>
                                                     <button type="button" class="px-2.5 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500"
@@ -283,10 +253,7 @@
         <div class="px-5 pt-5 pb-6">
             <div class="flex flex-col items-center -mt-12 mb-3">
                 <div class="relative">
-                    <img id="modal-dokter-photo" class="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md hidden" src="" alt="Foto Dokter">
-                    <div id="modal-dokter-initials" class="h-24 w-24 rounded-full flex items-center justify-center text-white text-3xl font-semibold bg-blue-600 border-4 border-white shadow-md">
-                        --
-                    </div>
+                    <img id="modal-dokter-photo" class="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md bg-gray-100" src="" alt="Foto Dokter">
                 </div>
                 <h3 id="modal-dokter-name" class="mt-3 text-xl font-medium text-gray-900"></h3>
                 <p id="modal-dokter-nim" class="text-sm text-gray-600 mt-1"></p>
@@ -754,21 +721,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         window.selectDokter = selectDokter;
 
-        function showDokterDetail(id, name, nim, spesialisasi, photo, initials, pengalaman, tempat_praktik) {
+        function showDokterDetail(id, name, nim, spesialisasi, photo, pengalaman, tempat_praktik) {
             currentDokterId = id;
             const modalPhoto = document.getElementById('modal-dokter-photo');
-            const modalInitials = document.getElementById('modal-dokter-initials');
 
-            if (photo) {
-                modalPhoto.src = photo;
-                modalPhoto.classList.remove('hidden');
-                modalInitials.classList.add('hidden');
-            } else {
-                modalPhoto.classList.add('hidden');
-                modalPhoto.src = '';
-                modalInitials.textContent = initials || '\\u{2013}';
-                modalInitials.classList.remove('hidden');
-            }
+            modalPhoto.src = photo || '{{ \App\Support\ProfilePhoto::transparentDataUrl() }}';
             document.getElementById('modal-dokter-name').textContent = name;
             document.getElementById('modal-dokter-nim').textContent = 'SIP/' + nim;
             document.getElementById('modal-dokter-fakultas').textContent = spesialisasi || 'Dokter Umum';

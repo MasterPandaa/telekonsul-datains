@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 
 class ProfilePhoto
 {
+    private const BASE_DIR = 'profile-photos';
+
     private static function normalizePath(string $path): string
     {
         $path = str_replace('\\', '/', $path);
@@ -18,7 +20,7 @@ class ProfilePhoto
 
     public static function relativePath(int $userId): string
     {
-        return 'profil/' . $userId . '/fotoprofil.png';
+        return self::BASE_DIR . '/' . $userId . '/profile.png';
     }
 
     public static function relativePathWithExtension(int $userId, string $extension): string
@@ -26,7 +28,7 @@ class ProfilePhoto
         $extension = ltrim(strtolower($extension), '.');
         $extension = $extension !== '' ? $extension : 'png';
 
-        return 'profil/' . $userId . '/fotoprofil.' . $extension;
+        return self::BASE_DIR . '/' . $userId . '/profile.' . $extension;
     }
 
     public static function publicPath(string $relativePath): string
@@ -55,18 +57,7 @@ class ProfilePhoto
             $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
         }
 
-        if (Str::startsWith($relativePath, 'img/profil/')) {
-            $candidate = ltrim(Str::after($relativePath, 'img/'), '/');
-            if (Storage::disk('public')->exists($candidate)) {
-                return true;
-            }
-        }
-
-        if (Storage::disk('public')->exists($relativePath)) {
-            return true;
-        }
-
-        return file_exists(self::publicPath($relativePath));
+        return $relativePath !== '' && Storage::disk('public')->exists($relativePath);
     }
 
     public static function resolveUrl(?string $fotoValue, ?int $userId = null): ?string
@@ -85,22 +76,11 @@ class ProfilePhoto
             $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
         }
 
-        if (Str::startsWith($relativePath, 'img/profil/')) {
-            $candidate = ltrim(Str::after($relativePath, 'img/'), '/');
-            if ($candidate !== '' && Storage::disk('public')->exists($candidate)) {
-                return Storage::url($candidate);
-            }
+        if ($relativePath === '') {
+            return null;
         }
 
-        if ($relativePath !== '' && Storage::disk('public')->exists($relativePath)) {
-            return Storage::url($relativePath);
-        }
-
-        if (file_exists(self::publicPath($relativePath))) {
-            return asset($relativePath);
-        }
-
-        return null;
+        return Storage::disk('public')->exists($relativePath) ? Storage::url($relativePath) : null;
     }
 
     public static function blackDataUrl(): string
@@ -110,10 +90,22 @@ class ProfilePhoto
         return 'data:image/svg+xml;charset=UTF-8,' . rawurlencode($svg);
     }
 
+    public static function transparentDataUrl(): string
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" fill="transparent"/></svg>';
+
+        return 'data:image/svg+xml;charset=UTF-8,' . rawurlencode($svg);
+    }
+
     public static function storeUploadedAsPng(UploadedFile $file, int $userId): string
     {
-        $storageDir = 'profil/' . $userId;
-        $storagePng = $storageDir . '/fotoprofil.png';
+        return self::storeUploaded($file, $userId);
+    }
+
+    public static function storeUploaded(UploadedFile $file, int $userId): string
+    {
+        $storageDir = self::BASE_DIR . '/' . $userId;
+        $storagePng = $storageDir . '/profile.png';
 
         // Some servers (e.g. certain Railway images) may not have GD enabled.
         $hasGd = function_exists('imagecreatefromstring') && function_exists('imagepng');
@@ -141,9 +133,9 @@ class ProfilePhoto
         $ext = ltrim(strtolower($ext), '.');
         $ext = $ext !== '' ? $ext : 'png';
 
-        $storageRelative = $storageDir . '/fotoprofil.' . $ext;
+        $storageRelative = $storageDir . '/profile.' . $ext;
         self::deleteExisting($userId);
-        Storage::disk('public')->putFileAs($storageDir, $file, 'fotoprofil.' . $ext);
+        Storage::disk('public')->putFileAs($storageDir, $file, 'profile.' . $ext);
 
         return $storageRelative;
     }
@@ -158,33 +150,7 @@ class ProfilePhoto
             return;
         }
 
-        $relativePath = self::normalizePath(ltrim((string) $fotoValue, '/'));
-
-        if (Str::startsWith($relativePath, 'storage/')) {
-            $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
-        }
-
         self::deleteExisting($userId);
-
-        $allowedPrefixes = array_filter([
-            $userId > 0 ? ('profil/' . $userId . '/') : null,
-            'dokters/',
-            'dosens/',
-        ]);
-
-        foreach ($allowedPrefixes as $prefix) {
-            if (Str::startsWith($relativePath, $prefix) && Storage::disk('public')->exists($relativePath)) {
-                Storage::disk('public')->delete($relativePath);
-                break;
-            }
-        }
-
-        if ($userId > 0 && Str::startsWith($relativePath, 'img/profil/' . $userId . '/')) {
-            $absolute = self::publicPath($relativePath);
-            if (is_file($absolute)) {
-                @unlink($absolute);
-            }
-        }
     }
 
     private static function deleteExisting(int $userId): void
@@ -193,11 +159,11 @@ class ProfilePhoto
             return;
         }
 
-        $dir = 'profil/' . $userId;
+        $dir = self::BASE_DIR . '/' . $userId;
         $files = Storage::disk('public')->files($dir);
 
         foreach ($files as $path) {
-            if (Str::startsWith(basename($path), 'fotoprofil.')) {
+            if (Str::startsWith(basename($path), 'profile.')) {
                 Storage::disk('public')->delete($path);
             }
         }

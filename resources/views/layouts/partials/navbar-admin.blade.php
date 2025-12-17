@@ -66,8 +66,7 @@
         <!-- User Dropdown -->
         <div class="relative" x-data="{ isOpen: false }">
             <button @click="isOpen = !isOpen" class="flex items-center focus:outline-none group">
-                <div class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200">
-                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200">
                 </div>
                 
                 <span class="ml-2 hidden md:block font-medium text-gray-700 group-hover:text-blue-600 transition-colors duration-200 truncate max-w-[100px]">{{ Auth::user()->name }}</span>

@@ -3,7 +3,7 @@
     $displayName = $dosen && $dosen->nama ? $dosen->nama : Auth::user()->name;
     
     // Foto dosen
-    $fotoUrl = $dosen ? $dosen->foto_url : asset('img/dokter/default.jpg');
+    $fotoUrl = $dosen ? $dosen->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
 @endphp
 
 <aside class="w-64 bg-white shadow-lg flex flex-col py-6 px-4 min-h-screen hidden md:flex">

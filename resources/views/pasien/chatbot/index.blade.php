@@ -642,7 +642,7 @@
             // Ambil informasi foto profil pasien
             @php
                 $pasien = Auth::user()->pasien;
-                $fotoUrl = $pasien ? $pasien->foto_url : asset('img/pasien/default.jpg');
+                $fotoUrl = $pasien ? $pasien->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
             @endphp
             
             const userPhotoUrl = "{{ $fotoUrl }}";

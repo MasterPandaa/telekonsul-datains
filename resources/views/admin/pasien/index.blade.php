@@ -148,13 +148,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                @if($pasien->has_photo)
-                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}">
-                                @else
-                                    <div class="h-10 w-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold">
-                                        {{ $pasien->initials }}
-                                    </div>
-                                @endif
+                                <img class="h-10 w-10 rounded-full object-cover" src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}">
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $pasien->nama }}</div>

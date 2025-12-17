@@ -31,7 +31,7 @@ class Dokter extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        $default = asset('img/dokter/default.jpg');
+        $default = ProfilePhoto::transparentDataUrl();
 
         if (empty($this->foto)) {
             return $default;
@@ -53,9 +53,6 @@ class Dokter extends Model
         }
 
         $foto = (string) $this->foto;
-        if (Str::contains(strtolower($foto), 'default')) {
-            return false;
-        }
 
         if (Str::startsWith($foto, ['http://', 'https://'])) {
             return true;
@@ -64,24 +61,6 @@ class Dokter extends Model
         return ProfilePhoto::exists($foto);
     }
 
-    public function getInitialsAttribute(): string
-    {
-        $nameSource = trim($this->nama ?? $this->user->name ?? '');
-
-        if ($nameSource === '') {
-            return 'DK';
-        }
-
-        $words = preg_split('/\s+/', $nameSource);
-        $initials = collect($words)
-            ->filter(fn ($word) => $word !== '')
-            ->take(2)
-            ->map(fn ($word) => Str::substr($word, 0, 1))
-            ->implode('');
-
-        return Str::upper($initials ?: Str::substr($nameSource, 0, 2));
-    }
-    
     // Accessor untuk mendapatkan nama dari user
     public function getNamaAttribute()
     {
