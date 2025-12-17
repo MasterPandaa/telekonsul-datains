@@ -8,6 +8,14 @@ use Illuminate\Support\Str;
 
 class ProfilePhoto
 {
+    private static function normalizePath(string $path): string
+    {
+        $path = str_replace('\\', '/', $path);
+        $path = preg_replace('#/+#', '/', $path) ?? $path;
+
+        return $path;
+    }
+
     public static function relativePath(int $userId): string
     {
         return 'profil/' . $userId . '/fotoprofil.png';
@@ -41,7 +49,7 @@ class ProfilePhoto
             return true;
         }
 
-        $relativePath = ltrim((string) $fotoValue, '/');
+        $relativePath = self::normalizePath(ltrim((string) $fotoValue, '/'));
 
         if (Str::startsWith($relativePath, 'storage/')) {
             $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
@@ -71,7 +79,7 @@ class ProfilePhoto
             return $fotoValue;
         }
 
-        $relativePath = ltrim((string) $fotoValue, '/');
+        $relativePath = self::normalizePath(ltrim((string) $fotoValue, '/'));
 
         if (Str::startsWith($relativePath, 'storage/')) {
             $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
@@ -150,7 +158,7 @@ class ProfilePhoto
             return;
         }
 
-        $relativePath = ltrim((string) $fotoValue, '/');
+        $relativePath = self::normalizePath(ltrim((string) $fotoValue, '/'));
 
         if (Str::startsWith($relativePath, 'storage/')) {
             $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
