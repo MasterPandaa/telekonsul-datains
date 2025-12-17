@@ -172,6 +172,7 @@ class PasienController extends Controller
 
             if ($request->hasFile('foto')) {
                 $fotoFile = $request->file('foto');
+                ProfilePhoto::deleteByValue($pasien->foto, (int) ($pasien->user_id ?? 0));
                 $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) ($pasien->user_id ?? 0));
                 $pasienData['foto'] = $relativePath;
             }

@@ -4,7 +4,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Support\ProfilePhoto;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Dokter extends Model
@@ -32,8 +31,10 @@ class Dokter extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        if (!$this->has_photo) {
-            return asset('img/dokter/default.jpg');
+        $default = asset('img/dokter/default.jpg');
+
+        if (empty($this->foto)) {
+            return $default;
         }
 
         $foto = (string) $this->foto;
@@ -42,33 +43,7 @@ class Dokter extends Model
             return $foto;
         }
 
-        // Prefer new scheme: public/img/profil/{user_id}/fotoprofil.png
-        if (Str::contains($foto, 'img/profil/')) {
-            return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? asset('img/dokter/default.jpg');
-        }
-
-        if (Str::startsWith($foto, 'storage/')) {
-            return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? ProfilePhoto::blackDataUrl();
-        }
-
-        if (Str::startsWith($foto, 'dokters/')) {
-            return Storage::disk('public')->exists($foto)
-                ? asset('storage/' . ltrim($foto, '/'))
-                : ProfilePhoto::blackDataUrl();
-        }
-
-        if (Str::startsWith($foto, 'img/')) {
-            return file_exists(public_path($foto))
-                ? asset($foto)
-                : ProfilePhoto::blackDataUrl();
-        }
-
-        // Asumsikan path relatif terhadap disk public atau public path
-        if (Storage::disk('public')->exists($foto)) {
-            return asset('storage/' . ltrim($foto, '/'));
-        }
-
-        return file_exists(public_path($foto)) ? asset($foto) : ProfilePhoto::blackDataUrl();
+        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? $default;
     }
 
     public function getHasPhotoAttribute(): bool
@@ -86,11 +61,7 @@ class Dokter extends Model
             return true;
         }
 
-        if (Str::contains($foto, 'img/profil/')) {
-            return file_exists(public_path(ltrim($foto, '/')));
-        }
-
-        return true;
+        return ProfilePhoto::exists($foto);
     }
 
     public function getInitialsAttribute(): string

@@ -17,7 +17,7 @@
         <div class="p-6 flex flex-col items-center text-center space-y-4">
             <div class="relative">
                 <div class="w-40 h-40 rounded-full overflow-hidden ring-4 ring-blue-50 shadow-sm bg-white">
-                    <img src="{{ $fotoUrl }}" alt="{{ $profil['nama'] }}" class="w-full h-full object-cover">
+                    <img src="{{ $fotoUrl }}" alt="{{ $profil['nama'] }}" class="w-full h-full object-cover cursor-pointer" onclick="openFotoModal(this.src)">
                 </div>
                 <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" class="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-md transition" title="Ubah foto">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,6 +145,25 @@
                         <p class="mt-1 text-sm text-gray-800">{{ $profil['pengalaman'] }}</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="viewFotoModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="absolute inset-0 bg-gray-800 opacity-70" onclick="closeFotoModal()"></div>
+    <div class="relative top-16 mx-auto p-4 w-11/12 max-w-2xl">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b">
+                <h3 class="text-sm font-semibold text-gray-800">Foto Profil</h3>
+                <button type="button" class="text-gray-500 hover:text-gray-800" onclick="closeFotoModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 bg-gray-50">
+                <img id="viewFotoModalImg" src="" alt="Foto Profil" class="w-full max-h-[75vh] object-contain rounded-lg bg-white">
             </div>
         </div>
     </div>
@@ -306,6 +325,26 @@
 
 @push('scripts')
 <script>
+    function openFotoModal(url) {
+        const modal = document.getElementById('viewFotoModal');
+        const img = document.getElementById('viewFotoModalImg');
+        if (modal && img) {
+            img.src = url;
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeFotoModal() {
+        const modal = document.getElementById('viewFotoModal');
+        const img = document.getElementById('viewFotoModalImg');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        if (img) {
+            img.src = '';
+        }
+    }
+
     function previewImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();

@@ -179,7 +179,7 @@ class DosenController extends Controller
     public function updateFoto(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -190,6 +190,7 @@ class DosenController extends Controller
         
         if ($request->hasFile('foto')) {
             $foto = $request->file('foto');
+            ProfilePhoto::deleteByValue($dosen->foto, (int) Auth::id());
             $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) Auth::id());
 
             $dosen->foto = $relativePath;

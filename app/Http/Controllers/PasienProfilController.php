@@ -119,7 +119,7 @@ class PasienProfilController extends Controller
     public function uploadFoto(Request $request)
     {
         $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
         
         $user = Auth::user();
@@ -130,6 +130,7 @@ class PasienProfilController extends Controller
         }
 
         $foto = $request->file('foto');
+        ProfilePhoto::deleteByValue($pasien->foto, (int) $user->id);
         $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) $user->id);
 
         $pasien->foto = $relativePath;

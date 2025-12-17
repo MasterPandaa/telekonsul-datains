@@ -8,14 +8,9 @@ use Illuminate\Support\Str;
 
 class ProfilePhoto
 {
-    private static function toPublicUrl(string $relativePath): string
-    {
-        return '/' . ltrim($relativePath, '/');
-    }
-
     public static function relativePath(int $userId): string
     {
-        return 'storage/profil/' . $userId . '/fotoprofil.png';
+        return 'profil/' . $userId . '/fotoprofil.png';
     }
 
     public static function relativePathWithExtension(int $userId, string $extension): string
@@ -23,7 +18,7 @@ class ProfilePhoto
         $extension = ltrim(strtolower($extension), '.');
         $extension = $extension !== '' ? $extension : 'png';
 
-        return 'storage/profil/' . $userId . '/fotoprofil.' . $extension;
+        return 'profil/' . $userId . '/fotoprofil.' . $extension;
     }
 
     public static function publicPath(string $relativePath): string
@@ -36,6 +31,36 @@ class ProfilePhoto
         return !empty($value) && Str::startsWith($value, ['http://', 'https://']);
     }
 
+    public static function exists(?string $fotoValue): bool
+    {
+        if (blank($fotoValue)) {
+            return false;
+        }
+
+        if (self::isRemote($fotoValue)) {
+            return true;
+        }
+
+        $relativePath = ltrim((string) $fotoValue, '/');
+
+        if (Str::startsWith($relativePath, 'storage/')) {
+            $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
+        }
+
+        if (Str::startsWith($relativePath, 'img/profil/')) {
+            $candidate = ltrim(Str::after($relativePath, 'img/'), '/');
+            if (Storage::disk('public')->exists($candidate)) {
+                return true;
+            }
+        }
+
+        if (Storage::disk('public')->exists($relativePath)) {
+            return true;
+        }
+
+        return file_exists(self::publicPath($relativePath));
+    }
+
     public static function resolveUrl(?string $fotoValue, ?int $userId = null): ?string
     {
         if (blank($fotoValue)) {
@@ -46,45 +71,28 @@ class ProfilePhoto
             return $fotoValue;
         }
 
-        $relativePath = ltrim($fotoValue, '/');
+        $relativePath = ltrim((string) $fotoValue, '/');
 
         if (Str::startsWith($relativePath, 'storage/')) {
-            $publicCandidate = public_path($relativePath);
-            if (file_exists($publicCandidate)) {
-                return self::toPublicUrl($relativePath);
-            }
-
-            $storageRelative = ltrim(Str::after($relativePath, 'storage/'), '/');
-            if ($storageRelative !== '' && Storage::disk('public')->exists($storageRelative)) {
-                return self::toPublicUrl('storage/' . $storageRelative);
-            }
-
-            return self::blackDataUrl();
-        }
-
-        if (Str::startsWith($relativePath, ['dokters/', 'dosen/', 'dosen\/', 'img/dosen/'])) {
-            $storageRelative = $relativePath;
-            $storageRelative = Str::startsWith($storageRelative, 'img/dosen/')
-                ? Str::after($storageRelative, 'img/')
-                : $storageRelative;
-
-            if (Storage::disk('public')->exists($storageRelative)) {
-                return self::toPublicUrl('storage/' . ltrim($storageRelative, '/'));
-            }
-        }
-
-        if (file_exists(self::publicPath($relativePath))) {
-            return self::toPublicUrl($relativePath);
+            $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
         }
 
         if (Str::startsWith($relativePath, 'img/profil/')) {
-            $storageRelative = Str::after($relativePath, 'img/');
-            if ($storageRelative !== '' && Storage::disk('public')->exists($storageRelative)) {
-                return self::toPublicUrl('storage/' . ltrim($storageRelative, '/'));
+            $candidate = ltrim(Str::after($relativePath, 'img/'), '/');
+            if ($candidate !== '' && Storage::disk('public')->exists($candidate)) {
+                return Storage::url($candidate);
             }
         }
 
-        return self::blackDataUrl();
+        if ($relativePath !== '' && Storage::disk('public')->exists($relativePath)) {
+            return Storage::url($relativePath);
+        }
+
+        if (file_exists(self::publicPath($relativePath))) {
+            return asset($relativePath);
+        }
+
+        return null;
     }
 
     public static function blackDataUrl(): string
@@ -98,7 +106,6 @@ class ProfilePhoto
     {
         $storageDir = 'profil/' . $userId;
         $storagePng = $storageDir . '/fotoprofil.png';
-        $returnPng = 'storage/' . $storagePng;
 
         // Some servers (e.g. certain Railway images) may not have GD enabled.
         $hasGd = function_exists('imagecreatefromstring') && function_exists('imagepng');
@@ -115,8 +122,9 @@ class ProfilePhoto
                 imagedestroy($image);
 
                 if ($png !== false) {
+                    self::deleteExisting($userId);
                     Storage::disk('public')->put($storagePng, $png);
-                    return $returnPng;
+                    return $storagePng;
                 }
             }
         }
@@ -126,8 +134,64 @@ class ProfilePhoto
         $ext = $ext !== '' ? $ext : 'png';
 
         $storageRelative = $storageDir . '/fotoprofil.' . $ext;
+        self::deleteExisting($userId);
         Storage::disk('public')->putFileAs($storageDir, $file, 'fotoprofil.' . $ext);
 
-        return 'storage/' . $storageRelative;
+        return $storageRelative;
+    }
+
+    public static function deleteByValue(?string $fotoValue, int $userId): void
+    {
+        if (blank($fotoValue)) {
+            return;
+        }
+
+        if (self::isRemote($fotoValue)) {
+            return;
+        }
+
+        $relativePath = ltrim((string) $fotoValue, '/');
+
+        if (Str::startsWith($relativePath, 'storage/')) {
+            $relativePath = ltrim(Str::after($relativePath, 'storage/'), '/');
+        }
+
+        self::deleteExisting($userId);
+
+        $allowedPrefixes = array_filter([
+            $userId > 0 ? ('profil/' . $userId . '/') : null,
+            'dokters/',
+            'dosens/',
+        ]);
+
+        foreach ($allowedPrefixes as $prefix) {
+            if (Str::startsWith($relativePath, $prefix) && Storage::disk('public')->exists($relativePath)) {
+                Storage::disk('public')->delete($relativePath);
+                break;
+            }
+        }
+
+        if ($userId > 0 && Str::startsWith($relativePath, 'img/profil/' . $userId . '/')) {
+            $absolute = self::publicPath($relativePath);
+            if (is_file($absolute)) {
+                @unlink($absolute);
+            }
+        }
+    }
+
+    private static function deleteExisting(int $userId): void
+    {
+        if ($userId <= 0) {
+            return;
+        }
+
+        $dir = 'profil/' . $userId;
+        $files = Storage::disk('public')->files($dir);
+
+        foreach ($files as $path) {
+            if (Str::startsWith(basename($path), 'fotoprofil.')) {
+                Storage::disk('public')->delete($path);
+            }
+        }
     }
 }

@@ -452,13 +452,14 @@ class DokterPageController extends Controller
     public function updateFoto(Request $request)
     {
         $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
         
         // Ambil data dokter
         $dokter = Dokter::where('user_id', Auth::id())->firstOrFail();
 
         $fotoFile = $request->file('foto');
+        ProfilePhoto::deleteByValue($dokter->foto, (int) Auth::id());
         $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) Auth::id());
 
         $dokter->foto = $relativePath;

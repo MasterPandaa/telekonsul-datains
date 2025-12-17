@@ -107,7 +107,7 @@
         </div>
         <div class="p-6 text-center">
             <div class="w-32 h-32 mx-auto profile-avatar rounded-full overflow-hidden mb-4">
-                <img src="{{ $pasien->foto_url }}" alt="Foto Profil" class="w-full h-full object-cover">
+                <img src="{{ $pasien->foto_url }}" alt="Foto Profil" class="w-full h-full object-cover cursor-pointer" onclick="openFotoModal(this.src)">
             </div>
             <h2 class="text-xl font-bold text-gray-800">{{ $pasien->nama }}</h2>
             <p class="text-sm text-gray-600 mt-1">ID: P{{ str_pad($pasien->id, 5, '0', STR_PAD_LEFT) }}</p>
@@ -234,6 +234,25 @@
                         <p class="info-value">{{ $pasien->riwayat_penyakit ?? 'Tidak ada riwayat penyakit kronis' }}</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="viewFotoModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="absolute inset-0 bg-gray-800 opacity-70" onclick="closeFotoModal()"></div>
+    <div class="relative top-16 mx-auto p-4 w-11/12 max-w-2xl">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b">
+                <h3 class="text-sm font-semibold text-gray-800">Foto Profil</h3>
+                <button type="button" class="text-gray-500 hover:text-gray-800" onclick="closeFotoModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 bg-gray-50">
+                <img id="viewFotoModalImg" src="" alt="Foto Profil" class="w-full max-h-[75vh] object-contain rounded-lg bg-white">
             </div>
         </div>
     </div>
@@ -461,6 +480,26 @@ function showNotification(message, type = 'success') {
             notification.remove();
         }, 500);
     }, 5000);
+}
+
+function openFotoModal(url) {
+    const modal = document.getElementById('viewFotoModal');
+    const img = document.getElementById('viewFotoModalImg');
+    if (modal && img) {
+        img.src = url;
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeFotoModal() {
+    const modal = document.getElementById('viewFotoModal');
+    const img = document.getElementById('viewFotoModalImg');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    if (img) {
+        img.src = '';
+    }
 }
 
 function previewImage(input) {

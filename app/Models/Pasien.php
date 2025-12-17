@@ -86,30 +86,39 @@ class Pasien extends Model
     // Accessor untuk mendapatkan URL foto profil
     public function getFotoUrlAttribute()
     {
-        if (!$this->has_photo) {
-            return asset('img/pasien/default.jpg');
+        $default = asset('img/pasien/default.jpg');
+
+        $foto = $this->foto;
+        if (blank($foto)) {
+            return $default;
         }
 
-        $foto = (string) $this->foto;
+        $foto = (string) $foto;
 
-        if (Str::startsWith($foto, ['http://', 'https://'])) {
-            return $foto;
-        }
-
-        // Legacy: only filename stored, located in public/img/pasien
         if (!Str::contains($foto, '/')) {
             $legacyRelative = 'img/pasien/' . ltrim($foto, '/');
-            return file_exists(public_path($legacyRelative))
-                ? asset($legacyRelative)
-                : ProfilePhoto::blackDataUrl();
+            return file_exists(public_path($legacyRelative)) ? asset($legacyRelative) : $default;
         }
 
-        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? asset('img/pasien/default.jpg');
+        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? $default;
     }
 
     public function getHasPhotoAttribute(): bool
     {
-        return !empty($this->foto) && !Str::contains(strtolower((string) $this->foto), 'default');
+        if (empty($this->foto)) {
+            return false;
+        }
+
+        $foto = (string) $this->foto;
+        if (Str::contains(strtolower($foto), 'default')) {
+            return false;
+        }
+
+        if (!Str::contains($foto, '/')) {
+            return file_exists(public_path('img/pasien/' . ltrim($foto, '/')));
+        }
+
+        return ProfilePhoto::exists($foto);
     }
 
     public function getInitialsAttribute(): string
