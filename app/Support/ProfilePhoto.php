@@ -8,6 +8,11 @@ use Illuminate\Support\Str;
 
 class ProfilePhoto
 {
+    private static function toPublicUrl(string $relativePath): string
+    {
+        return '/' . ltrim($relativePath, '/');
+    }
+
     public static function relativePath(int $userId): string
     {
         return 'storage/profil/' . $userId . '/fotoprofil.png';
@@ -46,12 +51,12 @@ class ProfilePhoto
         if (Str::startsWith($relativePath, 'storage/')) {
             $publicCandidate = public_path($relativePath);
             if (file_exists($publicCandidate)) {
-                return asset($relativePath);
+                return self::toPublicUrl($relativePath);
             }
 
             $storageRelative = ltrim(Str::after($relativePath, 'storage/'), '/');
             if ($storageRelative !== '' && Storage::disk('public')->exists($storageRelative)) {
-                return asset('storage/' . $storageRelative);
+                return self::toPublicUrl('storage/' . $storageRelative);
             }
 
             return self::blackDataUrl();
@@ -64,18 +69,18 @@ class ProfilePhoto
                 : $storageRelative;
 
             if (Storage::disk('public')->exists($storageRelative)) {
-                return asset('storage/' . ltrim($storageRelative, '/'));
+                return self::toPublicUrl('storage/' . ltrim($storageRelative, '/'));
             }
         }
 
         if (file_exists(self::publicPath($relativePath))) {
-            return asset($relativePath);
+            return self::toPublicUrl($relativePath);
         }
 
         if (Str::startsWith($relativePath, 'img/profil/')) {
             $storageRelative = Str::after($relativePath, 'img/');
             if ($storageRelative !== '' && Storage::disk('public')->exists($storageRelative)) {
-                return asset('storage/' . ltrim($storageRelative, '/'));
+                return self::toPublicUrl('storage/' . ltrim($storageRelative, '/'));
             }
         }
 

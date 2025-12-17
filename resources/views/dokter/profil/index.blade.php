@@ -160,7 +160,7 @@
                 <form action="{{ route('dokter.profil.update-foto') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="w-40 h-40 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
-                        <img id="preview-foto" src="{{ asset($profil['foto'] ?? 'img/dokter/default.jpg') }}" alt="Preview" class="w-full h-full object-cover">
+                        <img id="preview-foto" src="{{ $fotoUrl }}" alt="Preview" class="w-full h-full object-cover">
                     </div>
                     <div class="mt-3">
                         <label class="block text-sm font-medium text-gray-700 mb-2">

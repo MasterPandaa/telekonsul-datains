@@ -427,7 +427,7 @@ class DokterPageController extends Controller
             'tempat_lahir' => $dokter->tempat_lahir ?? '',
             'tanggal_lahir_tampil' => $dokter->tanggal_lahir ? $dokter->tanggal_lahir->format('d F Y') : '',
             'tanggal_lahir' => $dokter->tanggal_lahir ?? '',
-            'foto' => $dokter->foto && file_exists(public_path($dokter->foto)) ? $dokter->foto : 'img/dokter/default.jpg',
+            'foto' => $dokter->foto_url,
             'spesialisasi' => $dokter->spesialisasi ?? '',
             'sub_spesialisasi' => $dokter->sub_spesialisasi ?? '',
             'universitas' => $dokter->universitas ?? '',
