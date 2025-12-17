@@ -108,7 +108,7 @@
                 <!-- Tanggal Lahir -->
                 <div>
                     <label for="tanggal_lahir" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir</label>
-                    <input type="date" name="tanggal_lahir" id="tanggal_lahir" value="{{ old('tanggal_lahir', optional($dokter->tanggal_lahir)->format('Y-m-d')) }}"
+                    <input type="date" name="tanggal_lahir" id="tanggal_lahir" value="{{ old('tanggal_lahir', $dokter->tanggal_lahir ? \Illuminate\Support\Carbon::parse($dokter->tanggal_lahir)->format('Y-m-d') : '') }}"
                            class="w-full px-3 py-2 border @error('tanggal_lahir') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     @error('tanggal_lahir')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

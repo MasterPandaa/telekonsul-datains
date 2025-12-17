@@ -64,6 +64,8 @@ class DosenController extends Controller
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:50|unique:dosens',
             'email' => 'required|email|max:255|unique:dosens|unique:users,email',
+            'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
+            'alamat' => 'nullable|string|max:2000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
@@ -73,6 +75,7 @@ class DosenController extends Controller
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
@@ -88,8 +91,10 @@ class DosenController extends Controller
             ]);
 
             $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
-            if (array_key_exists('no_hp', $dosenData) && $dosenData['no_hp'] === '') {
-                $dosenData['no_hp'] = null;
+            foreach (['no_hp', 'jenis_kelamin', 'alamat'] as $nullableField) {
+                if (array_key_exists($nullableField, $dosenData) && $dosenData[$nullableField] === '') {
+                    $dosenData[$nullableField] = null;
+                }
             }
             $dosenData['user_id'] = $user->id;
 
@@ -132,6 +137,8 @@ class DosenController extends Controller
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:50|unique:dosens,nip,' . $dosen->id,
             'email' => 'required|email|max:255|unique:users,email,' . ($dosen->user_id ?? 'null') . ',id|unique:dosens,email,' . $dosen->id,
+            'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
+            'alamat' => 'nullable|string|max:2000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
@@ -142,6 +149,7 @@ class DosenController extends Controller
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
             'foto.image' => 'Foto harus berupa gambar',
@@ -165,8 +173,10 @@ class DosenController extends Controller
             }
 
             $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
-            if (array_key_exists('no_hp', $dosenData) && $dosenData['no_hp'] === '') {
-                $dosenData['no_hp'] = null;
+            foreach (['no_hp', 'jenis_kelamin', 'alamat'] as $nullableField) {
+                if (array_key_exists($nullableField, $dosenData) && $dosenData[$nullableField] === '') {
+                    $dosenData[$nullableField] = null;
+                }
             }
 
             if ($request->hasFile('foto')) {

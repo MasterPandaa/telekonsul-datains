@@ -18,6 +18,7 @@ class Dosen extends Model
         'foto',
         'nip',
         'email',
+        'jenis_kelamin',
         'alamat',
         'no_hp',
     ];

@@ -114,6 +114,32 @@
                     <th class="px-4 py-3 border-b">
                         <a href="{{ route('admin.dosen.index', [
                             'search' => $searchTerm ?? '', 
+                            'sort_by' => 'jenis_kelamin', 
+                            'sort_order' => $sortBy === 'jenis_kelamin' && $sortOrder === 'asc' ? 'desc' : 'asc'
+                        ]) }}" class="flex items-center group">
+                            <span>Jenis Kelamin</span>
+                            <span class="ml-1">
+                                @if($sortBy === 'jenis_kelamin')
+                                    @if($sortOrder === 'asc')
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    @endif
+                                @else
+                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                    </svg>
+                                @endif
+                            </span>
+                        </a>
+                    </th>
+                    <th class="px-4 py-3 border-b">
+                        <a href="{{ route('admin.dosen.index', [
+                            'search' => $searchTerm ?? '', 
                             'sort_by' => 'email', 
                             'sort_order' => $sortBy === 'email' && $sortOrder === 'asc' ? 'desc' : 'asc'
                         ]) }}" class="flex items-center group">
@@ -165,6 +191,10 @@
                     </td>
                     <td class="px-4 py-3">
                         <div class="text-sm text-gray-900">{{ $dosen->nip }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm text-gray-900">{{ $dosen->jenis_kelamin ?? '-' }}</div>
+                        <div class="text-sm text-gray-500">{{ $dosen->alamat ? \Illuminate\Support\Str::limit($dosen->alamat, 40) : '-' }}</div>
                     </td>
                     <td class="px-4 py-3">
                         <div class="text-sm text-gray-900">{{ $dosen->email }}</div>

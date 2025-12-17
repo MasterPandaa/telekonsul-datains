@@ -50,8 +50,16 @@
                         <p class="text-gray-800">{{ $dosen->email }}</p>
                     </div>
                     <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Jenis Kelamin</h4>
+                        <p class="text-gray-800">{{ $dosen->jenis_kelamin ?? 'Belum diisi' }}</p>
+                    </div>
+                    <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-1">Nomor Telepon</h4>
                         <p class="text-gray-800">{{ $dosen->no_hp ?? 'Belum diisi' }}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Alamat</h4>
+                        <p class="text-gray-800">{{ $dosen->alamat ?? 'Belum diisi' }}</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 mb-1">Terdaftar Pada</h4>

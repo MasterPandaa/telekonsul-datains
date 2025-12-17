@@ -690,7 +690,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add all messages
                 messages.forEach(message => {
-                    const isPerspectiveOwner = message.user_id === currentUserId;
+                    const isPerspectiveOwner = isDosenView
+                        ? (doctorUserId !== null && message.user_id === doctorUserId)
+                        : (message.user_id === currentUserId);
                     const time = new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
                     const wrapperAlignment = isPerspectiveOwner ? 'justify-end' : 'justify-start';
