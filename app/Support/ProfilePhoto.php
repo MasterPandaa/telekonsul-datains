@@ -14,6 +14,14 @@ class ProfilePhoto
         return 'img/profil/' . $userId . '/fotoprofil.png';
     }
 
+    public static function relativePathWithExtension(int $userId, string $extension): string
+    {
+        $extension = ltrim(strtolower($extension), '.');
+        $extension = $extension !== '' ? $extension : 'png';
+
+        return 'img/profil/' . $userId . '/fotoprofil.' . $extension;
+    }
+
     public static function publicPath(string $relativePath): string
     {
         return public_path(ltrim($relativePath, '/'));
@@ -77,23 +85,30 @@ class ProfilePhoto
 
     public static function storeUploadedAsPng(UploadedFile $file, int $userId): string
     {
-        $relative = self::relativePath($userId);
-        $dir = dirname($relative);
+        $relativePng = self::relativePath($userId);
+        $dir = dirname($relativePng);
         File::ensureDirectoryExists(public_path($dir));
 
-        $target = public_path($relative);
+        $targetPng = public_path($relativePng);
 
-        $image = @imagecreatefromstring(file_get_contents($file->getRealPath()));
-        if ($image !== false) {
-            imagealphablending($image, true);
-            imagesavealpha($image, true);
-            imagepng($image, $target);
-            imagedestroy($image);
+        // Some servers (e.g. certain Railway images) may not have GD enabled.
+        $hasGd = function_exists('imagecreatefromstring') && function_exists('imagepng');
 
-            return $relative;
+        if ($hasGd) {
+            $image = @imagecreatefromstring(file_get_contents($file->getRealPath()));
+            if ($image !== false) {
+                imagealphablending($image, true);
+                imagesavealpha($image, true);
+                imagepng($image, $targetPng);
+                imagedestroy($image);
+
+                return $relativePng;
+            }
         }
 
-        $file->move(public_path($dir), 'fotoprofil.png');
+        $ext = $file->getClientOriginalExtension() ?: $file->extension() ?: 'png';
+        $relative = self::relativePathWithExtension($userId, $ext);
+        $file->move(public_path($dir), basename($relative));
 
         return $relative;
     }
