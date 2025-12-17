@@ -30,7 +30,7 @@ class PasienSeeder extends Seeder
                     'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
                     'tempat_lahir' => $faker->city(),
                     'tanggal_lahir' => $faker->date('Y-m-d', '-20 years'),
-                    'foto' => 'img/pasien/default.jpg',
+                    'foto' => null,
                     'tinggi_badan' => $faker->numberBetween(150, 185),
                     'berat_badan' => $faker->numberBetween(45, 90),
                     'tekanan_darah' => $faker->randomElement(['110/70', '120/80', '130/85']),

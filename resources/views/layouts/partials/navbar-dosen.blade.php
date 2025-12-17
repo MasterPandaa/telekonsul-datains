@@ -95,17 +95,14 @@
                     $displayName = explode(' ', $displayName)[0];
                     
                     // Gunakan foto default untuk dosen
-                    $fotoUrl = asset('img/dokter/default.jpg');
-                    if ($dosen && isset($dosen->foto)) {
-                        $fotoUrl = asset('storage/img/dosen/' . $dosen->foto);
-                    }
+                    $fotoUrl = $dosen ? $dosen->foto_url : asset('img/dokter/default.jpg');
                 @endphp
                 
                 @if($fotoUrl && $fotoUrl != asset('img/dokter/default.jpg'))
                     <div class="w-9 h-9 rounded-full bg-cover bg-center shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200" style="background-image: url('{{ $fotoUrl }}')"></div>
                 @else
                     <div class="w-9 h-9 rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200">
-                        {{ strtoupper(substr($displayName, 0, 1)) }}
+                        {{ $dosen ? $dosen->initials : \App\Support\Initials::from($displayName, 2) }}
                     </div>
                 @endif
                 

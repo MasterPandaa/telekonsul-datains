@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Support\ProfilePhoto;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -35,33 +36,61 @@ class Dokter extends Model
             return asset('img/dokter/default.jpg');
         }
 
-        $foto = $this->foto;
+        $foto = (string) $this->foto;
 
         if (Str::startsWith($foto, ['http://', 'https://'])) {
             return $foto;
         }
 
+        // Prefer new scheme: public/img/profil/{user_id}/fotoprofil.png
+        if (Str::contains($foto, 'img/profil/')) {
+            return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? asset('img/dokter/default.jpg');
+        }
+
         if (Str::startsWith($foto, 'storage/')) {
-            return asset($foto);
+            return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? ProfilePhoto::blackDataUrl();
         }
 
         if (Str::startsWith($foto, 'dokters/')) {
-            return asset('storage/' . ltrim($foto, '/'));
+            return Storage::disk('public')->exists($foto)
+                ? asset('storage/' . ltrim($foto, '/'))
+                : ProfilePhoto::blackDataUrl();
         }
 
         if (Str::startsWith($foto, 'img/')) {
-            return asset($foto);
+            return file_exists(public_path($foto))
+                ? asset($foto)
+                : ProfilePhoto::blackDataUrl();
         }
 
-        // Asumsikan path relatif terhadap disk public
-        return Storage::disk('public')->exists($foto)
-            ? asset('storage/' . ltrim($foto, '/'))
-            : asset($foto);
+        // Asumsikan path relatif terhadap disk public atau public path
+        if (Storage::disk('public')->exists($foto)) {
+            return asset('storage/' . ltrim($foto, '/'));
+        }
+
+        return file_exists(public_path($foto)) ? asset($foto) : ProfilePhoto::blackDataUrl();
     }
 
     public function getHasPhotoAttribute(): bool
     {
-        return !empty($this->foto) && !Str::contains($this->foto, 'default');
+        if (empty($this->foto)) {
+            return false;
+        }
+
+        $foto = (string) $this->foto;
+        if (Str::contains(strtolower($foto), 'default')) {
+            return false;
+        }
+
+        if (Str::startsWith($foto, ['http://', 'https://'])) {
+            return true;
+        }
+
+        if (Str::contains($foto, 'img/profil/')) {
+            return file_exists(public_path(ltrim($foto, '/')));
+        }
+
+        return true;
     }
 
     public function getInitialsAttribute(): string

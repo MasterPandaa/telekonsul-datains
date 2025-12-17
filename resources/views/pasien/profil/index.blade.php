@@ -107,11 +107,7 @@
         </div>
         <div class="p-6 text-center">
             <div class="w-32 h-32 mx-auto profile-avatar rounded-full overflow-hidden mb-4">
-                @if($pasien->foto)
-                    <img src="{{ asset('img/pasien/' . $pasien->foto) }}" alt="Foto Profil" class="w-full h-full object-cover">
-                @else
-                    <img src="{{ asset('img/pasien/default.jpg') }}" alt="Foto Profil" class="w-full h-full object-cover">
-                @endif
+                <img src="{{ $pasien->foto_url }}" alt="Foto Profil" class="w-full h-full object-cover">
             </div>
             <h2 class="text-xl font-bold text-gray-800">{{ $pasien->nama }}</h2>
             <p class="text-sm text-gray-600 mt-1">ID: P{{ str_pad($pasien->id, 5, '0', STR_PAD_LEFT) }}</p>
@@ -252,13 +248,16 @@
             <div class="mt-2 px-7 py-3">
                 <form action="{{ route('pasien.profil.upload-foto') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <div class="w-32 h-32 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
+                        <img id="preview-foto" src="{{ $pasien->foto_url }}" alt="Preview" class="w-full h-full object-cover">
+                    </div>
                     <div class="mb-4">
                         <input type="file" name="foto" id="foto" class="block w-full text-sm text-gray-500
                             file:mr-4 file:py-2 file:px-4
                             file:rounded-md file:border-0
                             file:text-sm file:font-semibold
                             file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100" required>
+                            hover:file:bg-blue-100" required onchange="previewImage(this);">
                         <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG. Maks: 2MB</p>
                     </div>
                     <div class="flex justify-end space-x-3">
@@ -463,6 +462,19 @@ function showNotification(message, type = 'success') {
         }, 500);
     }, 5000);
 }
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('preview-foto');
+            if (preview) {
+                preview.src = e.target.result;
+            }
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
 </script>
 @endpush
-@endsection 
+@endsection

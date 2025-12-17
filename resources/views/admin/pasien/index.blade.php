@@ -148,10 +148,12 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                @if($pasien->foto && file_exists(public_path('img/pasien/' . $pasien->foto)))
-                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ asset('img/pasien/' . $pasien->foto) }}" alt="{{ $pasien->nama }}">
+                                @if($pasien->has_photo)
+                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}">
                                 @else
-                                    <img class="h-10 w-10 rounded-full bg-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode($pasien->nama) }}&background=3b82f6&color=fff" alt="{{ $pasien->nama }}">
+                                    <div class="h-10 w-10 rounded-full bg-gray-900 text-white flex items-center justify-center font-semibold">
+                                        {{ $pasien->initials }}
+                                    </div>
                                 @endif
                             </div>
                             <div class="ml-4">

@@ -31,10 +31,12 @@
         <div class="md:w-1/4 bg-gray-50 p-6 border-r border-gray-200">
             <div class="flex flex-col items-center">
                 <div class="w-32 h-32 rounded-full overflow-hidden bg-gray-100 mb-4">
-                    @if($pasien->foto)
-                        <img src="{{ asset('storage/' . $pasien->foto) }}" alt="{{ $pasien->nama }}" class="w-full h-full object-cover">
+                    @if($pasien->has_photo)
+                        <img src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}" class="w-full h-full object-cover">
                     @else
-                        <img src="{{ asset('img/pasien/default.jpg') }}" alt="{{ $pasien->nama }}" class="w-full h-full object-cover">
+                        <div class="w-full h-full flex items-center justify-center bg-gray-900 text-white font-semibold text-3xl">
+                            {{ $pasien->initials }}
+                        </div>
                     @endif
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 text-center">{{ $pasien->nama }}</h3>
@@ -137,12 +139,12 @@
                     <p class="mb-2">Apakah Anda yakin ingin menghapus data pasien:</p>
                     <div class="flex items-center p-3 bg-red-50 rounded-lg border border-red-200">
                         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-3">
-                            @if($pasien->foto)
-                                <img src="{{ asset('storage/' . $pasien->foto) }}" class="w-12 h-12 rounded-full object-cover">
+                            @if($pasien->has_photo)
+                                <img src="{{ $pasien->foto_url }}" class="w-12 h-12 rounded-full object-cover">
                             @else
-                                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
+                                <div class="w-full h-full flex items-center justify-center bg-gray-900 text-white font-semibold text-3xl">
+                                    {{ $pasien->initials }}
+                                </div>
                             @endif
                         </div>
                         <div>

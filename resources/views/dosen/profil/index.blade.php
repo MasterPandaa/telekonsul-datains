@@ -1,7 +1,7 @@
 @extends('layouts.dosen')
 @section('dosen-content')
 @php
-    $fotoUrl = $dosen->foto ? asset('storage/img/dosen/' . $dosen->foto) : asset('img/dokter/default.jpg');
+    $fotoUrl = $dosen ? $dosen->foto_url : asset('img/dokter/default.jpg');
     $displayName = $dosen->nama ?? Auth::user()->name;
 @endphp
 
@@ -204,4 +204,4 @@
     }
 </script>
 @endpush
-@endsection 
+@endsection 

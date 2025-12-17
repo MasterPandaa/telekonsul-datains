@@ -88,7 +88,7 @@
                     <div class="w-9 h-9 rounded-full bg-cover bg-center shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200" style="background-image: url('{{ $fotoUrl }}')"></div>
                 @else
                     <div class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200">
-                        {{ strtoupper(substr($displayName, 0, 1)) }}
+                        {{ $dokter ? $dokter->initials : \App\Support\Initials::from($displayName, 2) }}
                     </div>
                 @endif
                 

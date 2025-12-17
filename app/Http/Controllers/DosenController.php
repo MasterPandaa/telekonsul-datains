@@ -6,6 +6,7 @@ use App\Models\Dosen;
 use App\Models\Dokter;
 use App\Models\Konsultasi;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -188,17 +189,10 @@ class DosenController extends Controller
         $dosen = Auth::user()->dosen;
         
         if ($request->hasFile('foto')) {
-            // Hapus foto lama jika ada
-            if ($dosen->foto && $dosen->foto != 'default.jpg') {
-                Storage::delete('public/img/dosen/' . $dosen->foto);
-            }
-            
-            // Upload foto baru
             $foto = $request->file('foto');
-            $namaFoto = 'dosen_' . $dosen->id . '_' . time() . '.' . $foto->getClientOriginalExtension();
-            $foto->storeAs('public/img/dosen', $namaFoto);
-            
-            $dosen->foto = $namaFoto;
+            $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) Auth::id());
+
+            $dosen->foto = $relativePath;
             $dosen->save();
         }
 

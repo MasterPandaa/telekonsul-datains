@@ -3,6 +3,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Konsultasi;
+use App\Support\Initials;
+use App\Support\ProfilePhoto;
+use Illuminate\Support\Str;
 
 class Pasien extends Model
 {
@@ -83,9 +86,36 @@ class Pasien extends Model
     // Accessor untuk mendapatkan URL foto profil
     public function getFotoUrlAttribute()
     {
-        if ($this->foto && file_exists(public_path('img/pasien/' . $this->foto))) {
-            return asset('img/pasien/' . $this->foto);
+        if (!$this->has_photo) {
+            return asset('img/pasien/default.jpg');
         }
-        return asset('img/pasien/default.jpg');
+
+        $foto = (string) $this->foto;
+
+        if (Str::startsWith($foto, ['http://', 'https://'])) {
+            return $foto;
+        }
+
+        // Legacy: only filename stored, located in public/img/pasien
+        if (!Str::contains($foto, '/')) {
+            $legacyRelative = 'img/pasien/' . ltrim($foto, '/');
+            return file_exists(public_path($legacyRelative))
+                ? asset($legacyRelative)
+                : ProfilePhoto::blackDataUrl();
+        }
+
+        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? asset('img/pasien/default.jpg');
     }
-} 
+
+    public function getHasPhotoAttribute(): bool
+    {
+        return !empty($this->foto) && !Str::contains(strtolower((string) $this->foto), 'default');
+    }
+
+    public function getInitialsAttribute(): string
+    {
+        $nameSource = $this->nama ?? ($this->user ? $this->user->name : null);
+
+        return Initials::from($nameSource, 2);
+    }
+}

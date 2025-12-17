@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pasien;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -127,21 +128,11 @@ class PasienProfilController extends Controller
         if (!$pasien) {
             return redirect()->back()->with('error', 'Data pasien tidak ditemukan');
         }
-        
-        // Hapus foto lama jika ada (selain foto default)
-        if ($pasien->foto && file_exists(public_path('img/pasien/' . $pasien->foto)) && $pasien->foto != 'default.jpg') {
-            unlink(public_path('img/pasien/' . $pasien->foto));
-        }
-        
-        // Upload foto baru
+
         $foto = $request->file('foto');
-        $namaFoto = 'pasien_' . Str::slug($pasien->nama) . '_' . time() . '.' . $foto->getClientOriginalExtension();
-        
-        // Pindahkan file ke folder public/img/pasien
-        $foto->move(public_path('img/pasien'), $namaFoto);
-        
-        // Simpan nama file foto ke database
-        $pasien->foto = $namaFoto;
+        $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) $user->id);
+
+        $pasien->foto = $relativePath;
         $pasien->save();
         
         return redirect()->route('pasien.profil.index')->with('success', 'Foto profil berhasil diperbarui');

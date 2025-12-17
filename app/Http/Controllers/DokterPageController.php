@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Dokter;
+use App\Support\ProfilePhoto;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -456,20 +457,11 @@ class DokterPageController extends Controller
         
         // Ambil data dokter
         $dokter = Dokter::where('user_id', Auth::id())->firstOrFail();
-        
-        // Hapus foto lama jika ada dan bukan foto default
-        if ($dokter->foto && $dokter->foto != 'img/dokter/default.jpg' && file_exists(public_path($dokter->foto))) {
-            unlink(public_path($dokter->foto));
-        }
-        
-        // Upload foto baru
+
         $fotoFile = $request->file('foto');
-        $fotoName = 'dokter_' . time() . '.' . $fotoFile->getClientOriginalExtension();
-        $fotoPath = 'img/dokter/';
-        $fotoFile->move(public_path($fotoPath), $fotoName);
-        
-        // Update data dokter
-        $dokter->foto = $fotoPath . $fotoName;
+        $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) Auth::id());
+
+        $dokter->foto = $relativePath;
         $dokter->save();
         
         return redirect()->route('dokter.profil.index')

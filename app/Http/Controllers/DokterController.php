@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use App\Models\Dokter;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -212,21 +213,9 @@ class DokterController extends Controller
             }
 
             if ($request->hasFile('foto')) {
-                $photoPath = $request->file('foto')->store('dokters', 'public');
-
-                if ($dokter->foto && !Str::contains($dokter->foto, 'default')) {
-                    $existingPath = Str::startsWith($dokter->foto, 'storage/')
-                        ? Str::after($dokter->foto, 'storage/')
-                        : ltrim($dokter->foto, '/');
-
-                    if ($existingPath && Storage::disk('public')->exists($existingPath)) {
-                        Storage::disk('public')->delete($existingPath);
-                    } elseif (file_exists(public_path($dokter->foto))) {
-                        @unlink(public_path($dokter->foto));
-                    }
-                }
-
-                $dokterData['foto'] = $photoPath;
+                $fotoFile = $request->file('foto');
+                $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) ($dokter->user_id ?? 0));
+                $dokterData['foto'] = $relativePath;
             }
 
             $dokter->update($dokterData);

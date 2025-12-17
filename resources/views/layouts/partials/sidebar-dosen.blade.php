@@ -3,11 +3,7 @@
     $displayName = $dosen && $dosen->nama ? $dosen->nama : Auth::user()->name;
     
     // Foto dosen
-    if ($dosen && isset($dosen->foto)) {
-        $fotoUrl = asset('storage/img/dosen/' . $dosen->foto);
-    } else {
-        $fotoUrl = asset('img/dokter/default.jpg');
-    }
+    $fotoUrl = $dosen ? $dosen->foto_url : asset('img/dokter/default.jpg');
 @endphp
 
 <aside class="w-64 bg-white shadow-lg flex flex-col py-6 px-4 min-h-screen hidden md:flex">

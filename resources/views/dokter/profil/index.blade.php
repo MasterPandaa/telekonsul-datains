@@ -8,9 +8,7 @@
 <!-- We'll handle alerts with SweetAlert instead of the static alert divs -->
 
 @php
-    $fotoUrl = !empty($profil['foto']) && file_exists(public_path($profil['foto']))
-        ? asset($profil['foto'])
-        : asset('img/dokter/default.jpg');
+    $fotoUrl = $dokter ? $dokter->foto_url : asset('img/dokter/default.jpg');
 @endphp
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
