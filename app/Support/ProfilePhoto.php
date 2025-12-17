@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -11,7 +10,7 @@ class ProfilePhoto
 {
     public static function relativePath(int $userId): string
     {
-        return 'img/profil/' . $userId . '/fotoprofil.png';
+        return 'storage/profil/' . $userId . '/fotoprofil.png';
     }
 
     public static function relativePathWithExtension(int $userId, string $extension): string
@@ -19,7 +18,7 @@ class ProfilePhoto
         $extension = ltrim(strtolower($extension), '.');
         $extension = $extension !== '' ? $extension : 'png';
 
-        return 'img/profil/' . $userId . '/fotoprofil.' . $extension;
+        return 'storage/profil/' . $userId . '/fotoprofil.' . $extension;
     }
 
     public static function publicPath(string $relativePath): string
@@ -73,6 +72,13 @@ class ProfilePhoto
             return asset($relativePath);
         }
 
+        if (Str::startsWith($relativePath, 'img/profil/')) {
+            $storageRelative = Str::after($relativePath, 'img/');
+            if ($storageRelative !== '' && Storage::disk('public')->exists($storageRelative)) {
+                return asset('storage/' . ltrim($storageRelative, '/'));
+            }
+        }
+
         return self::blackDataUrl();
     }
 
@@ -85,11 +91,9 @@ class ProfilePhoto
 
     public static function storeUploadedAsPng(UploadedFile $file, int $userId): string
     {
-        $relativePng = self::relativePath($userId);
-        $dir = dirname($relativePng);
-        File::ensureDirectoryExists(public_path($dir));
-
-        $targetPng = public_path($relativePng);
+        $storageDir = 'profil/' . $userId;
+        $storagePng = $storageDir . '/fotoprofil.png';
+        $returnPng = 'storage/' . $storagePng;
 
         // Some servers (e.g. certain Railway images) may not have GD enabled.
         $hasGd = function_exists('imagecreatefromstring') && function_exists('imagepng');
@@ -99,17 +103,26 @@ class ProfilePhoto
             if ($image !== false) {
                 imagealphablending($image, true);
                 imagesavealpha($image, true);
-                imagepng($image, $targetPng);
+
+                ob_start();
+                imagepng($image);
+                $png = ob_get_clean();
                 imagedestroy($image);
 
-                return $relativePng;
+                if ($png !== false) {
+                    Storage::disk('public')->put($storagePng, $png);
+                    return $returnPng;
+                }
             }
         }
 
         $ext = $file->getClientOriginalExtension() ?: $file->extension() ?: 'png';
-        $relative = self::relativePathWithExtension($userId, $ext);
-        $file->move(public_path($dir), basename($relative));
+        $ext = ltrim(strtolower($ext), '.');
+        $ext = $ext !== '' ? $ext : 'png';
 
-        return $relative;
+        $storageRelative = $storageDir . '/fotoprofil.' . $ext;
+        Storage::disk('public')->putFileAs($storageDir, $file, 'fotoprofil.' . $ext);
+
+        return 'storage/' . $storageRelative;
     }
 }

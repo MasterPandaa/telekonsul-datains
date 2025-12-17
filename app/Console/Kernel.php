@@ -34,5 +34,6 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\SyncUserNames::class,
         Commands\CheckUserNames::class,
+        Commands\MigrateLegacyProfilePhotos::class,
     ];
 } 
