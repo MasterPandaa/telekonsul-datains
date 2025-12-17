@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Support\Initials;
 use App\Support\ProfilePhoto;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Dosen extends Model
@@ -49,12 +50,53 @@ class Dosen extends Model
             return $foto;
         }
 
-        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? ProfilePhoto::blackDataUrl();
+        if (Str::contains($foto, 'img/profil/')) {
+            return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? asset('img/dokter/default.jpg');
+        }
+
+        if (Str::startsWith($foto, 'storage/')) {
+            return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? ProfilePhoto::blackDataUrl();
+        }
+
+        if (Str::startsWith($foto, 'dosens/')) {
+            return Storage::disk('public')->exists($foto)
+                ? asset('storage/' . ltrim($foto, '/'))
+                : ProfilePhoto::blackDataUrl();
+        }
+
+        if (Str::startsWith($foto, 'img/')) {
+            return file_exists(public_path($foto))
+                ? asset($foto)
+                : ProfilePhoto::blackDataUrl();
+        }
+
+        if (Storage::disk('public')->exists($foto)) {
+            return asset('storage/' . ltrim($foto, '/'));
+        }
+
+        return file_exists(public_path($foto)) ? asset($foto) : ProfilePhoto::blackDataUrl();
     }
 
     public function getHasPhotoAttribute(): bool
     {
-        return !empty($this->foto) && !Str::contains(strtolower((string) $this->foto), 'default');
+        if (empty($this->foto)) {
+            return false;
+        }
+
+        $foto = (string) $this->foto;
+        if (Str::contains(strtolower($foto), 'default')) {
+            return false;
+        }
+
+        if (Str::startsWith($foto, ['http://', 'https://'])) {
+            return true;
+        }
+
+        if (Str::contains($foto, 'img/profil/')) {
+            return file_exists(public_path(ltrim($foto, '/')));
+        }
+
+        return true;
     }
 
     public function getInitialsAttribute(): string

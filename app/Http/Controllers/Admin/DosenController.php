@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dosen;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class DosenController extends Controller
 {
@@ -62,9 +64,10 @@ class DosenController extends Controller
         $validatedData = $request->validate([
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:50|unique:dosens',
-            'email' => 'required|email|max:255|unique:dosens|unique:users',
-            'alamat' => 'nullable|string|max:255',
-            'no_hp' => 'nullable|string|max:15',
+            'email' => 'required|email|max:255|unique:dosens|unique:users,email',
+            'alamat' => 'nullable|string|max:1000',
+            'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
+            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dosen wajib diisi',
             'nip.required' => 'NIP wajib diisi',
@@ -72,6 +75,9 @@ class DosenController extends Controller
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
+            'password.required' => 'Password wajib diisi',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai',
         ]);
 
         DB::beginTransaction();
@@ -79,11 +85,17 @@ class DosenController extends Controller
             $user = User::create([
                 'name' => $validatedData['nama'],
                 'email' => $validatedData['email'],
-                'password' => Hash::make('dosen123'), // default password
+                'password' => Hash::make($validatedData['password']),
                 'role' => 'dosen',
             ]);
 
-            $dosenData = collect($validatedData)->except(['nama'])->toArray();
+            $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
+            if (array_key_exists('alamat', $dosenData) && $dosenData['alamat'] === '') {
+                $dosenData['alamat'] = null;
+            }
+            if (array_key_exists('no_hp', $dosenData) && $dosenData['no_hp'] === '') {
+                $dosenData['no_hp'] = null;
+            }
             $dosenData['user_id'] = $user->id;
 
             $dosen = Dosen::create($dosenData);
@@ -124,9 +136,11 @@ class DosenController extends Controller
         $validatedData = $request->validate([
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:50|unique:dosens,nip,' . $dosen->id,
-            'email' => 'required|email|max:255|unique:dosens,email,' . $dosen->id,
-            'alamat' => 'nullable|string|max:255',
-            'no_hp' => 'nullable|string|max:15',
+            'email' => 'required|email|max:255|unique:users,email,' . ($dosen->user_id ?? 'null') . ',id|unique:dosens,email,' . $dosen->id,
+            'alamat' => 'nullable|string|max:1000',
+            'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dosen wajib diisi',
             'nip.required' => 'NIP wajib diisi',
@@ -134,6 +148,9 @@ class DosenController extends Controller
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
+            'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'foto.image' => 'Foto harus berupa gambar',
         ]);
 
         $oldData = $dosen->toArray();
@@ -141,13 +158,32 @@ class DosenController extends Controller
         DB::beginTransaction();
         try {
             if ($dosen->user) {
-                $dosen->user->update([
+                $userUpdates = [
                     'name' => $validatedData['nama'],
                     'email' => $validatedData['email'],
-                ]);
+                ];
+
+                if (!empty($validatedData['password'])) {
+                    $userUpdates['password'] = Hash::make($validatedData['password']);
+                }
+
+                $dosen->user->update($userUpdates);
             }
 
-            $dosenData = collect($validatedData)->except(['nama'])->toArray();
+            $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
+            if (array_key_exists('alamat', $dosenData) && $dosenData['alamat'] === '') {
+                $dosenData['alamat'] = null;
+            }
+            if (array_key_exists('no_hp', $dosenData) && $dosenData['no_hp'] === '') {
+                $dosenData['no_hp'] = null;
+            }
+
+            if ($request->hasFile('foto')) {
+                $fotoFile = $request->file('foto');
+                $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) ($dosen->user_id ?? 0));
+                $dosenData['foto'] = $relativePath;
+            }
+
             $dosen->update($dosenData);
 
             DB::commit();

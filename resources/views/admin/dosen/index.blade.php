@@ -149,7 +149,13 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                <img class="h-10 w-10 rounded-full bg-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode($dosen->nama) }}&background=3b82f6&color=fff" alt="{{ $dosen->nama }}">
+                                @if($dosen->has_photo)
+                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ $dosen->foto_url }}" alt="{{ $dosen->nama }}">
+                                @else
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold">
+                                        {{ $dosen->initials }}
+                                    </div>
+                                @endif
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $dosen->nama }}</div>

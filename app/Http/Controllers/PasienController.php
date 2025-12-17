@@ -2,10 +2,12 @@
 namespace App\Http\Controllers;
 use App\Models\Pasien;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class PasienController extends Controller
 {
@@ -53,24 +55,43 @@ class PasienController extends Controller
     }
     
     public function store(Request $request) {
-        $request->validate([
-            'nama' => 'required',
-            'nik' => 'required|unique:pasiens',
-            'email' => 'required|email|unique:pasiens|unique:users',
+        $validatedData = $request->validate([
+            'nama' => 'required|string|max:255',
+            'nik' => 'required|string|max:50|unique:pasiens,nik',
+            'email' => 'required|email|max:255|unique:users,email|unique:pasiens,email',
+            'alamat' => 'nullable|string|max:1000',
+            'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
+            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+        ], [
+            'nama.required' => 'Nama pasien wajib diisi',
+            'nik.required' => 'NIK wajib diisi',
+            'nik.unique' => 'NIK sudah terdaftar',
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah terdaftar',
+            'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
+            'password.required' => 'Password wajib diisi',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai',
         ]);
         
         DB::beginTransaction();
         try {
             // Buat user terlebih dahulu
             $user = User::create([
-                'name' => $request->nama,
-                'email' => $request->email,
-                'password' => Hash::make('pasien123'), // Default password
+                'name' => $validatedData['nama'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
                 'role' => 'pasien'
             ]);
             
             // Buat pasien dengan relasi ke user
-            $pasienData = $request->except('nama');
+            $pasienData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
+            if (array_key_exists('alamat', $pasienData) && $pasienData['alamat'] === '') {
+                $pasienData['alamat'] = null;
+            }
+            if (array_key_exists('no_hp', $pasienData) && $pasienData['no_hp'] === '') {
+                $pasienData['no_hp'] = null;
+            }
             $pasienData['user_id'] = $user->id;
             
             $pasien = Pasien::create($pasienData);
@@ -96,10 +117,24 @@ class PasienController extends Controller
     }
     
     public function update(Request $request, Pasien $pasien) {
-        $request->validate([
-            'nama' => 'required',
-            'nik' => 'required|unique:pasiens,nik,'.$pasien->id,
-            'email' => 'required|email|unique:pasiens,email,'.$pasien->id,
+        $validatedData = $request->validate([
+            'nama' => 'required|string|max:255',
+            'nik' => 'required|string|max:50|unique:pasiens,nik,' . $pasien->id,
+            'email' => 'required|email|max:255|unique:users,email,' . ($pasien->user_id ?? 'null') . ',id|unique:pasiens,email,' . $pasien->id,
+            'alamat' => 'nullable|string|max:1000',
+            'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+        ], [
+            'nama.required' => 'Nama pasien wajib diisi',
+            'nik.required' => 'NIK wajib diisi',
+            'nik.unique' => 'NIK sudah terdaftar',
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah terdaftar',
+            'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'foto.image' => 'Foto harus berupa gambar',
         ]);
         
         $oldData = $pasien->toArray();
@@ -108,14 +143,31 @@ class PasienController extends Controller
         try {
             // Update user name
             if ($pasien->user) {
-                $pasien->user->update([
-                    'name' => $request->nama,
-                    'email' => $request->email
-                ]);
+                $userUpdates = [
+                    'name' => $validatedData['nama'],
+                    'email' => $validatedData['email'],
+                ];
+
+                if (!empty($validatedData['password'])) {
+                    $userUpdates['password'] = Hash::make($validatedData['password']);
+                }
+
+                $pasien->user->update($userUpdates);
             }
             
             // Update pasien data
-            $pasienData = $request->except('nama');
+            $pasienData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
+            foreach (['alamat', 'no_hp', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'tinggi_badan', 'berat_badan', 'tekanan_darah', 'alergi', 'riwayat_penyakit'] as $nullableField) {
+                if (array_key_exists($nullableField, $pasienData) && $pasienData[$nullableField] === '') {
+                    $pasienData[$nullableField] = null;
+                }
+            }
+
+            if ($request->hasFile('foto')) {
+                $fotoFile = $request->file('foto');
+                $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) ($pasien->user_id ?? 0));
+                $pasienData['foto'] = $relativePath;
+            }
             $pasien->update($pasienData);
             
             DB::commit();

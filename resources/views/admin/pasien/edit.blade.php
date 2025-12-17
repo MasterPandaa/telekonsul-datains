@@ -70,6 +70,23 @@
                     @enderror
                     <p class="mt-1 text-xs text-gray-500">Format: 08xxxxxxxxxx</p>
                 </div>
+
+                <!-- Foto Profil -->
+                <div>
+                    <label for="foto" class="block text-sm font-medium text-gray-700 mb-1">Foto Profil</label>
+                    <div class="flex items-center space-x-4">
+                        <div class="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border">
+                            <img src="{{ $pasien->foto_url }}" alt="{{ $pasien->nama }}" class="h-full w-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <input type="file" name="foto" id="foto" accept="image/*" class="w-full text-sm text-gray-700">
+                            <p class="mt-1 text-xs text-gray-500">Format: JPG, JPEG, PNG, WEBP. Maksimal 2MB.</p>
+                            @error('foto')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Password Baru -->
                 <div>
