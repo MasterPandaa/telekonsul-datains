@@ -20,6 +20,8 @@ class DokterSeeder extends Seeder
         $dokterUsers = User::where('role', 'dokter')->get();
 
         foreach ($dokterUsers as $index => $user) {
+            $gender = ($index % 2 == 0) ? 'Laki-laki' : 'Perempuan';
+            
             Dokter::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -28,10 +30,10 @@ class DokterSeeder extends Seeder
                     'email' => $user->email,
                     'alamat' => $faker->address(),
                     'no_hp' => $this->generatePhoneNumber($index + 1),
-                    'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
+                    'jenis_kelamin' => $gender,
                     'tempat_lahir' => $faker->city(),
                     'tanggal_lahir' => $faker->date('Y-m-d', '-25 years'),
-                    'foto' => 'img/dokter/default.jpg',
+                    'foto' => null,
                     'spesialisasi' => $faker->randomElement([
                         'Kedokteran Umum',
                         'Penyakit Dalam',
@@ -63,7 +65,7 @@ class DokterSeeder extends Seeder
 
     private function generateStr(int $sequence): string
     {
-        return sprintf('%04d.%d.%d.%04d.%02d.%05d', rand(1000, 9999), rand(1, 9), rand(1, 9), rand(1000, 9999), rand(10, 99), $sequence * rand(10, 99));
+        return sprintf('%013d', 1000000000000 + ($sequence * 1000000) + rand(0, 999999));
     }
 
     private function generatePhoneNumber(int $sequence): string

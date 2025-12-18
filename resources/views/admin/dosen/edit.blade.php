@@ -84,7 +84,7 @@
                     <label for="foto" class="block text-sm font-medium text-gray-700 mb-1">Foto Profil</label>
                     <div class="flex items-center space-x-4">
                         <div class="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border">
-                            <img src="{{ $dosen->foto_url }}" alt="{{ $dosen->nama }}" class="h-full w-full object-cover">
+                            <img id="foto-preview" src="{{ $dosen->foto_url }}" alt="{{ $dosen->nama }}" class="h-full w-full object-cover">
                         </div>
                         <div class="flex-1">
                             <input type="file" name="foto" id="foto" accept="image/*" class="w-full text-sm text-gray-700">
@@ -187,5 +187,22 @@
         input.addEventListener('input', handler);
         input.addEventListener('blur', handler);
     });
+
+    // Photo preview functionality
+    const fotoInput = document.getElementById('foto');
+    const fotoPreview = document.getElementById('foto-preview');
+    
+    if (fotoInput && fotoPreview) {
+        fotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 </script>
 @endpush
