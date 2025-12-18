@@ -45,7 +45,7 @@ class PasienSeeder extends Seeder
 
     private function generateNik(int $sequence): string
     {
-        return sprintf('31750%02d%07d', now()->format('y'), $sequence * rand(10, 90));
+        return sprintf('31750%02d%07d', now()->format('y'), 1000000 + $sequence);
     }
 
     private function generatePhoneNumber(int $sequence): string
