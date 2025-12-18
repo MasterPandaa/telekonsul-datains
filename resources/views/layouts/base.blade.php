@@ -61,6 +61,57 @@
         @yield('body')
         @yield('content')
     </div>
+
+    <script>
+        window.profilePhotoConfirmAndSubmit = function (input) {
+            const file = input && input.files ? input.files[0] : null;
+            if (!file) {
+                return;
+            }
+
+            if (typeof Swal === 'undefined') {
+                input.form.submit();
+                return;
+            }
+
+            Swal.fire({
+                title: 'Upload foto profil?',
+                text: file.name,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Upload',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    input.form.submit();
+                } else {
+                    input.value = '';
+                }
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof Swal === 'undefined') {
+                return;
+            }
+
+            const toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            });
+
+            @if (session('success'))
+                toast.fire({ icon: 'success', title: @json(session('success')) });
+            @endif
+
+            @if (session('error'))
+                toast.fire({ icon: 'error', title: @json(session('error')) });
+            @endif
+        });
+    </script>
     
     @stack('scripts')
     <!-- Scripts -->

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use App\Models\Pasien;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -129,6 +130,7 @@ class PasienController extends Controller
             'tekanan_darah' => 'nullable|string|max:50',
             'alergi' => 'nullable|string|max:2000',
             'riwayat_penyakit' => 'nullable|string|max:2000',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama pasien wajib diisi',
@@ -159,9 +161,20 @@ class PasienController extends Controller
 
                 $pasien->user->update($userUpdates);
             }
+
+            if ($request->hasFile('foto')) {
+                if (!$pasien->user) {
+                    throw new \Exception('User terkait tidak ditemukan');
+                }
+
+                ProfilePhoto::deleteIfExists($pasien->user->profile_photo_path ?? null);
+                $path = ProfilePhoto::storeForUser($request->file('foto'), (int) $pasien->user->id);
+                $pasien->user->profile_photo_path = $path;
+                $pasien->user->save();
+            }
             
             // Update pasien data
-            $pasienData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
+            $pasienData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
             foreach (['no_hp', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'tinggi_badan', 'berat_badan', 'tekanan_darah', 'alergi', 'riwayat_penyakit'] as $nullableField) {
                 if (array_key_exists($nullableField, $pasienData) && $pasienData[$nullableField] === '') {
                     $pasienData[$nullableField] = null;

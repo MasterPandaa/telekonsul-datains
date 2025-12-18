@@ -115,7 +115,7 @@
             <div class="mt-6 border-t pt-4">
                 <form action="{{ route('profile-photo.update') }}" method="POST" enctype="multipart/form-data" class="w-full">
                     @csrf
-                    <input type="file" name="foto" accept="image/*" class="hidden" id="pasien-profile-photo-input" onchange="this.form.submit()">
+                    <input type="file" name="foto" accept="image/*" class="hidden" id="pasien-profile-photo-input" onchange="profilePhotoConfirmAndSubmit(this)">
                     <button type="button" onclick="document.getElementById('pasien-profile-photo-input').click()" 
                             class="w-full bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <div class="flex items-center justify-center">

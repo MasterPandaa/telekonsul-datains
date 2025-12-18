@@ -2,11 +2,11 @@
 namespace App\Http\Controllers;
 use App\Models\Dokter;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -162,6 +162,7 @@ class DokterController extends Controller
             'spesialisasi' => 'nullable|string|max:100',
             'tempat_praktik' => 'nullable|string|max:255',
             'rumah_sakit' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'password' => ['nullable','confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dokter wajib diisi',
@@ -201,9 +202,20 @@ class DokterController extends Controller
 
                 $dokter->user->update($userUpdates);
             }
+
+            if ($request->hasFile('foto')) {
+                if (!$dokter->user) {
+                    throw new \Exception('User terkait tidak ditemukan');
+                }
+
+                ProfilePhoto::deleteIfExists($dokter->user->profile_photo_path ?? null);
+                $path = ProfilePhoto::storeForUser($request->file('foto'), (int) $dokter->user->id);
+                $dokter->user->profile_photo_path = $path;
+                $dokter->user->save();
+            }
             
             // Update dokter data
-            $dokterData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
+            $dokterData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
             foreach (['tempat_lahir','tanggal_lahir','universitas','tahun_lulus','alamat','spesialisasi','tempat_praktik','rumah_sakit'] as $nullableField) {
                 if (array_key_exists($nullableField, $dokterData) && $dokterData[$nullableField] === '') {
                     $dokterData[$nullableField] = null;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dosen;
 use App\Models\User;
+use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -140,6 +141,7 @@ class DosenController extends Controller
             'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
             'alamat' => 'nullable|string|max:2000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'password' => ['nullable', 'confirmed', 'min:8'],
         ], [
             'nama.required' => 'Nama dosen wajib diisi',
@@ -171,7 +173,18 @@ class DosenController extends Controller
                 $dosen->user->update($userUpdates);
             }
 
-            $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
+            if ($request->hasFile('foto')) {
+                if (!$dosen->user) {
+                    throw new \Exception('User terkait tidak ditemukan');
+                }
+
+                ProfilePhoto::deleteIfExists($dosen->user->profile_photo_path ?? null);
+                $path = ProfilePhoto::storeForUser($request->file('foto'), (int) $dosen->user->id);
+                $dosen->user->profile_photo_path = $path;
+                $dosen->user->save();
+            }
+
+            $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
             foreach (['no_hp', 'jenis_kelamin', 'alamat'] as $nullableField) {
                 if (array_key_exists($nullableField, $dosenData) && $dosenData[$nullableField] === '') {
                     $dosenData[$nullableField] = null;

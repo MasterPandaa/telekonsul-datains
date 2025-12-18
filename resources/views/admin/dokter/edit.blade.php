@@ -24,7 +24,7 @@
 
 <div class="bg-white rounded-lg shadow-md overflow-hidden">
     <div class="p-6">
-        <form action="{{ route('admin.dokter.update', $dokter) }}" method="POST" class="space-y-6">
+        <form action="{{ route('admin.dokter.update', $dokter) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
             
@@ -47,6 +47,14 @@
                         <option value="Perempuan" {{ old('jenis_kelamin', $dokter->jenis_kelamin) === 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
                     </select>
                     @error('jenis_kelamin')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="foto" class="block text-sm font-medium text-gray-700 mb-1">Foto Profil</label>
+                    <input type="file" name="foto" id="foto" accept="image/*" class="w-full px-3 py-2 border @error('foto') border-red-300 @else border-gray-300 @enderror rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    @error('foto')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>

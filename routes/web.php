@@ -31,6 +31,22 @@ Route::get('/', function () {
  * Fallback handler untuk file di storage/public ketika symlink tidak tersedia.
  */
 Route::get('storage/{path}', function (string $path) {
+    if (str_contains($path, '..')) {
+        abort(404);
+    }
+
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return Storage::disk('public')->response($path);
+})->where('path', '.*');
+
+Route::get('public-files/{path}', function (string $path) {
+    if (str_contains($path, '..')) {
+        abort(404);
+    }
+
     if (!Storage::disk('public')->exists($path)) {
         abort(404);
     }

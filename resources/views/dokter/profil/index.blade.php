@@ -32,7 +32,7 @@
             <div class="w-full pt-4 border-t border-gray-100">
                 <form action="{{ route('profile-photo.update') }}" method="POST" enctype="multipart/form-data" class="w-full">
                     @csrf
-                    <input type="file" name="foto" accept="image/*" class="hidden" id="dokter-profile-photo-input" onchange="this.form.submit()">
+                    <input type="file" name="foto" accept="image/*" class="hidden" id="dokter-profile-photo-input" onchange="profilePhotoConfirmAndSubmit(this)">
                     <button type="button" onclick="document.getElementById('dokter-profile-photo-input').click()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition">
                         Ubah Foto Profil
                     </button>

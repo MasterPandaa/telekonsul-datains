@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProfilePhoto
@@ -22,7 +21,7 @@ class ProfilePhoto
             return self::getDefaultUrl();
         }
 
-        return Storage::disk(self::DISK)->url($path);
+        return url('public-files/' . ltrim($path, '/'));
     }
 
     public static function storeForUser(UploadedFile $file, int $userId): string
@@ -39,6 +38,6 @@ class ProfilePhoto
             return;
         }
 
-        Storage::disk(self::DISK)->delete($path);
+        \Illuminate\Support\Facades\Storage::disk(self::DISK)->delete($path);
     }
 }
