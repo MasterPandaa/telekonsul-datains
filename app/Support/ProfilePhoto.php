@@ -80,7 +80,9 @@ class ProfilePhoto
             return null;
         }
 
-        return Storage::disk('public')->exists($relativePath) ? Storage::url($relativePath) : null;
+        // Return URL even if file doesn't exist in local check
+        // This allows Railway volumes or other persistent storage to serve the file
+        return Storage::url($relativePath);
     }
 
     public static function blackDataUrl(): string
