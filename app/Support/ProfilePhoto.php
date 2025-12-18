@@ -3,11 +3,11 @@
 namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class ProfilePhoto
 {
-    private const BASE_DIR = 'profile-photos';
+    private const BASE_DIR = 'profile';
 
     public static function getDefaultUrl(): string
     {
@@ -26,18 +26,19 @@ class ProfilePhoto
             throw new \InvalidArgumentException('User ID must be positive');
         }
 
-        self::delete($userId);
-
         $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $path = self::BASE_DIR . '/' . $userId . '/profile.' . $extension;
+        $userDir = public_path(self::BASE_DIR . '/' . $userId);
         
-        Storage::disk('public')->putFileAs(
-            self::BASE_DIR . '/' . $userId,
-            $file,
-            'profile.' . $extension
-        );
+        if (!File::exists($userDir)) {
+            File::makeDirectory($userDir, 0755, true);
+        } else {
+            self::delete($userId);
+        }
 
-        return $path;
+        $fileName = 'profile.' . $extension;
+        $file->move($userDir, $fileName);
+
+        return self::BASE_DIR . '/' . $userId . '/' . $fileName;
     }
 
     public static function delete(int $userId): void
@@ -46,10 +47,15 @@ class ProfilePhoto
             return;
         }
 
-        $directory = self::BASE_DIR . '/' . $userId;
+        $userDir = public_path(self::BASE_DIR . '/' . $userId);
         
-        if (Storage::disk('public')->exists($directory)) {
-            Storage::disk('public')->deleteDirectory($directory);
+        if (File::exists($userDir)) {
+            $files = File::glob($userDir . '/profile.*');
+            foreach ($files as $file) {
+                if (File::isFile($file)) {
+                    File::delete($file);
+                }
+            }
         }
     }
 
@@ -68,13 +74,10 @@ class ProfilePhoto
         }
 
         $cleanPath = ltrim($photoPath, '/');
-        
-        if (str_starts_with($cleanPath, 'storage/')) {
-            $cleanPath = substr($cleanPath, 8);
-        }
+        $fullPath = public_path($cleanPath);
 
-        if (Storage::disk('public')->exists($cleanPath)) {
-            return Storage::disk('public')->url($cleanPath);
+        if (File::exists($fullPath)) {
+            return asset($cleanPath);
         }
 
         return self::getDefaultUrl();

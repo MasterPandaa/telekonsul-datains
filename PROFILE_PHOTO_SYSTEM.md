@@ -1,13 +1,14 @@
 # Sistem Foto Profil - Dokumentasi
 
 ## Ringkasan
-Sistem foto profil telah dibangun ulang dengan logika yang jauh lebih sederhana dan optimal untuk deployment di Railway.
+Sistem foto profil telah dibangun ulang dengan logika yang **sangat sederhana** - langsung menyimpan ke direktori `public/` tanpa menggunakan Storage facade atau symlink.
 
 ## Struktur Penyimpanan
 
 ### Lokasi File
-- **Path**: `storage/app/public/profile-photos/{user_id}/profile.{ext}`
-- **URL**: Diakses via symlink `storage:link` → `/storage/profile-photos/{user_id}/profile.{ext}`
+- **Path Fisik**: `public/profile/{user_id}/profile.{ext}`
+- **URL**: Langsung diakses via `asset()` → `/profile/{user_id}/profile.{ext}`
+- **Tidak perlu** `php artisan storage:link`
 
 ### Format File
 - Ekstensi yang didukung: jpg, jpeg, png, webp
@@ -20,9 +21,10 @@ Sistem foto profil telah dibangun ulang dengan logika yang jauh lebih sederhana 
 
 #### 1. `ProfilePhoto::store(UploadedFile $file, int $userId): string`
 Upload dan simpan foto profil baru.
-- Menghapus foto lama secara otomatis
+- Membuat direktori `public/profile/{user_id}/` jika belum ada
+- Menghapus foto lama secara otomatis (semua file `profile.*`)
 - Menyimpan foto dengan nama standar `profile.{ext}`
-- Return: path relatif file (`profile-photos/{user_id}/profile.{ext}`)
+- Return: path relatif file (`profile/{user_id}/profile.{ext}`)
 
 **Contoh:**
 ```php
@@ -35,8 +37,8 @@ $user->save();
 Mendapatkan URL foto untuk ditampilkan.
 - Jika path kosong → return default avatar
 - Jika URL eksternal → return as-is
-- Jika path lokal → return URL via Storage
-- Jika file tidak ada → return default avatar
+- Jika path lokal → return URL via `asset()`
+- Jika file tidak ada di `public/` → return default avatar
 
 **Contoh:**
 ```php
@@ -52,7 +54,8 @@ public function getFotoUrlAttribute(): string
 
 #### 3. `ProfilePhoto::delete(int $userId): void`
 Menghapus semua foto profil user.
-- Menghapus seluruh direktori `profile-photos/{user_id}/`
+- Menghapus semua file `profile.*` di `public/profile/{user_id}/`
+- Direktori tetap ada untuk upload berikutnya
 
 #### 4. `ProfilePhoto::getDefaultUrl(): string`
 Mendapatkan URL avatar default (SVG placeholder dengan icon user).
@@ -145,12 +148,14 @@ $model->save();
 
 ## Keuntungan Sistem Baru
 
-1. **Lebih Sederhana**: Hanya 4 metode utama vs 10+ metode sebelumnya
-2. **Konsisten**: Semua role menggunakan logika yang sama
-3. **Railway-Ready**: Kompatibel dengan persistent volume di Railway
-4. **Auto-Cleanup**: Foto lama otomatis terhapus saat upload baru
-5. **Fallback Otomatis**: Selalu menampilkan avatar default jika foto tidak ada
-6. **Type-Safe**: Return type yang jelas untuk semua metode
+1. **Sangat Sederhana**: Hanya 4 metode utama, langsung ke `public/`
+2. **Tidak Perlu Storage Link**: Tidak perlu `php artisan storage:link`
+3. **Konsisten**: Semua role menggunakan logika yang sama
+4. **Railway-Ready**: Kompatibel dengan persistent volume di Railway
+5. **Auto-Cleanup**: Foto lama otomatis terhapus saat upload baru
+6. **Fallback Otomatis**: Selalu menampilkan avatar default jika foto tidak ada
+7. **Type-Safe**: Return type yang jelas untuk semua metode
+8. **Direct Access**: File langsung accessible via URL tanpa symlink
 
 ## Migrasi dari Sistem Lama
 
