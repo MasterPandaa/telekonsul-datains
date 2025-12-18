@@ -69,7 +69,7 @@ class DokterController extends Controller
             'no_str' => ['required','digits:13','unique:dokters,no_str'],
             'email' => ['required','email:rfc,dns','max:255','unique:users,email','unique:dokters,email'],
             'no_hp' => ['required','regex:/^08[0-9]{8,11}$/'],
-            'password' => ['required','confirmed', Password::min(8)->mixedCase()->numbers()],
+            'password' => ['required','confirmed', 'min:8'],
         ], [
             'nama.required' => 'Nama dokter wajib diisi',
             'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
@@ -87,6 +87,7 @@ class DokterController extends Controller
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'password.min' => 'Password minimal 8 karakter',
         ]);
         
         // Normalisasi data penting

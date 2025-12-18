@@ -157,9 +157,6 @@
         password: value => {
             if (!value) return '';
             if (value.length < 8) return 'Password minimal 8 karakter';
-            if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) {
-                return 'Gunakan kombinasi huruf besar, huruf kecil, dan angka';
-            }
             return '';
         },
         password_confirmation: (value, allValues) => {

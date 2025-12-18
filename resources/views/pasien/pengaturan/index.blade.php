@@ -69,7 +69,7 @@
                     @error('password')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @else
-                    <p class="mt-2 text-xs text-gray-500">Password harus terdiri dari minimal 8 karakter dan gabungan huruf dan angka.</p>
+                    <p class="mt-2 text-xs text-gray-500">Password minimal 8 karakter.</p>
                     @enderror
                 </div>
                 

@@ -30,14 +30,12 @@ class DokterPasswordController extends Controller
                     $fail('Password saat ini tidak sesuai.');
                 }
             }],
-            'password' => ['required', 'confirmed', Password::min(8)
-                ->letters()
-                ->numbers()
-            ],
+            'password' => ['required', 'confirmed', 'min:8'],
         ], [
             'current_password.required' => 'Password saat ini wajib diisi.',
             'password.required' => 'Password baru wajib diisi.',
             'password.confirmed' => 'Konfirmasi password baru tidak sesuai.',
+            'password.min' => 'Password minimal 8 karakter.',
         ]);
 
         $user = Auth::user();

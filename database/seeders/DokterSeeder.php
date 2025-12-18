@@ -27,7 +27,7 @@ class DokterSeeder extends Seeder
                     'no_str' => $this->generateStr($index + 1),
                     'email' => $user->email,
                     'alamat' => $faker->address(),
-                    'no_hp' => $faker->phoneNumber(),
+                    'no_hp' => $this->generatePhoneNumber($index + 1),
                     'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
                     'tempat_lahir' => $faker->city(),
                     'tanggal_lahir' => $faker->date('Y-m-d', '-25 years'),
@@ -64,6 +64,11 @@ class DokterSeeder extends Seeder
     private function generateStr(int $sequence): string
     {
         return sprintf('%04d.%d.%d.%04d.%02d.%05d', rand(1000, 9999), rand(1, 9), rand(1, 9), rand(1000, 9999), rand(10, 99), $sequence * rand(10, 99));
+    }
+
+    private function generatePhoneNumber(int $sequence): string
+    {
+        return sprintf('08%d%08d', rand(1, 9), $sequence * rand(10000, 99999));
     }
 }
  

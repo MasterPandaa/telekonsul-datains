@@ -26,7 +26,7 @@ class PasienSeeder extends Seeder
                     'nik' => $this->generateNik($index + 1),
                     'email' => $user->email,
                     'alamat' => $faker->address(),
-                    'no_hp' => $faker->phoneNumber(),
+                    'no_hp' => $this->generatePhoneNumber($index + 1),
                     'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
                     'tempat_lahir' => $faker->city(),
                     'tanggal_lahir' => $faker->date('Y-m-d', '-20 years'),
@@ -44,5 +44,10 @@ class PasienSeeder extends Seeder
     private function generateNik(int $sequence): string
     {
         return sprintf('31750%02d%07d', now()->format('y'), $sequence * rand(10, 90));
+    }
+
+    private function generatePhoneNumber(int $sequence): string
+    {
+        return sprintf('08%d%08d', rand(1, 9), $sequence * rand(10000, 99999));
     }
 }

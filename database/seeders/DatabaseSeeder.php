@@ -28,10 +28,33 @@ class DatabaseSeeder extends Seeder
     private function createMandatoryUsers(): void
     {
         $users = [
-            ['Admin Wajib', 'admin@example.com', 'admin', 'admin'],
-            ['Dokter Wajib', 'dokter@example.com', 'dokter', 'dokter'],
-            ['Dosen Wajib', 'dosen@example.com', 'dosen', 'dosen'],
-            ['Pasien Wajib', 'pasien@example.com', 'pasien', 'pasien'],
+            ['Admin PSTI', 'adminpsti@gmail.com', 'adminpsti', 'admin'],
+            ['Admin Datains', 'admindatains@gmail.com', 'admindatains', 'admin'],
+            ['Admin Adit', 'adminadit@gmail.com', 'adminadit', 'admin'],
+            ['Admin Yesa', 'adminyesa@gmail.com', 'adminyesa', 'admin'],
+            ['Admin Susi', 'adminsusi@gmail.com', 'adminsusi', 'admin'],
+            ['Admin Lutpi', 'adminlutpi@gmail.com', 'adminlutpi', 'admin'],
+            
+            ['Dokter PSTI', 'dokterpsti@gmail.com', 'dokterpsti', 'dokter'],
+            ['Dokter Datains', 'dokterdatains@gmail.com', 'dokterdatains', 'dokter'],
+            ['Dokter Adit', 'dokteradit@gmail.com', 'dokteradit', 'dokter'],
+            ['Dokter Yesa', 'dokteryesa@gmail.com', 'dokteryesa', 'dokter'],
+            ['Dokter Susi', 'doktersusi@gmail.com', 'doktersusi', 'dokter'],
+            ['Dokter Lutpi', 'dokterlutpi@gmail.com', 'dokterlutpi', 'dokter'],
+            
+            ['Dosen PSTI', 'dosenpsti@gmail.com', 'dosenpsti', 'dosen'],
+            ['Dosen Datains', 'dosendatains@gmail.com', 'dosendatains', 'dosen'],
+            ['Dosen Adit', 'dosenadit@gmail.com', 'dosenadit', 'dosen'],
+            ['Dosen Yesa', 'dosenyesa@gmail.com', 'dosenyesa', 'dosen'],
+            ['Dosen Susi', 'dosensusi@gmail.com', 'dosensusi', 'dosen'],
+            ['Dosen Lutpi', 'dosenlutpi@gmail.com', 'dosenlutpi', 'dosen'],
+            
+            ['Pasien PSTI', 'pasienpsti@gmail.com', 'pasienpsti', 'pasien'],
+            ['Pasien Datains', 'pasiendatains@gmail.com', 'pasiendatains', 'pasien'],
+            ['Pasien Adit', 'pasienadit@gmail.com', 'pasienadit', 'pasien'],
+            ['Pasien Yesa', 'pasienyesa@gmail.com', 'pasienyesa', 'pasien'],
+            ['Pasien Susi', 'pasiensusi@gmail.com', 'pasiensusi', 'pasien'],
+            ['Pasien Lutpi', 'pasienlutpi@gmail.com', 'pasienlutpi', 'pasien'],
         ];
 
         foreach ($users as [$name, $email, $password, $role]) {
@@ -48,29 +71,7 @@ class DatabaseSeeder extends Seeder
 
     private function createAdditionalUsers(): void
     {
-        $counts = 5;
-        $roles = [
-            'admin' => 'Admin',
-            'dokter' => 'Dokter',
-            'dosen' => 'Dosen',
-            'pasien' => 'Pasien',
-        ];
-
-        foreach ($roles as $role => $label) {
-            for ($i = 2; $i <= $counts + 1; $i++) {
-                $email = strtolower($role) . $i . '@example.com';
-                $password = strtolower($role) . $i;
-
-                User::updateOrCreate(
-                    ['email' => $email],
-                    [
-                        'name' => $label . ' ' . $i,
-                        'password' => Hash::make($password),
-                        'role' => $role,
-                    ]
-                );
-            }
-        }
+        // No additional users needed - all users are created in createMandatoryUsers
     }
 }
 

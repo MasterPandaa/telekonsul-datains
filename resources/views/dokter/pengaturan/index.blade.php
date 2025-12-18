@@ -41,7 +41,7 @@
                             <div class="mt-1 relative">
                                 <input type="password" id="password" name="password" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm @error('password') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror" placeholder="Minimal 8 karakter">
                             </div>
-                            <p class="mt-2 text-xs text-gray-500">Gunakan kombinasi huruf besar, kecil, angka, dan simbol.</p>
+                            <p class="mt-2 text-xs text-gray-500">Password minimal 8 karakter.</p>
                             @error('password')
                                 <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                             @enderror

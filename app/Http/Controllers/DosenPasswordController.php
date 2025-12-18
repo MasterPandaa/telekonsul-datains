@@ -26,7 +26,9 @@ class DosenPasswordController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'current_password' => 'required',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
+        ], [
+            'password.min' => 'Password minimal 8 karakter.',
         ]);
 
         if ($validator->fails()) {

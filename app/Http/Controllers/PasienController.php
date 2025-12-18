@@ -60,7 +60,7 @@ class PasienController extends Controller
             'email' => 'required|email|max:255|unique:users,email|unique:pasiens,email',
             'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
-            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'password' => ['required', 'confirmed', 'min:8'],
         ], [
             'nama.required' => 'Nama pasien wajib diisi',
             'nik.required' => 'NIK wajib diisi',
@@ -72,6 +72,7 @@ class PasienController extends Controller
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'password.min' => 'Password minimal 8 karakter',
         ]);
         
         DB::beginTransaction();

@@ -26,7 +26,7 @@ class DosenSeeder extends Seeder
                     'nip' => $this->generateNip($index + 1),
                     'email' => $user->email,
                     'alamat' => $faker->address(),
-                    'no_hp' => $faker->phoneNumber(),
+                    'no_hp' => $this->generatePhoneNumber($index + 1),
                 ]
             );
         }
@@ -34,6 +34,11 @@ class DosenSeeder extends Seeder
 
     private function generateNip(int $sequence): string
     {
-        return sprintf('%010d', $sequence * rand(10000, 99999));
+        return sprintf('%013d', $sequence * rand(100000000, 999999999));
+    }
+
+    private function generatePhoneNumber(int $sequence): string
+    {
+        return sprintf('08%d%08d', rand(1, 9), $sequence * rand(10000, 99999));
     }
 }

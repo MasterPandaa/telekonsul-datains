@@ -67,7 +67,7 @@ class DosenController extends Controller
             'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
             'alamat' => 'nullable|string|max:2000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
-            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'password' => ['required', 'confirmed', 'min:8'],
         ], [
             'nama.required' => 'Nama dosen wajib diisi',
             'nip.required' => 'NIP wajib diisi',
@@ -79,6 +79,7 @@ class DosenController extends Controller
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'password.min' => 'Password minimal 8 karakter',
         ]);
 
         DB::beginTransaction();
@@ -141,7 +142,7 @@ class DosenController extends Controller
             'alamat' => 'nullable|string|max:2000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'password' => ['nullable', 'confirmed', 'min:8'],
         ], [
             'nama.required' => 'Nama dosen wajib diisi',
             'nip.required' => 'NIP wajib diisi',
@@ -152,6 +153,7 @@ class DosenController extends Controller
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
+            'password.min' => 'Password minimal 8 karakter',
             'foto.image' => 'Foto harus berupa gambar',
         ]);
 

@@ -21,7 +21,7 @@
             <ul class="list-disc list-inside space-y-1">
                 <li>NIK wajib diisi (maksimal 50 karakter).</li>
                 <li>Nomor HP diawali 08 dan berisi 10-13 digit angka.</li>
-                <li>Password minimal 8 karakter serta kombinasi huruf besar, huruf kecil, dan angka.</li>
+                <li>Password minimal 8 karakter.</li>
             </ul>
         </div>
 
@@ -177,9 +177,6 @@
         password: value => {
             if (!value) return 'Password wajib diisi';
             if (value.length < 8) return 'Password minimal 8 karakter';
-            if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) {
-                return 'Gunakan kombinasi huruf besar, huruf kecil, dan angka';
-            }
             return '';
         },
         password_confirmation: (value, allValues) => {
