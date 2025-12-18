@@ -161,12 +161,12 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         @php
-                            $chatFotoUrl = \App\Support\ProfilePhoto::transparentDataUrl();
+                            $chatFotoUrl = \App\Support\ProfilePhoto::getDefaultUrl();
                             if (!isset($isDosenView)) {
                                 if (Auth::user()->role === 'dokter') {
-                                    $chatFotoUrl = $konsultasi->pasien ? $konsultasi->pasien->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                                    $chatFotoUrl = $konsultasi->pasien ? $konsultasi->pasien->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
                                 } else {
-                                    $chatFotoUrl = $konsultasi->dokter && $konsultasi->dokter->dokter ? $konsultasi->dokter->dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                                    $chatFotoUrl = $konsultasi->dokter && $konsultasi->dokter->dokter ? $konsultasi->dokter->dokter->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
                                 }
                             }
                         @endphp

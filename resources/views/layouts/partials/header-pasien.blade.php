@@ -2,7 +2,7 @@
     $pasien = Auth::user()->pasien;
     $displayName = $pasien && $pasien->nama ? $pasien->nama : Auth::user()->name;
 
-    $fotoUrl = $pasien ? $pasien->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+    $fotoUrl = $pasien ? $pasien->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
 @endphp
 
 <header class="bg-white shadow">

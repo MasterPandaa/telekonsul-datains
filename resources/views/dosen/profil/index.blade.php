@@ -1,7 +1,7 @@
 @extends('layouts.dosen')
 @section('dosen-content')
 @php
-    $fotoUrl = $dosen ? $dosen->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+    $fotoUrl = $dosen ? $dosen->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
     $displayName = $dosen->nama ?? Auth::user()->name;
 @endphp
 

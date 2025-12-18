@@ -83,36 +83,8 @@ class Pasien extends Model
     }
     
     // Accessor untuk mendapatkan URL foto profil
-    public function getFotoUrlAttribute()
+    public function getFotoUrlAttribute(): string
     {
-        $default = ProfilePhoto::transparentDataUrl();
-
-        $foto = $this->foto;
-        if (blank($foto)) {
-            return $default;
-        }
-
-        $foto = (string) $foto;
-
-        if (Str::startsWith($foto, ['http://', 'https://'])) {
-            return $foto;
-        }
-
-        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? $default;
-    }
-
-    public function getHasPhotoAttribute(): bool
-    {
-        if (empty($this->foto)) {
-            return false;
-        }
-
-        $foto = (string) $this->foto;
-
-        if (Str::startsWith($foto, ['http://', 'https://'])) {
-            return true;
-        }
-
-        return ProfilePhoto::exists($foto);
+        return ProfilePhoto::getUrl($this->foto);
     }
 }

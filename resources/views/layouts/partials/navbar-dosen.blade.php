@@ -94,7 +94,7 @@
                     // Ambil hanya kata pertama jika nama terlalu panjang
                     $displayName = explode(' ', $displayName)[0];
                     
-                    $fotoUrl = $dosen ? $dosen->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                    $fotoUrl = $dosen ? $dosen->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
                 @endphp
                 
                 <div class="w-9 h-9 rounded-full overflow-hidden shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200 bg-gray-100">

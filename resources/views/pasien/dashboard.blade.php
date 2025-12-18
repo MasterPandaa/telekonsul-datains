@@ -277,7 +277,7 @@
                         @php
                             $dokterUser = $item->dokter;
                             $dokterNama = $dokterUser->name ?? 'Dokter';
-                            $dokterFotoUrl = $dokterUser && $dokterUser->dokter ? $dokterUser->dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                            $dokterFotoUrl = $dokterUser && $dokterUser->dokter ? $dokterUser->dokter->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
                         @endphp
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">

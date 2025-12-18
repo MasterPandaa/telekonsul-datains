@@ -6,7 +6,7 @@
     if ($dokter) {
         $fotoUrl = $dokter->foto_url;
     } else {
-        $fotoUrl = \App\Support\ProfilePhoto::transparentDataUrl();
+        $fotoUrl = \App\Support\ProfilePhoto::getDefaultUrl();
     }
 @endphp
 

@@ -191,8 +191,7 @@ class DosenController extends Controller
         try {
             if ($request->hasFile('foto')) {
                 $foto = $request->file('foto');
-                ProfilePhoto::deleteByValue($dosen->foto, (int) Auth::id());
-                $relativePath = ProfilePhoto::storeUploadedAsPng($foto, (int) Auth::id());
+                $relativePath = ProfilePhoto::store($foto, (int) Auth::id());
 
                 $dosen->foto = $relativePath;
                 $dosen->save();

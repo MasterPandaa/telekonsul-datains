@@ -215,8 +215,7 @@ class DokterController extends Controller
 
             if ($request->hasFile('foto')) {
                 $fotoFile = $request->file('foto');
-                ProfilePhoto::deleteByValue($dokter->foto, (int) ($dokter->user_id ?? 0));
-                $relativePath = ProfilePhoto::storeUploadedAsPng($fotoFile, (int) ($dokter->user_id ?? 0));
+                $relativePath = ProfilePhoto::store($fotoFile, (int) ($dokter->user_id ?? 0));
                 $dokterData['foto'] = $relativePath;
             }
 

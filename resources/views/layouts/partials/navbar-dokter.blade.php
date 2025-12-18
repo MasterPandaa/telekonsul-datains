@@ -85,7 +85,7 @@
                 @endphp
                 
                 <div class="w-9 h-9 rounded-full overflow-hidden shadow-sm border-2 border-white group-hover:border-blue-200 transition-all duration-200 bg-gray-100">
-                    <img src="{{ $fotoUrl ?? \App\Support\ProfilePhoto::transparentDataUrl() }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
+                    <img src="{{ $fotoUrl ?? \App\Support\ProfilePhoto::getDefaultUrl() }}" alt="{{ $displayName }}" class="w-full h-full object-cover">
                 </div>
                 
                 <span class="ml-2 hidden md:block font-medium text-gray-700 group-hover:text-blue-600 transition-colors duration-200 truncate max-w-[100px]">{{ $displayName }}</span>

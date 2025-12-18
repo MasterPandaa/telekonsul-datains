@@ -39,34 +39,7 @@ class Dosen extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        $default = ProfilePhoto::transparentDataUrl();
-
-        if (empty($this->foto)) {
-            return $default;
-        }
-
-        $foto = (string) $this->foto;
-
-        if (Str::startsWith($foto, ['http://', 'https://'])) {
-            return $foto;
-        }
-
-        return ProfilePhoto::resolveUrl($foto, (int) ($this->user_id ?? 0)) ?? $default;
-    }
-
-    public function getHasPhotoAttribute(): bool
-    {
-        if (empty($this->foto)) {
-            return false;
-        }
-
-        $foto = (string) $this->foto;
-
-        if (Str::startsWith($foto, ['http://', 'https://'])) {
-            return true;
-        }
-
-        return ProfilePhoto::exists($foto);
+        return ProfilePhoto::getUrl($this->foto);
     }
 
     /**

@@ -79,7 +79,7 @@
                                 <div class="p-4 flex items-start">
                                     <div class="flex-shrink-0 mr-3">
                                         @php
-                                            $dokterFoto = $m->dokter ? $m->dokter->foto_url : \App\Support\ProfilePhoto::transparentDataUrl();
+                                            $dokterFoto = $m->dokter ? $m->dokter->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
                                         @endphp
                                         <img class="h-16 w-16 rounded-full object-cover border-3 border-gray-100 bg-gray-100" src="{{ $dokterFoto }}" alt="{{ $m->name }}">
                                     </div>
@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentDokterId = id;
             const modalPhoto = document.getElementById('modal-dokter-photo');
 
-            modalPhoto.src = photo || '{{ \App\Support\ProfilePhoto::transparentDataUrl() }}';
+            modalPhoto.src = photo || '{{ \App\Support\ProfilePhoto::getDefaultUrl() }}';
             document.getElementById('modal-dokter-name').textContent = name;
             document.getElementById('modal-dokter-nim').textContent = 'SIP/' + nim;
             document.getElementById('modal-dokter-fakultas').textContent = spesialisasi || 'Dokter Umum';
