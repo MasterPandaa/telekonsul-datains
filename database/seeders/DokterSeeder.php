@@ -33,7 +33,6 @@ class DokterSeeder extends Seeder
                     'jenis_kelamin' => $gender,
                     'tempat_lahir' => $faker->city(),
                     'tanggal_lahir' => $faker->date('Y-m-d', '-25 years'),
-                    'foto' => '',
                     'spesialisasi' => $faker->randomElement([
                         'Kedokteran Umum',
                         'Penyakit Dalam',
