@@ -113,15 +113,19 @@
             <p class="text-sm text-gray-600 mt-1">ID: P{{ str_pad($pasien->id, 5, '0', STR_PAD_LEFT) }}</p>
             
             <div class="mt-6 border-t pt-4">
-                <button onclick="document.getElementById('uploadFotoModal').classList.remove('hidden')" 
-                        class="w-full bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <div class="flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        Ubah Foto Profil
-                    </div>
-                </button>
+                <form action="{{ route('profile-photo.update') }}" method="POST" enctype="multipart/form-data" class="w-full">
+                    @csrf
+                    <input type="file" name="foto" accept="image/*" class="hidden" id="pasien-profile-photo-input" onchange="this.form.submit()">
+                    <button type="button" onclick="document.getElementById('pasien-profile-photo-input').click()" 
+                            class="w-full bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <div class="flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Ubah Foto Profil
+                        </div>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -258,40 +262,6 @@
     </div>
 </div>
 
-<!-- Modal Upload Foto -->
-<div id="uploadFotoModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="absolute inset-0 bg-gray-800 opacity-50" onclick="document.getElementById('uploadFotoModal').classList.add('hidden')"></div>
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Upload Foto Profil</h3>
-            <div class="mt-2 px-7 py-3">
-                <form action="{{ route('pasien.profil.upload-foto') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="w-32 h-32 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
-                        <img id="preview-foto" src="{{ $pasien->foto_url }}" alt="Preview" class="w-full h-full object-cover">
-                    </div>
-                    <div class="mb-4">
-                        <input type="file" name="foto" id="foto" class="block w-full text-sm text-gray-500
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-md file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100" required onchange="previewImage(this);">
-                        <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG. Maks: 2MB</p>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none" onclick="document.getElementById('uploadFotoModal').classList.add('hidden')">
-                            Batal
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none">
-                            Upload
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal Edit Informasi Dasar -->
 <div id="editInformasiModal" class="fixed inset-0 z-50 hidden overflow-y-auto">

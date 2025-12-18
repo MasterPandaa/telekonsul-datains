@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PasienController;
@@ -22,6 +21,7 @@ use App\Http\Controllers\Admin\DosenController as AdminDosenController;
 use App\Http\Controllers\DokterPasswordController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\DosenPasswordController;
+use App\Http\Controllers\ProfilePhotoController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -38,52 +38,6 @@ Route::get('storage/{path}', function (string $path) {
     return Storage::disk('public')->response($path);
 })->where('path', '.*');
 
-Route::get('profile/{path}', function (string $path) {
-    $cleanPath = ltrim($path, '/');
-    if (str_contains($cleanPath, '..')) {
-        abort(400);
-    }
-
-    $publicFile = public_path('profile/' . $cleanPath);
-    if (File::exists($publicFile)) {
-        return response()->file($publicFile);
-    }
-
-    $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
-    if (!empty($persistPath)) {
-        $persistPath = rtrim($persistPath, "\\/ ");
-        $persistFile = $persistPath . DIRECTORY_SEPARATOR . $cleanPath;
-        if (File::exists($persistFile)) {
-            return response()->file($persistFile);
-        }
-    }
-
-    abort(404);
-})->where('path', '.*');
-
-Route::get('profileuser/{path}', function (string $path) {
-    $cleanPath = ltrim($path, '/');
-    if (str_contains($cleanPath, '..')) {
-        abort(400);
-    }
-
-    $publicFile = public_path('profileuser/' . $cleanPath);
-    if (File::exists($publicFile)) {
-        return response()->file($publicFile);
-    }
-
-    $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
-    if (!empty($persistPath)) {
-        $persistPath = rtrim($persistPath, "\\/ ");
-        $persistFile = $persistPath . DIRECTORY_SEPARATOR . $cleanPath;
-        if (File::exists($persistFile)) {
-            return response()->file($persistFile);
-        }
-    }
-
-    abort(404);
-})->where('path', '.*');
-
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -97,6 +51,9 @@ Route::middleware('auth')->prefix('api')->group(function() {
 Route::get('/update-konsultasi-status', [AdminController::class, 'updateKonsultasiStatus'])->name('update-konsultasi-status');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/profile-photo', [ProfilePhotoController::class, 'update'])->name('profile-photo.update');
+    Route::delete('/profile-photo', [ProfilePhotoController::class, 'destroy'])->name('profile-photo.destroy');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Admin menu
     Route::prefix('admin')->name('admin.')->middleware('can:isAdmin')->group(function () {
@@ -133,7 +90,6 @@ Route::middleware(['auth', 'can:isDokter'])->prefix('dokter')->name('dokter.')->
     
     // Profil Dokter
     Route::get('/profil', [DokterPageController::class, 'profilIndex'])->name('profil.index');
-    Route::post('/profil/update-foto', [DokterPageController::class, 'updateFoto'])->name('profil.update-foto');
     Route::post('/profil/update-informasi', [DokterPageController::class, 'updateInformasi'])->name('profil.update-informasi');
     Route::post('/profil/update-akademik', [DokterPageController::class, 'updateAkademik'])->name('profil.update-akademik');
     Route::post('/profil/update-keahlian', [DokterPageController::class, 'updateKeahlian'])->name('profil.update-keahlian');
@@ -178,7 +134,6 @@ Route::middleware(['auth', 'can:isDosen'])->prefix('dosen')->name('dosen.')->gro
     // Profil Dosen
     Route::prefix('profil')->name('profil.')->group(function() {
         Route::get('/', [DosenController::class, 'profilIndex'])->name('index');
-        Route::post('/update-foto', [DosenController::class, 'updateFoto'])->name('update-foto');
         Route::post('/update-informasi', [DosenController::class, 'updateInformasi'])->name('update-informasi');
     });
     
@@ -231,7 +186,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pasien/profil', [PasienProfilController::class, 'index'])->name('pasien.profil.index');
     Route::post('/pasien/profil/update-informasi', [PasienProfilController::class, 'updateInformasiDasar'])->name('pasien.profil.update-informasi');
     Route::post('/pasien/profil/update-medis', [PasienProfilController::class, 'updateInformasiMedis'])->name('pasien.profil.update-medis');
-    Route::post('/pasien/profil/upload-foto', [PasienProfilController::class, 'uploadFoto'])->name('pasien.profil.upload-foto');
 });
 
 // Chat Room Routes

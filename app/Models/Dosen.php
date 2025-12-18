@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Support\ProfilePhoto;
-use Illuminate\Support\Str;
 
 class Dosen extends Model
 {
@@ -39,7 +37,7 @@ class Dosen extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        return ProfilePhoto::getUrl($this->foto);
+        return $this->user ? $this->user->profile_photo_url : asset('img/BW_ASSRI.png');
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\ProfilePhoto;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'profile_photo_path',
     ];
 
     /**
@@ -32,6 +34,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'profile_photo_path',
     ];
 
     /**
@@ -85,5 +88,10 @@ class User extends Authenticatable
     public function unreadNotificationsCount()
     {
         return $this->notifications()->where('is_read', false)->count();
+    }
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        return ProfilePhoto::url($this->profile_photo_path);
     }
 }

@@ -3,167 +3,42 @@
 namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProfilePhoto
 {
-    private const BASE_DIR = 'profileuser';
-
-    private static function getPersistPath(): ?string
-    {
-        $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
-        if (empty($persistPath)) {
-            return null;
-        }
-
-        return rtrim($persistPath, "\\/ ");
-    }
-
-    private static function getRelativePathInsideBaseDir(string $cleanPath): string
-    {
-        if (str_starts_with($cleanPath, self::BASE_DIR . '/')) {
-            return substr($cleanPath, strlen(self::BASE_DIR) + 1);
-        }
-
-        return $cleanPath;
-    }
-
-    private static function ensurePersistentLink(): void
-    {
-        $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
-        if (empty($persistPath)) {
-            return;
-        }
-
-        if (!File::exists($persistPath)) {
-            File::makeDirectory($persistPath, 0755, true);
-        }
-
-        $publicProfileDir = public_path(self::BASE_DIR);
-        $publicExists = File::exists($publicProfileDir);
-        $publicIsLink = $publicExists && is_link($publicProfileDir);
-
-        if ($publicIsLink) {
-            $currentTarget = readlink($publicProfileDir);
-            if ($currentTarget !== $persistPath) {
-                File::delete($publicProfileDir);
-                File::link($persistPath, $publicProfileDir);
-            }
-            return;
-        }
-
-        if ($publicExists && File::isDirectory($publicProfileDir)) {
-            File::copyDirectory($publicProfileDir, $persistPath);
-            File::deleteDirectory($publicProfileDir);
-        } elseif ($publicExists) {
-            throw new \RuntimeException('PROFILE_PHOTO_PERSIST_PATH is set but public/profile is not a directory or symlink.');
-        }
-
-        File::link($persistPath, $publicProfileDir);
-    }
+    private const DISK = 'public';
+    private const DIR = 'profile-photos';
 
     public static function getDefaultUrl(): string
     {
-        return 'data:image/svg+xml;base64,' . base64_encode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">' .
-            '<rect width="200" height="200" fill="#e5e7eb"/>' .
-            '<circle cx="100" cy="80" r="35" fill="#9ca3af"/>' .
-            '<path d="M100 120 Q60 120 40 160 L160 160 Q140 120 100 120" fill="#9ca3af"/>' .
-            '</svg>'
-        );
+        return asset('img/BW_ASSRI.png');
     }
 
-    public static function store(UploadedFile $file, int $userId): string
+    public static function url(?string $path): string
     {
-        if ($userId <= 0) {
-            throw new \InvalidArgumentException('User ID must be positive');
-        }
-
-        self::ensurePersistentLink();
-
-        $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $userDir = public_path(self::BASE_DIR . '/' . $userId);
-        
-        if (!File::exists($userDir)) {
-            File::makeDirectory($userDir, 0755, true);
-        } else {
-            self::delete($userId);
-        }
-
-        $fileName = 'profile.' . $extension;
-        $file->move($userDir, $fileName);
-
-        return 'Public/' . self::BASE_DIR . '/' . $userId . '/' . $fileName;
-    }
-
-    public static function delete(int $userId): void
-    {
-        if ($userId <= 0) {
-            return;
-        }
-
-        self::ensurePersistentLink();
-
-        $userDir = public_path(self::BASE_DIR . '/' . $userId);
-        
-        if (File::exists($userDir)) {
-            $files = File::glob($userDir . '/profile.*');
-            foreach ($files as $file) {
-                if (File::isFile($file)) {
-                    File::delete($file);
-                }
-            }
-        }
-    }
-
-    public static function getUrl(?string $photoPath): string
-    {
-        if (empty($photoPath)) {
+        if (empty($path)) {
             return self::getDefaultUrl();
         }
 
-        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
-            return $photoPath;
+        return Storage::disk(self::DISK)->url($path);
+    }
+
+    public static function storeForUser(UploadedFile $file, int $userId): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $fileName = 'u' . $userId . '_' . Str::uuid()->toString() . '.' . $extension;
+
+        return $file->storeAs(self::DIR, $fileName, self::DISK);
+    }
+
+    public static function deleteIfExists(?string $path): void
+    {
+        if (empty($path)) {
+            return;
         }
 
-        if (str_starts_with($photoPath, 'data:')) {
-            return $photoPath;
-        }
-
-        $cleanPath = ltrim(str_replace('\\', '/', $photoPath), '/');
-
-        if (str_starts_with($cleanPath, 'Public/')) {
-            $cleanPath = substr($cleanPath, strlen('Public/'));
-        }
-
-        if (str_starts_with($cleanPath, 'public/')) {
-            $cleanPath = substr($cleanPath, strlen('public/'));
-        }
-
-        $fullPath = public_path($cleanPath);
-
-        if (File::exists($fullPath)) {
-            return asset($cleanPath);
-        }
-
-        $persistPath = self::getPersistPath();
-        if (!empty($persistPath)) {
-            $relativeInsideBase = self::getRelativePathInsideBaseDir($cleanPath);
-            $persistFullPath = $persistPath . DIRECTORY_SEPARATOR . $relativeInsideBase;
-
-            if (File::exists($persistFullPath)) {
-                return url($cleanPath);
-            }
-        }
-
-        // Backward compatibility for old directory name: "profile/..."
-        if (str_starts_with($cleanPath, 'profile/')) {
-            $legacyFullPath = public_path($cleanPath);
-            if (File::exists($legacyFullPath)) {
-                return asset($cleanPath);
-            }
-        }
-
-        return self::getDefaultUrl();
+        Storage::disk(self::DISK)->delete($path);
     }
 }

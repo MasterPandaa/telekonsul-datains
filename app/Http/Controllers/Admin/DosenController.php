@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dosen;
 use App\Models\User;
-use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -141,7 +140,6 @@ class DosenController extends Controller
             'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
             'alamat' => 'nullable|string|max:2000',
             'no_hp' => ['nullable', 'regex:/^08[0-9]{8,11}$/'],
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'password' => ['nullable', 'confirmed', 'min:8'],
         ], [
             'nama.required' => 'Nama dosen wajib diisi',
@@ -154,7 +152,6 @@ class DosenController extends Controller
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
             'password.min' => 'Password minimal 8 karakter',
-            'foto.image' => 'Foto harus berupa gambar',
         ]);
 
         $oldData = $dosen->toArray();
@@ -174,17 +171,11 @@ class DosenController extends Controller
                 $dosen->user->update($userUpdates);
             }
 
-            $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
+            $dosenData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
             foreach (['no_hp', 'jenis_kelamin', 'alamat'] as $nullableField) {
                 if (array_key_exists($nullableField, $dosenData) && $dosenData[$nullableField] === '') {
                     $dosenData[$nullableField] = null;
                 }
-            }
-
-            if ($request->hasFile('foto')) {
-                $fotoFile = $request->file('foto');
-                $relativePath = ProfilePhoto::store($fotoFile, (int) ($dosen->user_id ?? 0));
-                $dosenData['foto'] = $relativePath;
             }
 
             $dosen->update($dosenData);

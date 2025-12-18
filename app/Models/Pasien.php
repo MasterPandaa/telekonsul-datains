@@ -3,8 +3,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Konsultasi;
-use App\Support\ProfilePhoto;
-use Illuminate\Support\Str;
 
 class Pasien extends Model
 {
@@ -85,6 +83,6 @@ class Pasien extends Model
     // Accessor untuk mendapatkan URL foto profil
     public function getFotoUrlAttribute(): string
     {
-        return ProfilePhoto::getUrl($this->foto);
+        return $this->user ? $this->user->profile_photo_url : asset('img/BW_ASSRI.png');
     }
 }

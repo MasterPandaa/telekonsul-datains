@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 use Illuminate\Pagination\Paginator;
 
@@ -25,33 +24,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-
-        $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
-        if (!empty($persistPath)) {
-            $publicProfileDir = public_path('profileuser');
-
-            if (!File::exists($persistPath)) {
-                File::makeDirectory($persistPath, 0755, true);
-            }
-
-            $publicExists = File::exists($publicProfileDir);
-            $publicIsLink = $publicExists && is_link($publicProfileDir);
-
-            if ($publicIsLink) {
-                $currentTarget = readlink($publicProfileDir);
-                if ($currentTarget !== $persistPath) {
-                    File::delete($publicProfileDir);
-                    File::link($persistPath, $publicProfileDir);
-                }
-            } elseif ($publicExists && File::isDirectory($publicProfileDir)) {
-                File::copyDirectory($publicProfileDir, $persistPath);
-                File::deleteDirectory($publicProfileDir);
-                File::link($persistPath, $publicProfileDir);
-            } elseif (!$publicExists) {
-                File::link($persistPath, $publicProfileDir);
-            }
-        }
-
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }

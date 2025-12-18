@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 use App\Models\Dokter;
 use App\Models\User;
-use App\Support\ProfilePhoto;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -163,7 +162,6 @@ class DokterController extends Controller
             'spesialisasi' => 'nullable|string|max:100',
             'tempat_praktik' => 'nullable|string|max:255',
             'rumah_sakit' => 'nullable|string|max:255',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'password' => ['nullable','confirmed', Password::min(8)->mixedCase()->numbers()],
         ], [
             'nama.required' => 'Nama dokter wajib diisi',
@@ -181,7 +179,6 @@ class DokterController extends Controller
             'no_hp.required' => 'Nomor HP wajib diisi',
             'no_hp.regex' => 'Nomor HP harus diawali 08 dan terdiri dari 10-13 digit',
             'password.confirmed' => 'Konfirmasi password tidak sesuai',
-            'foto.image' => 'Foto harus berupa gambar',
         ]);
         
         $validatedData['no_sip'] = strtoupper($validatedData['no_sip']);
@@ -206,17 +203,11 @@ class DokterController extends Controller
             }
             
             // Update dokter data
-            $dokterData = collect($validatedData)->except(['nama', 'password', 'password_confirmation', 'foto'])->toArray();
+            $dokterData = collect($validatedData)->except(['nama', 'password', 'password_confirmation'])->toArray();
             foreach (['tempat_lahir','tanggal_lahir','universitas','tahun_lulus','alamat','spesialisasi','tempat_praktik','rumah_sakit'] as $nullableField) {
                 if (array_key_exists($nullableField, $dokterData) && $dokterData[$nullableField] === '') {
                     $dokterData[$nullableField] = null;
                 }
-            }
-
-            if ($request->hasFile('foto')) {
-                $fotoFile = $request->file('foto');
-                $relativePath = ProfilePhoto::store($fotoFile, (int) ($dokter->user_id ?? 0));
-                $dokterData['foto'] = $relativePath;
             }
 
             $dokter->update($dokterData);

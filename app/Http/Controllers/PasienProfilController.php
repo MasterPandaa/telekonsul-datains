@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Pasien;
 use App\Models\User;
-use App\Support\ProfilePhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PasienProfilController extends Controller
@@ -118,30 +116,6 @@ class PasienProfilController extends Controller
      */
     public function uploadFoto(Request $request)
     {
-        $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-        ]);
-        
-        $user = Auth::user();
-        $pasien = Pasien::where('email', $user->email)->first();
-        
-        if (!$pasien) {
-            return redirect()->back()->with('error', 'Data pasien tidak ditemukan');
-        }
-
-        try {
-            $foto = $request->file('foto');
-            $relativePath = ProfilePhoto::store($foto, (int) $user->id);
-
-            $pasien->foto = $relativePath;
-            $pasien->save();
-
-            return redirect()->route('pasien.profil.index')->with('success', 'Foto profil berhasil diperbarui');
-        } catch (\Throwable $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Gagal mengunggah foto. Penyebab: ' . $e->getMessage());
-        }
+        return redirect()->back()->with('error', 'Fitur upload foto profil dinonaktifkan.');
     }
 } 

@@ -6,11 +6,9 @@ use App\Models\Dosen;
 use App\Models\Dokter;
 use App\Models\Konsultasi;
 use App\Models\User;
-use App\Support\ProfilePhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -178,32 +176,7 @@ class DosenController extends Controller
      */
     public function updateFoto(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $dosen = Auth::user()->dosen;
-
-        try {
-            if ($request->hasFile('foto')) {
-                $foto = $request->file('foto');
-                $relativePath = ProfilePhoto::store($foto, (int) Auth::id());
-
-                $dosen->foto = $relativePath;
-                $dosen->save();
-            }
-
-            return redirect()->back()->with('success', 'Foto profil berhasil diperbarui');
-        } catch (\Throwable $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Gagal mengunggah foto. Penyebab: ' . $e->getMessage());
-        }
+        return redirect()->back()->with('error', 'Fitur upload foto profil dinonaktifkan.');
     }
 
     /**

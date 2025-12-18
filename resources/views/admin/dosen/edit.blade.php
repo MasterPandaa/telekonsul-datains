@@ -25,7 +25,7 @@
 
 <div class="bg-white rounded-lg shadow-md overflow-hidden">
     <div class="p-6">
-        <form action="{{ route('admin.dosen.update', $dosen->id) }}" method="POST" class="space-y-6" enctype="multipart/form-data">
+        <form action="{{ route('admin.dosen.update', $dosen->id) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -80,23 +80,7 @@
                     @enderror
                 </div>
 
-                <div>
-                    <label for="foto" class="block text-sm font-medium text-gray-700 mb-1">Foto Profil</label>
-                    <div class="flex items-center space-x-4">
-                        <div class="h-16 w-16 rounded-full overflow-hidden bg-gray-100 border">
-                            <img id="foto-preview" src="{{ $dosen->foto_url }}" alt="{{ $dosen->nama }}" class="h-full w-full object-cover cursor-pointer" onclick="openFotoUploadModal()">
-                        </div>
-                        <div class="flex-1">
-                            <button type="button" onclick="openFotoUploadModal()" class="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                                Ubah Foto
-                            </button>
-                            <p class="mt-1 text-xs text-gray-500">Format: JPG, JPEG, PNG, WEBP. Maksimal 2MB.</p>
-                            @error('foto')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
+                
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru (opsional)</label>
@@ -122,34 +106,7 @@
                 </div>
             </div>
 
-            <div id="uploadFotoModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-                <div class="absolute inset-0 bg-gray-800 opacity-50" onclick="closeFotoUploadModal()"></div>
-                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                    <div class="mt-3 text-center">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Upload Foto Profil</h3>
-                        <div class="mt-2 px-7 py-3">
-                            <div class="w-40 h-40 mx-auto bg-gray-200 mb-4 overflow-hidden rounded-full">
-                                <img id="foto-preview-modal" src="{{ $dosen->foto_url }}" alt="Preview" class="w-full h-full object-cover">
-                            </div>
-                            <div class="mt-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Pilih Foto
-                                </label>
-                                <input type="file" name="foto" id="foto" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                <p class="mt-1 text-sm text-gray-500">Format: JPG, JPEG, PNG, WEBP. Maks: 2MB</p>
-                            </div>
-                            <div class="mt-5 flex justify-center space-x-3">
-                                <button type="button" onclick="closeFotoUploadModal()" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    Tutup
-                                </button>
-                                <button type="button" onclick="closeFotoUploadModal()" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    Gunakan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
         </form>
     </div>
 </div>
@@ -219,33 +176,6 @@
         input.addEventListener('blur', handler);
     });
 
-    // Photo preview functionality
-    const fotoInput = document.getElementById('foto');
-    const fotoPreview = document.getElementById('foto-preview');
-    const fotoPreviewModal = document.getElementById('foto-preview-modal');
     
-    if (fotoInput && fotoPreview) {
-        fotoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    fotoPreview.src = e.target.result;
-                    if (fotoPreviewModal) {
-                        fotoPreviewModal.src = e.target.result;
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    function openFotoUploadModal() {
-        document.getElementById('uploadFotoModal')?.classList.remove('hidden');
-    }
-
-    function closeFotoUploadModal() {
-        document.getElementById('uploadFotoModal')?.classList.add('hidden');
-    }
 </script>
 @endpush

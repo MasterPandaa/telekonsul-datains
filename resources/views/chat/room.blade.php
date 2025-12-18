@@ -161,12 +161,12 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         @php
-                            $chatFotoUrl = \App\Support\ProfilePhoto::getDefaultUrl();
+                            $chatFotoUrl = asset('img/BW_ASSRI.png');
                             if (!isset($isDosenView)) {
                                 if (Auth::user()->role === 'dokter') {
-                                    $chatFotoUrl = $konsultasi->pasien ? $konsultasi->pasien->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
+                                    $chatFotoUrl = $konsultasi->pasien ? $konsultasi->pasien->foto_url : asset('img/BW_ASSRI.png');
                                 } else {
-                                    $chatFotoUrl = $konsultasi->dokter && $konsultasi->dokter->dokter ? $konsultasi->dokter->dokter->foto_url : \App\Support\ProfilePhoto::getDefaultUrl();
+                                    $chatFotoUrl = $konsultasi->dokter && $konsultasi->dokter->dokter ? $konsultasi->dokter->dokter->foto_url : asset('img/BW_ASSRI.png');
                                 }
                             }
                         @endphp

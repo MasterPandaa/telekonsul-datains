@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Dokter;
-use App\Support\ProfilePhoto;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Konsultasi;
 use Illuminate\Support\Facades\Artisan;
 use App\Services\KonsultasiService;
@@ -57,7 +55,7 @@ class DokterPageController extends Controller
                 'tanggal' => $item->tanggal ? $item->tanggal->format('d F Y') : '-',
                 'jam' => $item->jam_mulai . ' - ' . $item->jam_selesai,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
-                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::getDefaultUrl(),
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : asset('img/BW_ASSRI.png'),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'status' => $item->status
@@ -175,7 +173,7 @@ class DokterPageController extends Controller
                 'id' => $item->id,
                 'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
-                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::getDefaultUrl(),
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : asset('img/BW_ASSRI.png'),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'tanggal_tampil' => $item->tanggal,
@@ -210,7 +208,7 @@ class DokterPageController extends Controller
                 'id' => $item->id,
                 'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
-                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::getDefaultUrl(),
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : asset('img/BW_ASSRI.png'),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'tanggal_tampil' => $item->tanggal,
@@ -301,7 +299,7 @@ class DokterPageController extends Controller
                 'id' => $item->id,
                 'pasien_id' => $item->pasien_id,
                 'pasien_nama' => $item->pasien->nama ?? 'Pasien',
-                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : ProfilePhoto::getDefaultUrl(),
+                'pasien_foto_url' => $item->pasien ? $item->pasien->foto_url : asset('img/BW_ASSRI.png'),
                 'pasien_gender' => $item->pasien->jenis_kelamin ?? '-',
                 'pasien_usia' => $item->pasien->usia ?? '-',
                 'tanggal' => $tanggalFormat,
@@ -455,27 +453,7 @@ class DokterPageController extends Controller
 
     public function updateFoto(Request $request)
     {
-        $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-        ]);
-        
-        // Ambil data dokter
-        $dokter = Dokter::where('user_id', Auth::id())->firstOrFail();
-
-        try {
-            $fotoFile = $request->file('foto');
-            $relativePath = ProfilePhoto::store($fotoFile, (int) Auth::id());
-
-            $dokter->foto = $relativePath;
-            $dokter->save();
-
-            return redirect()->route('dokter.profil.index')
-                ->with('success', 'Foto profil berhasil diperbarui');
-        } catch (\Throwable $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Gagal mengunggah foto. Penyebab: ' . $e->getMessage());
-        }
+        return redirect()->back()->with('error', 'Fitur upload foto profil dinonaktifkan.');
     }
 
     public function updateInformasi(Request $request)
