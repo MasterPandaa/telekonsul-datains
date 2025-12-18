@@ -20,11 +20,14 @@ class DosenSeeder extends Seeder
         $dosenUsers = User::where('role', 'dosen')->get();
 
         foreach ($dosenUsers as $index => $user) {
+            $gender = ($index % 2 == 0) ? 'Laki-laki' : 'Perempuan';
+            
             Dosen::updateOrCreate(
                 ['user_id' => $user->id],
                 [
                     'nip' => $this->generateNip($index + 1),
                     'email' => $user->email,
+                    'jenis_kelamin' => $gender,
                     'alamat' => $faker->address(),
                     'no_hp' => $this->generatePhoneNumber($index + 1),
                 ]

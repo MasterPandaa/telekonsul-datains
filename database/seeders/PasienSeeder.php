@@ -20,6 +20,8 @@ class PasienSeeder extends Seeder
         $pasienUsers = User::where('role', 'pasien')->get();
 
         foreach ($pasienUsers as $index => $user) {
+            $gender = ($index % 2 == 0) ? 'Laki-laki' : 'Perempuan';
+            
             Pasien::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -27,7 +29,7 @@ class PasienSeeder extends Seeder
                     'email' => $user->email,
                     'alamat' => $faker->address(),
                     'no_hp' => $this->generatePhoneNumber($index + 1),
-                    'jenis_kelamin' => $faker->randomElement(['Laki-laki', 'Perempuan']),
+                    'jenis_kelamin' => $gender,
                     'tempat_lahir' => $faker->city(),
                     'tanggal_lahir' => $faker->date('Y-m-d', '-20 years'),
                     'foto' => null,
