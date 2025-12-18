@@ -142,7 +142,7 @@
                 <div class="text-left mb-4">
                     <p class="mb-2">Apakah Anda yakin ingin menghapus data dokter:</p>
                     <div class="flex items-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <img src="{{ $dokter->foto_url ?? asset('img/BW_ASSRI.png') }}" class="w-12 h-12 rounded-full object-cover bg-gray-100 mr-3">
+                        <img src="{{ $dokter->foto_url ?? asset('img/default.jpg') }}" class="w-12 h-12 rounded-full object-cover bg-gray-100 mr-3">
                         <div>
                             <p class="font-semibold text-gray-800">{{ $dokter->nama }}</p>
                             <p class="text-sm text-gray-600">{{ $dokter->no_sip }}</p>

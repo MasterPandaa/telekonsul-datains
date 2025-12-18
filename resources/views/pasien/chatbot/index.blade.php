@@ -642,7 +642,7 @@
             // Ambil informasi foto profil pasien
             @php
                 $pasien = Auth::user()->pasien;
-                $fotoUrl = $pasien ? $pasien->foto_url : asset('img/BW_ASSRI.png');
+                $fotoUrl = $pasien ? $pasien->foto_url : asset('img/default.jpg');
             @endphp
             
             const userPhotoUrl = "{{ $fotoUrl }}";

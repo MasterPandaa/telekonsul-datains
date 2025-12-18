@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Services\NotificationService;
 
 class PasienProfilController extends Controller
 {
@@ -42,6 +43,7 @@ class PasienProfilController extends Controller
     public function updateInformasiDasar(Request $request)
     {
         $user = Auth::user();
+        $oldEmail = $user->email;
         $pasien = Pasien::where('email', $user->email)->first();
         
         if (!$pasien) {
@@ -74,9 +76,15 @@ class PasienProfilController extends Controller
         
         $pasien->save();
         
-        // Update nama user juga
+        // Update user juga
         $user->name = $request->nama;
+        $user->email = $request->email;
         $user->save();
+
+        if ($oldEmail !== $user->email) {
+            $notificationService = app(NotificationService::class);
+            $notificationService->createUserEmailChangedNotification($user, $oldEmail);
+        }
         
         return redirect()->route('pasien.profil.index')->with('success', 'Informasi dasar berhasil diperbarui');
     }

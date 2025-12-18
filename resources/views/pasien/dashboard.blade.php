@@ -277,7 +277,7 @@
                         @php
                             $dokterUser = $item->dokter;
                             $dokterNama = $dokterUser->name ?? 'Dokter';
-                            $dokterFotoUrl = $dokterUser && $dokterUser->dokter ? $dokterUser->dokter->foto_url : asset('img/BW_ASSRI.png');
+                            $dokterFotoUrl = $dokterUser && $dokterUser->dokter ? $dokterUser->dokter->foto_url : asset('img/default.jpg');
                         @endphp
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">

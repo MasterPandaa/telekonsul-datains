@@ -481,6 +481,9 @@ class PasienPageController extends Controller
         $konsultasi->keterangan = $validated['keterangan'];
         $konsultasi->status = 'Menunggu';
         $konsultasi->save();
+
+        $notificationService = app(NotificationService::class);
+        $notificationService->createKonsultasiBaruNotification($konsultasi);
         
         return redirect()->route('pasien.konsultasi.index')
             ->with('success', 'Permintaan konsultasi berhasil dibuat dan menunggu konfirmasi.');
@@ -560,6 +563,9 @@ class PasienPageController extends Controller
             'status' => 'Dibatalkan',
             'alasan_batal' => $request->alasan_batal
         ]);
+
+        $notificationService = app(NotificationService::class);
+        $notificationService->createKonsultasiDibatalkanOlehPasienNotification($konsultasi);
         
         return redirect()->back()->with('success', 'Konsultasi berhasil dibatalkan');
     }

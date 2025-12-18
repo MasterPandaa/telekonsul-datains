@@ -39,49 +39,56 @@
             </nav>
             
             <div class="flex items-center space-x-4">
-                <!-- Notification dropdown -->
-                <div x-data="{ open: false, notifications: [], unreadCount: 0 }" x-init="
-                    fetch('{{ route('notifications.getLatest') }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        notifications = data.notifications;
-                        unreadCount = data.unreadCount;
-                    })
-                    .catch(error => console.error('Error:', error));
-                " class="relative">
-                    <button @click="open = !open" class="relative p-1 text-gray-600 hover:text-blue-600 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        <span x-show="unreadCount > 0" class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-                    </button>
-                    
-                    <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200" style="z-index: 9999;">
-                        <div class="p-3 border-b border-gray-200 bg-gray-50">
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notifikasi</h3>
+                <!-- Notifications Dropdown -->
+                <div x-data="notificationSystem()" x-init="init()" class="relative">
+                    <button @click="toggleNotifications();" class="relative p-1 text-gray-600 hover:text-blue-600 focus:outline-none">
+                        <div class="relative">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span x-show="unreadCount > 0" x-transition:enter="transition ease-out duration-300" 
+                                  x-transition:enter-start="opacity-0 transform scale-50" 
+                                  x-transition:enter-end="opacity-100 transform scale-100" 
+                                  class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
                         </div>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200" style="display: none; z-index: 9999;">
+
+                        <!-- Header Notifikasi -->
+                        <div class="flex justify-between items-center px-4 py-3 border-b">
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notifikasi</h3>
+                            <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">Lihat semua</a>
+                        </div>
+
+                        <!-- Body Notifikasi -->
                         <div class="max-h-60 overflow-y-auto">
                             <template x-for="notification in notifications" :key="notification.id">
-                                <a :href="`{{ url('notifications') }}/${notification.id}/read`" class="block p-4 border-b border-gray-200 hover:bg-gray-50" :class="{'bg-blue-50': !notification.is_read}">
-                                    <div class="flex">
-                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 flex-shrink-0">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <a :href="`{{ url('notifications') }}/${notification.id}/read`" class="block px-4 py-3 hover:bg-gray-50 transition border-b" :class="{'bg-blue-50': !notification.is_read}">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                                            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                                             </svg>
                                         </div>
                                         <div class="ml-3">
-                                            <p class="text-sm text-gray-800" x-text="notification.message"></p>
-                                            <p class="text-xs text-gray-500 mt-1" x-text="new Date(notification.created_at).toLocaleString('id-ID')"></p>
+                                            <p class="text-sm font-medium text-gray-900" x-text="notification.message"></p>
+                                            <p class="text-xs text-gray-500 mt-1" x-text="formatDate(notification.created_at)"></p>
                                         </div>
                                     </div>
                                 </a>
                             </template>
-                            <div x-show="notifications.length === 0" class="p-4 text-center text-gray-500 text-sm">
+                            <div x-show="notifications.length === 0" class="px-4 py-3 text-sm text-gray-500 text-center">
                                 Tidak ada notifikasi
                             </div>
                         </div>
-                        <div class="p-3 border-t border-gray-200 bg-gray-50 text-right">
-                            <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">Lihat Semua Notifikasi</a>
+
+                        <!-- Footer Notifikasi -->
+                        <div class="px-4 py-2 border-t bg-gray-50">
+                            <div class="flex justify-between items-center">
+                                <button @click.prevent="markAllAsRead" type="button" class="text-xs text-gray-600 hover:underline">Tandai semua dibaca</button>
+                                <button @click.prevent="deleteAllNotifications" type="button" class="text-xs text-red-600 hover:underline">Hapus semua</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -179,4 +186,156 @@
             </div>
         </div>
     </div>
-</header> 
+</header>
+
+@push('scripts')
+<script>
+    function notificationSystem() {
+        return {
+            open: false,
+            notifications: [],
+            unreadCount: 0,
+            lastFetchTime: null,
+            pollingInterval: null,
+            
+            init() {
+                this.fetchNotifications();
+                
+                // Polling setiap 30 detik
+                this.pollingInterval = setInterval(() => this.fetchNotifications(), 30000);
+                
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        this.fetchNotifications();
+                    }
+                });
+                
+                this.requestNotificationPermission();
+            },
+            
+            toggleNotifications() {
+                this.open = !this.open;
+            },
+            
+            fetchNotifications() {
+                fetch('{{ route('notifications.getLatest') }}', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const oldUnreadCount = this.unreadCount;
+                        this.notifications = data.notifications;
+                        this.unreadCount = data.unreadCount;
+                        
+                        if (this.lastFetchTime && oldUnreadCount < this.unreadCount) {
+                            this.showDesktopNotification();
+                        }
+                        
+                        this.lastFetchTime = new Date();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notifications:', error);
+                        // Jangan lakukan polling lagi jika terjadi error autentikasi
+                        if (error.message.includes('401') || error.message.includes('403')) {
+                            clearInterval(this.pollingInterval);
+                        }
+                    });
+            },
+            
+            requestNotificationPermission() {
+                if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
+            },
+            
+            showDesktopNotification() {
+                if (Notification.permission !== "granted") return;
+                
+                const latestNotification = this.notifications.find(n => !n.is_read);
+                if (latestNotification) {
+                    const notification = new Notification("Telekonsultasi", {
+                        body: latestNotification.message,
+                        icon: "{{ asset('img/BLUE_ASSRI.png') }}"
+                    });
+                    
+                    notification.onclick = () => window.open(`{{ url('notifications') }}/${latestNotification.id}/read`);
+                }
+            },
+            
+            markAllAsRead() {
+                if (!confirm('Apakah Anda yakin ingin menandai semua notifikasi sebagai telah dibaca?')) return;
+
+                fetch('{{ route("notifications.readAll") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.notifications.forEach(notification => {
+                            notification.is_read = true;
+                        });
+                        this.unreadCount = 0;
+                        
+                        // Tampilkan pesan sukses
+                        alert('Semua notifikasi telah ditandai sebagai dibaca.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan. Silakan coba lagi.');
+                });
+            },
+            
+            deleteAllNotifications() {
+                if (!confirm('Apakah Anda yakin ingin menghapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) return;
+                
+                fetch('{{ route("notifications.deleteAll") }}', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.notifications = [];
+                        this.unreadCount = 0;
+                        
+                        // Tampilkan pesan sukses
+                        alert('Semua notifikasi telah dihapus.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan. Silakan coba lagi.');
+                });
+            },
+            
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('id-ID', { 
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        };
+    }
+</script>
+@endpush

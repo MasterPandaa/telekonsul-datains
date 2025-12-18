@@ -4,6 +4,7 @@ use App\Models\Pasien;
 use App\Models\User;
 use App\Support\ProfilePhoto;
 use App\Services\LogService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -183,6 +184,11 @@ class PasienController extends Controller
             $pasien->update($pasienData);
             
             DB::commit();
+
+            if ($pasien->user) {
+                $notificationService = app(NotificationService::class);
+                $notificationService->createUserProfileUpdatedByAdminNotification($pasien->user, auth()->user());
+            }
             
             // Catat aktivitas
             LogService::logActivity('update', 'Pasien', [

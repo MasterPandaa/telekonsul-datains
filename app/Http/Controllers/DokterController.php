@@ -4,6 +4,7 @@ use App\Models\Dokter;
 use App\Models\User;
 use App\Support\ProfilePhoto;
 use App\Services\LogService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -225,6 +226,11 @@ class DokterController extends Controller
             $dokter->update($dokterData);
             
             DB::commit();
+
+            if ($dokter->user) {
+                $notificationService = app(NotificationService::class);
+                $notificationService->createUserProfileUpdatedByAdminNotification($dokter->user, auth()->user());
+            }
             
             // Catat aktivitas
             try {

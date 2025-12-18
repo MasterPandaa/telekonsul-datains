@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Services\NotificationService;
 
 class DosenPasswordController extends Controller
 {
@@ -43,6 +44,9 @@ class DosenPasswordController extends Controller
 
         $user->password = Hash::make($request->password);
         $user->save();
+
+        $notificationService = app(NotificationService::class);
+        $notificationService->createUserPasswordChangedNotification($user);
 
         return redirect()->back()->with('success', 'Password berhasil diperbarui');
     }

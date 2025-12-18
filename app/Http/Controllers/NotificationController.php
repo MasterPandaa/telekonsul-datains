@@ -87,6 +87,7 @@ class NotificationController extends Controller
         
         // Ambil notifikasi terbaru dengan limit 10
         $rawNotifications = $user->notifications()
+            ->select(['id', 'user_id', 'title', 'type', 'message', 'link', 'is_read', 'created_at'])
             ->orderBy('created_at', 'desc')
             ->take(20) // Ambil lebih banyak untuk difilter
             ->get();
@@ -98,7 +99,7 @@ class NotificationController extends Controller
         $notifications = $uniqueNotifications->take(10);
         
         // Hitung jumlah notifikasi yang belum dibaca
-        $unreadCount = $user->unreadNotificationsCount();
+        $unreadCount = $user->notifications()->unread()->count();
         
         // Tambahkan informasi waktu relatif untuk setiap notifikasi
         $notifications->transform(function($notification) {
@@ -184,5 +185,34 @@ class NotificationController extends Controller
         }
         
         return redirect()->back()->with('success', 'Semua notifikasi berhasil dihapus.');
+    }
+
+    private function getNotificationsForUser()
+    {
+        if (!Auth::check()) {
+            return collect();
+        }
+
+        $notifications = Auth::user()->notifications()
+            ->select(['id', 'user_id', 'title', 'type', 'message', 'link', 'is_read', 'created_at'])
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
+
+        $notifications->transform(function ($notification) {
+            $notification->time_ago = Carbon::parse($notification->created_at)->diffForHumans();
+            return $notification;
+        });
+
+        return $notifications;
+    }
+
+    private function getUnreadCountForUser()
+    {
+        if (!Auth::check()) {
+            return 0;
+        }
+
+        return Auth::user()->notifications()->unread()->count();
     }
 }

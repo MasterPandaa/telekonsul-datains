@@ -5,9 +5,42 @@ namespace App\Services;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\Konsultasi;
+use Illuminate\Support\Collection;
 
 class NotificationService
 {
+    private function notifyAdmins(string $title, string $type, string $message, ?string $link = null, array $data = []): void
+    {
+        User::where('role', 'admin')
+            ->select(['id'])
+            ->chunkById(200, function (Collection $admins) use ($title, $type, $message, $link, $data) {
+                foreach ($admins as $admin) {
+                    Notification::create([
+                        'user_id' => $admin->id,
+                        'title' => $title,
+                        'type' => $type,
+                        'message' => $message,
+                        'link' => $link,
+                        'data' => $data,
+                        'is_read' => false,
+                    ]);
+                }
+            });
+    }
+
+    private function notifyUser(User $user, string $title, string $type, string $message, ?string $link = null, array $data = []): void
+    {
+        Notification::create([
+            'user_id' => $user->id,
+            'title' => $title,
+            'type' => $type,
+            'message' => $message,
+            'link' => $link,
+            'data' => $data,
+            'is_read' => false,
+        ]);
+    }
+
     /**
      * Membuat notifikasi untuk permintaan konsultasi baru
      */
@@ -140,6 +173,110 @@ class NotificationService
             ],
             'is_read' => false
         ]);
+    }
+
+    public function createKonsultasiDibatalkanOlehPasienNotification(Konsultasi $konsultasi): void
+    {
+        $dokter = User::find($konsultasi->dokter_id);
+        $pasien = $konsultasi->pasien;
+
+        if (!$dokter || !$pasien) {
+            return;
+        }
+
+        Notification::create([
+            'user_id' => $dokter->id,
+            'title' => 'Konsultasi Dibatalkan',
+            'type' => 'konsultasi_dibatalkan',
+            'message' => "Pasien {$pasien->nama_lengkap} membatalkan permintaan konsultasi.",
+            'link' => route('dokter.konsultasi.index'),
+            'data' => [
+                'konsultasi_id' => $konsultasi->id,
+                'pasien_id' => $pasien->id,
+                'alasan_batal' => $konsultasi->alasan_batal,
+            ],
+            'is_read' => false,
+        ]);
+    }
+
+    public function createNilaiDosenBaruNotification(Konsultasi $konsultasi): void
+    {
+        $dokter = User::find($konsultasi->dokter_id);
+
+        if (!$dokter) {
+            return;
+        }
+
+        Notification::create([
+            'user_id' => $dokter->id,
+            'title' => 'Penilaian Dosen Masuk',
+            'type' => 'nilai_dosen_baru',
+            'message' => 'Dosen telah memberikan penilaian untuk konsultasi Anda.',
+            'link' => route('dokter.riwayat.index'),
+            'data' => [
+                'konsultasi_id' => $konsultasi->id,
+                'nilai_dosen' => $konsultasi->nilai_dosen,
+                'dosen_id' => $konsultasi->dosen_id,
+            ],
+            'is_read' => false,
+        ]);
+    }
+
+    public function createUserProfileUpdatedByAdminNotification(User $targetUser, User $adminUser): void
+    {
+        $this->notifyUser(
+            $targetUser,
+            'Data Diri Diperbarui',
+            'profil_diubah_admin',
+            'Data diri Anda telah diperbarui oleh admin.',
+            null,
+            [
+                'admin_id' => $adminUser->id,
+                'target_role' => $targetUser->role,
+            ]
+        );
+
+        $this->notifyAdmins(
+            'Perubahan Data User',
+            'admin_update_user',
+            "Admin {$adminUser->name} memperbarui data user: {$targetUser->name}",
+            null,
+            [
+                'admin_id' => $adminUser->id,
+                'target_user_id' => $targetUser->id,
+                'target_role' => $targetUser->role,
+            ]
+        );
+    }
+
+    public function createUserPasswordChangedNotification(User $user): void
+    {
+        $this->notifyAdmins(
+            'User Mengganti Password',
+            'user_password_changed',
+            "User {$user->name} mengganti password.",
+            null,
+            [
+                'user_id' => $user->id,
+                'role' => $user->role,
+            ]
+        );
+    }
+
+    public function createUserEmailChangedNotification(User $user, string $oldEmail): void
+    {
+        $this->notifyAdmins(
+            'User Mengganti Email',
+            'user_email_changed',
+            "User {$user->name} mengganti email dari {$oldEmail} ke {$user->email}.",
+            null,
+            [
+                'user_id' => $user->id,
+                'role' => $user->role,
+                'old_email' => $oldEmail,
+                'new_email' => $user->email,
+            ]
+        );
     }
     
     /**

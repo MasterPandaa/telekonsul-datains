@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Services\NotificationService;
 
 class PasienPasswordController extends Controller
 {
@@ -41,6 +42,9 @@ class PasienPasswordController extends Controller
         $user = Auth::user();
         $user->password = Hash::make($request->password);
         $user->save();
+
+        $notificationService = app(NotificationService::class);
+        $notificationService->createUserPasswordChangedNotification($user);
 
         return redirect()->route('pasien.dashboard')->with('success', 'Password berhasil diperbarui.');
     }

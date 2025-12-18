@@ -12,7 +12,7 @@ class ProfilePhoto
 
     public static function getDefaultUrl(): string
     {
-        return asset('img/BW_ASSRI.png');
+        return asset('img/default.jpg');
     }
 
     public static function url(?string $path): string

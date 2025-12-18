@@ -37,7 +37,7 @@ class Dosen extends Model
 
     public function getFotoUrlAttribute(): string
     {
-        return $this->user ? $this->user->profile_photo_url : asset('img/BW_ASSRI.png');
+        return $this->user ? $this->user->profile_photo_url : asset('img/default.jpg');
     }
 
     /**

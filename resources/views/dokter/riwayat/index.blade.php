@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $item['pasien_foto_url'] ?? asset('img/BW_ASSRI.png') }}" alt="{{ $item['pasien_nama'] }}">
+                                    <img class="h-10 w-10 rounded-full object-cover bg-gray-100" src="{{ $item['pasien_foto_url'] ?? asset('img/default.jpg') }}" alt="{{ $item['pasien_nama'] }}">
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900">{{ $item['pasien_nama'] }}</div>

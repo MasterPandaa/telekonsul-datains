@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 class DosenController extends Controller
 {
@@ -87,6 +88,9 @@ class DosenController extends Controller
             $konsultasi->nilai_dosen = $nilai_dosen;
             $konsultasi->dosen_id = Auth::user()->dosen->id;
             $konsultasi->save();
+
+            $notificationService = app(NotificationService::class);
+            $notificationService->createNilaiDosenBaruNotification($konsultasi);
             
             \Log::info('Penilaian berhasil disimpan:', [
                 'konsultasi_id' => $id,

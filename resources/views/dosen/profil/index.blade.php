@@ -1,7 +1,7 @@
 @extends('layouts.dosen')
 @section('dosen-content')
 @php
-    $fotoUrl = $dosen ? $dosen->foto_url : asset('img/BW_ASSRI.png');
+    $fotoUrl = $dosen ? $dosen->foto_url : asset('img/default.jpg');
     $displayName = $dosen->nama ?? Auth::user()->name;
 @endphp
 

@@ -22,7 +22,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:col-span-1">
         <div class="flex flex-col items-center text-center space-y-4">
             <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-50 shadow bg-gray-100">
-                <img src="{{ $dokter->foto_url ?? asset('img/BW_ASSRI.png') }}" alt="{{ $dokter->nama ?? 'Dokter' }}" class="w-full h-full object-cover">
+                <img src="{{ $dokter->foto_url ?? asset('img/default.jpg') }}" alt="{{ $dokter->nama ?? 'Dokter' }}" class="w-full h-full object-cover">
             </div>
             <div class="space-y-1">
                 <h2 class="text-lg font-semibold text-gray-900">{{ $dokter->nama ?? 'Tidak ada nama' }}</h2>

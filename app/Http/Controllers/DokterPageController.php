@@ -246,6 +246,9 @@ class DokterPageController extends Controller
         // Update status menjadi terkonfirmasi
         $konsultasi->update(['status' => 'Terkonfirmasi']);
 
+        $notificationService = app(NotificationService::class);
+        $notificationService->createKonsultasiTerkonfirmasiNotification($konsultasi);
+
         return redirect()->back()->with('success', 'Konsultasi berhasil dikonfirmasi');
     }
 
@@ -266,6 +269,9 @@ class DokterPageController extends Controller
             'status' => 'Ditolak',
             'alasan_tolak' => $request->alasan_tolak
         ]);
+
+        $notificationService = app(NotificationService::class);
+        $notificationService->createKonsultasiDitolakNotification($konsultasi, $request->alasan_tolak);
 
         return redirect()->back()->with('success', 'Konsultasi berhasil ditolak');
     }

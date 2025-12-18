@@ -7,6 +7,7 @@ use App\Models\Dosen;
 use App\Models\User;
 use App\Support\ProfilePhoto;
 use App\Services\LogService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -194,6 +195,11 @@ class DosenController extends Controller
             $dosen->update($dosenData);
 
             DB::commit();
+
+            if ($dosen->user) {
+                $notificationService = app(NotificationService::class);
+                $notificationService->createUserProfileUpdatedByAdminNotification($dosen->user, auth()->user());
+            }
 
             try {
                 LogService::logActivity('update', 'Dosen', [
