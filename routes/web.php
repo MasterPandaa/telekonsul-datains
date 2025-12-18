@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PasienController;
@@ -35,6 +36,29 @@ Route::get('storage/{path}', function (string $path) {
     }
 
     return Storage::disk('public')->response($path);
+})->where('path', '.*');
+
+Route::get('profile/{path}', function (string $path) {
+    $cleanPath = ltrim($path, '/');
+    if (str_contains($cleanPath, '..')) {
+        abort(400);
+    }
+
+    $publicFile = public_path('profile/' . $cleanPath);
+    if (File::exists($publicFile)) {
+        return response()->file($publicFile);
+    }
+
+    $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
+    if (!empty($persistPath)) {
+        $persistPath = rtrim($persistPath, "\\/ ");
+        $persistFile = $persistPath . DIRECTORY_SEPARATOR . $cleanPath;
+        if (File::exists($persistFile)) {
+            return response()->file($persistFile);
+        }
+    }
+
+    abort(404);
 })->where('path', '.*');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
