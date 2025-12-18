@@ -61,6 +61,29 @@ Route::get('profile/{path}', function (string $path) {
     abort(404);
 })->where('path', '.*');
 
+Route::get('profileuser/{path}', function (string $path) {
+    $cleanPath = ltrim($path, '/');
+    if (str_contains($cleanPath, '..')) {
+        abort(400);
+    }
+
+    $publicFile = public_path('profileuser/' . $cleanPath);
+    if (File::exists($publicFile)) {
+        return response()->file($publicFile);
+    }
+
+    $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
+    if (!empty($persistPath)) {
+        $persistPath = rtrim($persistPath, "\\/ ");
+        $persistFile = $persistPath . DIRECTORY_SEPARATOR . $cleanPath;
+        if (File::exists($persistFile)) {
+            return response()->file($persistFile);
+        }
+    }
+
+    abort(404);
+})->where('path', '.*');
+
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

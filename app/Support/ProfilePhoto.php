@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\File;
 
 class ProfilePhoto
 {
-    private const BASE_DIR = 'profile';
+    private const BASE_DIR = 'profileuser';
 
     private static function getPersistPath(): ?string
     {
@@ -81,12 +81,8 @@ class ProfilePhoto
 
         self::ensurePersistentLink();
 
-        $persistPath = self::getPersistPath();
-
         $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $userDir = $persistPath
-            ? ($persistPath . DIRECTORY_SEPARATOR . $userId)
-            : public_path(self::BASE_DIR . '/' . $userId);
+        $userDir = public_path(self::BASE_DIR . '/' . $userId);
         
         if (!File::exists($userDir)) {
             File::makeDirectory($userDir, 0755, true);
@@ -97,7 +93,7 @@ class ProfilePhoto
         $fileName = 'profile.' . $extension;
         $file->move($userDir, $fileName);
 
-        return self::BASE_DIR . '/' . $userId . '/' . $fileName;
+        return 'Public/' . self::BASE_DIR . '/' . $userId . '/' . $fileName;
     }
 
     public static function delete(int $userId): void
@@ -108,11 +104,7 @@ class ProfilePhoto
 
         self::ensurePersistentLink();
 
-        $persistPath = self::getPersistPath();
-
-        $userDir = $persistPath
-            ? ($persistPath . DIRECTORY_SEPARATOR . $userId)
-            : public_path(self::BASE_DIR . '/' . $userId);
+        $userDir = public_path(self::BASE_DIR . '/' . $userId);
         
         if (File::exists($userDir)) {
             $files = File::glob($userDir . '/profile.*');
@@ -138,7 +130,16 @@ class ProfilePhoto
             return $photoPath;
         }
 
-        $cleanPath = ltrim($photoPath, '/');
+        $cleanPath = ltrim(str_replace('\\', '/', $photoPath), '/');
+
+        if (str_starts_with($cleanPath, 'Public/')) {
+            $cleanPath = substr($cleanPath, strlen('Public/'));
+        }
+
+        if (str_starts_with($cleanPath, 'public/')) {
+            $cleanPath = substr($cleanPath, strlen('public/'));
+        }
+
         $fullPath = public_path($cleanPath);
 
         if (File::exists($fullPath)) {
@@ -152,6 +153,14 @@ class ProfilePhoto
 
             if (File::exists($persistFullPath)) {
                 return url($cleanPath);
+            }
+        }
+
+        // Backward compatibility for old directory name: "profile/..."
+        if (str_starts_with($cleanPath, 'profile/')) {
+            $legacyFullPath = public_path($cleanPath);
+            if (File::exists($legacyFullPath)) {
+                return asset($cleanPath);
             }
         }
 

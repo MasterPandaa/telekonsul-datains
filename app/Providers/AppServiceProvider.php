@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
 
         $persistPath = env('PROFILE_PHOTO_PERSIST_PATH');
         if (!empty($persistPath)) {
-            $publicProfileDir = public_path('profile');
+            $publicProfileDir = public_path('profileuser');
 
             if (!File::exists($persistPath)) {
                 File::makeDirectory($persistPath, 0755, true);
