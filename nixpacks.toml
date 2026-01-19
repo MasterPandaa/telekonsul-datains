@@ -1,12 +1,5 @@
-# Providers for auto-detection
-[phases.setup]
-nixPkgs = ["nodejs_20"]
-
-[phases.install]
-cmds = [
-    "npm ci",
-    "composer install --optimize-autoloader --no-dev --no-interaction --no-progress"
-]
+# Let Nixpacks auto-detect PHP and Node.js
+# Only override build to remove migration (which fails without DB)
 
 [phases.build]
 cmds = [
