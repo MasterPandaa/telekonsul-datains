@@ -11,33 +11,78 @@ class HealsAiController extends Controller
 {
     /**
      * Mengirim pesan ke AI Agent (n8n) dengan fallback ke HealsAI internal.
+     * 
+     * @return \Illuminate\Http\JsonResponse Selalu status 200 dengan struktur { success, response, source, message }
      */
     public function getResponse(Request $request)
     {
-        $request->validate([
-            'message' => 'required|string',
-            'history' => 'nullable|array',
-            'is_new_conversation' => 'nullable|boolean',
-        ]);
+        try {
+            $request->validate([
+                'message' => 'required|string',
+                'history' => 'nullable|array',
+                'is_new_conversation' => 'nullable|boolean',
+            ]);
 
-        $message = $request->message;
-        $history = $request->history ?? [];
-        $isNewConversation = (bool) ($request->is_new_conversation ?? false);
+            $message = $request->message;
+            $history = $request->history ?? [];
+            $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
-        $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
+            // Coba kirim ke n8n terlebih dahulu
+            $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
 
-        if ($n8nResult['success']) {
-            return response()->json($n8nResult);
+            if ($n8nResult['success']) {
+                return response()->json([
+                    'success' => true,
+                    'response' => $n8nResult['response'],
+                    'source' => $n8nResult['source'] ?? 'n8n',
+                ], 200);
+            }
+
+            // === FALLBACK ke HealsAI (Gemini) jika n8n gagal ===
+            Log::info('HealsAI: Fallback triggered', [
+                'reason' => $n8nResult['message'] ?? 'n8n request failed',
+                'attempted' => $n8nResult['attempted'] ?? false,
+            ]);
+
+            $fallbackResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
+
+            if ($fallbackResult['success']) {
+                return response()->json([
+                    'success' => true,
+                    'response' => $fallbackResult['response'],
+                    'source' => $fallbackResult['source'] ?? 'healsai',
+                    'fallback_used' => true,
+                ], 200);
+            }
+
+            // Jika fallback juga gagal, kembalikan pesan error yang ramah
+            return response()->json([
+                'success' => false,
+                'response' => 'Maaf, sistem AI sedang tidak dapat diakses saat ini. Silakan coba lagi beberapa saat atau gunakan fitur Telekonsultasi untuk berbicara langsung dengan dokter.',
+                'message' => $fallbackResult['message'] ?? 'Fallback AI gagal',
+                'source' => 'system',
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'response' => 'Pesan tidak valid. Pastikan Anda mengirim pesan dengan format yang benar.',
+                'message' => 'Validation failed',
+                'source' => 'system',
+            ], 200);
+        } catch (\Throwable $th) {
+            Log::error('HealsAI: Unexpected error in getResponse', [
+                'exception' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'response' => 'Maaf, terjadi kesalahan pada sistem. Silakan coba lagi atau gunakan fitur Telekonsultasi.',
+                'message' => 'Unexpected system error',
+                'source' => 'system',
+            ], 200);
         }
-
-        $errorMessage = $n8nResult['message'] ?? 'Maaf, sistem AI sedang tidak dapat diakses. Silakan coba lagi beberapa saat.';
-
-        return response()->json([
-            'success' => false,
-            'message' => $errorMessage,
-            'source' => 'n8n',
-            'attempted' => $n8nResult['attempted'] ?? false,
-        ], 502);
     }
 
     /**
@@ -48,6 +93,7 @@ class HealsAiController extends Controller
         $settings = ChatbotSetting::first();
 
         if (!$settings || empty($settings->webhook_url)) {
+            Log::info('HealsAI: n8n webhook not configured');
             return [
                 'success' => false,
                 'attempted' => false,
@@ -57,11 +103,13 @@ class HealsAiController extends Controller
 
         $method = strtoupper($settings->method ?? 'POST');
         $timeout = (int) ($settings->timeout ?? 60);
+        $connectTimeout = min($timeout, 15); // Max 15 detik untuk connect
 
         $allowInsecure = (bool) $settings->allow_insecure_ssl;
 
         try {
             $client = Http::timeout($timeout)
+                ->connectTimeout($connectTimeout)
                 ->acceptJson()
                 ->withHeaders([
                     'User-Agent' => sprintf(
@@ -121,29 +169,68 @@ class HealsAiController extends Controller
                 'session' => $this->buildSessionMetadata($request),
             ];
 
+            // === DEEP LOGGING: Log sebelum request ===
+            Log::info('HealsAI: Sending request to n8n', [
+                'url' => $settings->webhook_url,
+                'method' => $method,
+                'timeout' => $timeout,
+                'auth_type' => $authType,
+                'payload_message' => substr($message, 0, 100), // Truncate untuk keamanan
+                'payload_history_count' => count($payload['history']),
+                'is_new_conversation' => $isNewConversation,
+            ]);
+
             $response = $client->send($method, $settings->webhook_url, [
                 'json' => $payload,
             ]);
 
-            if (!$response->successful()) {
-                Log::warning('n8n webhook error', [
+            // === DEEP LOGGING: Log raw response body SEBELUM parsing ===
+            $rawBody = $response->body();
+            Log::info('HealsAI: n8n Raw Response', [
+                'status_code' => $response->status(),
+                'body' => substr($rawBody, 0, 2000), // Batasi 2000 karakter untuk log
+                'body_length' => strlen($rawBody),
+                'content_type' => $response->header('Content-Type'),
+            ]);
+
+            // Cek apakah response berisi HTML (indikasi error page)
+            if ($this->isHtmlResponse($rawBody)) {
+                Log::warning('HealsAI: n8n returned HTML instead of JSON', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body_preview' => substr($rawBody, 0, 500),
                 ]);
 
                 return [
                     'success' => false,
                     'attempted' => true,
-                    'message' => 'Sistem agent utama tidak merespons dengan benar.'
+                    'message' => 'n8n mengembalikan halaman error HTML, bukan JSON.'
+                ];
+            }
+
+            if (!$response->successful()) {
+                Log::warning('HealsAI: n8n webhook HTTP error', [
+                    'status' => $response->status(),
+                    'body' => substr($rawBody, 0, 1000),
+                ]);
+
+                return [
+                    'success' => false,
+                    'attempted' => true,
+                    'message' => sprintf('n8n error HTTP %d: %s', $response->status(), $this->getHttpErrorMessage($response->status()))
                 ];
             }
 
             $data = $response->json();
 
             if (is_null($data)) {
-                $rawAnswer = $this->extractAnswerFromPayload($response->body());
+                Log::warning('HealsAI: n8n response is not valid JSON, trying to extract answer', [
+                    'body_preview' => substr($rawBody, 0, 500),
+                ]);
+
+                $rawAnswer = $this->extractAnswerFromPayload($rawBody);
 
                 if ($rawAnswer !== null) {
+                    Log::info('HealsAI: Successfully extracted answer from non-JSON response');
                     return [
                         'success' => true,
                         'response' => $rawAnswer,
@@ -152,20 +239,19 @@ class HealsAiController extends Controller
                     ];
                 }
 
-                Log::warning('n8n webhook invalid JSON response', [
-                    'body' => $response->body(),
-                ]);
-
                 return [
                     'success' => false,
                     'attempted' => true,
-                    'message' => 'Format respons webhook tidak valid.'
+                    'message' => 'Format respons n8n tidak valid (bukan JSON).'
                 ];
             }
 
             $successFlag = data_get($data, 'success');
 
             if ($successFlag === false) {
+                Log::warning('HealsAI: n8n returned success=false', [
+                    'message' => data_get($data, 'message'),
+                ]);
                 return [
                     'success' => false,
                     'attempted' => true,
@@ -173,9 +259,13 @@ class HealsAiController extends Controller
                 ];
             }
 
+            // Extract answer from JSON response
             $answer = $this->extractAnswerFromPayload($data);
 
             if (is_string($answer) && trim($answer) !== '') {
+                Log::info('HealsAI: Successfully extracted answer from n8n JSON', [
+                    'answer_length' => strlen($answer),
+                ]);
                 return [
                     'success' => true,
                     'response' => $answer,
@@ -184,20 +274,55 @@ class HealsAiController extends Controller
                 ];
             }
 
-            return [
-                'success' => false,
-                'attempted' => true,
-                'message' => 'Format respons webhook tidak valid.'
-            ];
-        } catch (\Throwable $th) {
-            Log::error('n8n webhook exception', [
-                'message' => $th->getMessage(),
+            // Could not extract answer
+            Log::warning('HealsAI: Could not extract answer from n8n response', [
+                'data_keys' => is_array($data) ? array_keys($data) : 'not array',
             ]);
 
             return [
                 'success' => false,
                 'attempted' => true,
-                'message' => 'Tidak dapat terhubung ke sistem agent utama.'
+                'message' => 'Format respons webhook tidak valid (tidak ditemukan field jawaban).'
+            ];
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+
+            // Timeout atau connection error
+            Log::error('HealsAI: n8n connection failed', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'url' => $settings->webhook_url ?? 'unknown',
+            ]);
+
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Koneksi ke n8n gagal (timeout atau server tidak tersedia).'
+            ];
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            // HTTP error (4xx, 5xx)
+            Log::error('HealsAI: n8n HTTP request exception', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'status' => $e->response ? $e->response->status() : 'unknown',
+            ]);
+
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Error HTTP dari n8n: ' . $e->getMessage()
+            ];
+        } catch (\Throwable $th) {
+            Log::error('HealsAI: n8n unexpected exception', [
+                'exception' => get_class($th),
+                'message' => $th->getMessage(),
+                'file' => $th->getFile(),
+                'line' => $th->getLine(),
+            ]);
+
+            return [
+                'success' => false,
+                'attempted' => true,
+                'message' => 'Terjadi kesalahan tidak terduga saat menghubungi n8n.'
             ];
         }
     }
@@ -284,25 +409,61 @@ class HealsAiController extends Controller
             return null;
         }
 
+        // === Candidate keys yang lebih lengkap ===
+        // Tambahan: 'text', 'content', 'data', 'reply', 'result', 'generated_text', 'value'
         $candidatePaths = [
+            // Primary response keys
             'response',
-            'data.response',
-            'result.response',
-            'payload.response',
+            'reply',
             'answer',
             'output',
-            'data.output',
-            'result.output',
-            'payload.output',
+            'text',
+            'content',
             'message',
+            'generated_text',
+            'value',
+            'result',
+
+            // Nested in 'data'
+            'data.response',
+            'data.reply',
+            'data.answer',
+            'data.output',
+            'data.text',
+            'data.content',
+            'data.message',
+
+            // Nested in 'result'
+            'result.response',
+            'result.reply',
+            'result.answer',
+            'result.output',
+            'result.text',
+            'result.content',
+            'result.message',
+
+            // Nested in 'payload'
+            'payload.response',
+            'payload.output',
+            'payload.text',
+            'payload.content',
+
+            // Nested in 'body'
             'body.response',
             'body.output',
+            'body.text',
+            'body.content',
             'body',
+
+            // Wildcard patterns
             '*.response',
             '*.output',
+            '*.text',
+            '*.content',
             '*.message',
             '*.json.response',
             '*.json.output',
+            '*.json.text',
             '*.body.output',
         ];
 
@@ -372,6 +533,46 @@ class HealsAiController extends Controller
     }
 
     /**
+     * Cek apakah response body berisi HTML (error page dari webserver)
+     */
+    private function isHtmlResponse(string $body): bool
+    {
+        $trimmed = trim($body);
+
+        // Cek apakah dimulai dengan tag HTML
+        if (preg_match('/^\s*<(!DOCTYPE|html|head|body)/i', $trimmed)) {
+            return true;
+        }
+
+        // Cek apakah mengandung tag HTML umum
+        if (preg_match('/<(html|head|body|title|div|span|p)\b/i', $trimmed)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Dapatkan pesan error yang ramah untuk kode HTTP
+     */
+    private function getHttpErrorMessage(int $statusCode): string
+    {
+        return match ($statusCode) {
+            400 => 'Bad Request - parameter tidak valid',
+            401 => 'Unauthorized - autentikasi gagal',
+            403 => 'Forbidden - akses ditolak',
+            404 => 'Not Found - endpoint tidak ditemukan',
+            408 => 'Request Timeout',
+            429 => 'Too Many Requests - rate limit terlampaui',
+            500 => 'Internal Server Error',
+            502 => 'Bad Gateway - server n8n tidak merespons',
+            503 => 'Service Unavailable - server tidak tersedia',
+            504 => 'Gateway Timeout',
+            default => 'Error tidak dikenal',
+        };
+    }
+
+    /**
      * Bangun pesan pembuka ketika fallback dipakai.
      */
     private function buildFallbackIntro(?string $reason = null): string
@@ -390,7 +591,17 @@ class HealsAiController extends Controller
     private function generateHealsAiResponse(string $message, array $history, bool $isNewConversation): array
     {
         try {
-            $simulationMode = filter_var(env('HEALSAI_SIMULATION_MODE', true), FILTER_VALIDATE_BOOLEAN);
+            // Default false - gunakan real AI jika env tidak diset
+            $simulationMode = filter_var(
+                env('HEALSAI_SIMULATION_MODE', false),
+                FILTER_VALIDATE_BOOLEAN
+            );
+
+            Log::info('HealsAI: generateHealsAiResponse called', [
+                'simulation_mode' => $simulationMode,
+                'has_api_key' => !empty(env('HEALSAI_API_KEY')),
+                'model' => env('HEALSAI_MODEL'),
+            ]);
 
             if ($simulationMode) {
                 $simulated = $this->getSimulatedResponse($message, $isNewConversation);
@@ -584,7 +795,8 @@ class HealsAiController extends Controller
         $messageLower = strtolower($message);
 
         // Cek apakah pertanyaan di luar topik kesehatan
-        if (stripos($messageLower, 'politik') !== false ||
+        if (
+            stripos($messageLower, 'politik') !== false ||
             stripos($messageLower, 'presiden') !== false ||
             stripos($messageLower, 'partai') !== false ||
             stripos($messageLower, 'pilpres') !== false ||
@@ -596,7 +808,8 @@ class HealsAiController extends Controller
             stripos($messageLower, 'ekonomi') !== false ||
             stripos($messageLower, 'investasi') !== false ||
             stripos($messageLower, 'game') !== false ||
-            stripos($messageLower, 'kode program') !== false) {
+            stripos($messageLower, 'kode program') !== false
+        ) {
 
             return [
                 'success' => true,
@@ -608,14 +821,16 @@ Silakan ajukan pertanyaan seputar kesehatan, kedokteran, gejala penyakit, atau i
         }
 
         // Cek permintaan untuk resep obat atau diagnosis
-        if (stripos($messageLower, 'berikan saya resep') !== false ||
+        if (
+            stripos($messageLower, 'berikan saya resep') !== false ||
             stripos($messageLower, 'resepkan saya') !== false ||
             stripos($messageLower, 'butuh resep') !== false ||
             stripos($messageLower, 'minta resep') !== false ||
             stripos($messageLower, 'obat apa yang harus') !== false ||
             stripos($messageLower, 'resep obat') !== false ||
             stripos($messageLower, 'diagnosa penyakit saya') !== false ||
-            stripos($messageLower, 'diagnosis penyakit saya') !== false) {
+            stripos($messageLower, 'diagnosis penyakit saya') !== false
+        ) {
 
             return [
                 'success' => true,
@@ -706,31 +921,31 @@ Diagnosis medis ibarat detektif yang memecahkan misteri - membutuhkan pengumpula
 
 Saya bisa membantu menjelaskan informasi umum tentang gejala atau kondisi tertentu, tetapi untuk diagnosis resmi yang aman dan akurat, sebaiknya Anda menggunakan fitur Telekonsultasi di platform ini untuk berbicara dengan dokter. Kesehatan Anda terlalu berharga untuk ditebak-tebak! 😊';
             } else if (stripos($messageLower, 'virus') !== false) {
-                $aiResponse = "Hai! Wah, topik yang menarik dan penting nih! Senang sekali bisa membahas tentang virus-virus mematikan dan bagaimana cara kita mencegahnya. Yuk, kita simak bersama!\n\n".
-                "Ada beberapa contoh virus yang dikenal sangat mematikan di dunia. Penting untuk diingat bahwa tingkat kematian akibat virus bisa bervariasi tergantung pada banyak faktor, seperti akses ke perawatan medis, kondisi kesehatan individu, dan jenis virusnya itu sendiri.\n\n".
-                "Berikut adalah beberapa contoh virus mematikan dan upaya pencegahannya:\n\n".
-                "- Virus Ebola:\n".
-                "  Ebola menyebabkan demam berdarah yang parah.\n".
-                "  Gejala meliputi demam, sakit kepala, nyeri otot, dan pendarahan internal.\n".
-                "  Pencegahan: Vaksinasi (tersedia untuk beberapa jenis Ebola), kebersihan yang ketat, dan isolasi pasien yang terinfeksi.\n\n".
-                "- Virus HIV (Human Immunodeficiency Virus):\n".
-                "  HIV menyerang sistem kekebalan tubuh, menyebabkan AIDS (Acquired Immunodeficiency Syndrome).\n".
-                "  HIV ditularkan melalui cairan tubuh seperti darah, air mani, dan ASI.\n".
-                "  Pencegahan: Penggunaan kondom saat berhubungan seks, hindari berbagi jarum suntik, dan terapi antiretroviral (ART) untuk menekan virus.\n\n".
-                "- Virus Influenza (Flu):\n".
-                "  Beberapa jenis influenza, seperti H1N1 (flu babi) dan H5N1 (flu burung), bisa sangat mematikan.\n".
-                "  Gejala meliputi demam, batuk, sakit tenggorokan, dan nyeri otot.\n".
-                "  Pencegahan: Vaksinasi flu tahunan, mencuci tangan yang baik, dan hindari kontak dekat dengan orang sakit.\n\n".
-                "Apakah ada virus tertentu yang ingin Anda ketahui lebih detail? Saya siap membantu memberikan informasi lebih lanjut! 😊";
+                $aiResponse = "Hai! Wah, topik yang menarik dan penting nih! Senang sekali bisa membahas tentang virus-virus mematikan dan bagaimana cara kita mencegahnya. Yuk, kita simak bersama!\n\n" .
+                    "Ada beberapa contoh virus yang dikenal sangat mematikan di dunia. Penting untuk diingat bahwa tingkat kematian akibat virus bisa bervariasi tergantung pada banyak faktor, seperti akses ke perawatan medis, kondisi kesehatan individu, dan jenis virusnya itu sendiri.\n\n" .
+                    "Berikut adalah beberapa contoh virus mematikan dan upaya pencegahannya:\n\n" .
+                    "- Virus Ebola:\n" .
+                    "  Ebola menyebabkan demam berdarah yang parah.\n" .
+                    "  Gejala meliputi demam, sakit kepala, nyeri otot, dan pendarahan internal.\n" .
+                    "  Pencegahan: Vaksinasi (tersedia untuk beberapa jenis Ebola), kebersihan yang ketat, dan isolasi pasien yang terinfeksi.\n\n" .
+                    "- Virus HIV (Human Immunodeficiency Virus):\n" .
+                    "  HIV menyerang sistem kekebalan tubuh, menyebabkan AIDS (Acquired Immunodeficiency Syndrome).\n" .
+                    "  HIV ditularkan melalui cairan tubuh seperti darah, air mani, dan ASI.\n" .
+                    "  Pencegahan: Penggunaan kondom saat berhubungan seks, hindari berbagi jarum suntik, dan terapi antiretroviral (ART) untuk menekan virus.\n\n" .
+                    "- Virus Influenza (Flu):\n" .
+                    "  Beberapa jenis influenza, seperti H1N1 (flu babi) dan H5N1 (flu burung), bisa sangat mematikan.\n" .
+                    "  Gejala meliputi demam, batuk, sakit tenggorokan, dan nyeri otot.\n" .
+                    "  Pencegahan: Vaksinasi flu tahunan, mencuci tangan yang baik, dan hindari kontak dekat dengan orang sakit.\n\n" .
+                    "Apakah ada virus tertentu yang ingin Anda ketahui lebih detail? Saya siap membantu memberikan informasi lebih lanjut! 😊";
             } else if (stripos($messageLower, 'indonesia') !== false && (stripos($messageLower, 'penyakit') !== false || stripos($messageLower, 'sakit') !== false)) {
-                $aiResponse = "Hai! Wah, pertanyaan yang menarik tentang penyakit yang hanya ada di Indonesia!\n\n".
-                "Sebenarnya, agak sulit untuk mengatakan bahwa suatu penyakit hanya ada di Indonesia, karena penyebaran penyakit bisa sangat dinamis dan kompleks. Namun, ada beberapa penyakit yang lebih sering ditemukan atau memiliki karakteristik unik di Indonesia dibandingkan negara lain. Penyakit-penyakit ini seringkali terkait dengan faktor lingkungan, gaya hidup, atau bahkan genetika populasi tertentu di Indonesia.\n\n".
-                "Berikut adalah beberapa contoh penyakit atau kondisi kesehatan yang memiliki karakteristik khusus di Indonesia:\n\n".
-                "- Demam Berdarah Dengue (DBD): DBD adalah masalah kesehatan masyarakat yang signifikan di Indonesia. Vektor nyamuk Aedes aegypti sangat umum di daerah tropis dan sub-tropis seperti Indonesia, dan curah hujan yang tinggi serta sanitasi yang kurang baik dapat memperburuk penyebaran penyakit ini.\n\n".
-                "- Malaria: Meskipun malaria juga ditemukan di banyak negara tropis lainnya, Indonesia memiliki beban malaria yang cukup tinggi, terutama di wilayah timur seperti Papua. Berbagai program pengendalian malaria terus dilakukan untuk mengurangi kasus dan kematian akibat penyakit ini.\n\n".
-                "- Filariasis (Penyakit Kaki Gajah): Filariasis adalah penyakit parasit yang menyebabkan pembengkakan ekstrem pada anggota tubuh, terutama kaki. Indonesia masih memiliki beberapa daerah endemis filariasis, meskipun upaya eliminasi terus dilakukan.\n\n".
-                "- Penyakit Akibat Kurang Yodium (GAKI): Meskipun program fortifikasi yodium telah berjalan, beberapa daerah pegunungan dan pedalaman di Indonesia masih memiliki prevalensi GAKI yang cukup tinggi.\n\n".
-                "Apakah ada penyakit spesifik yang ingin Anda ketahui lebih detail? Saya bisa memberikan informasi lebih lanjut tentang pencegahan, gejala, atau penanganan penyakit-penyakit tersebut!";
+                $aiResponse = "Hai! Wah, pertanyaan yang menarik tentang penyakit yang hanya ada di Indonesia!\n\n" .
+                    "Sebenarnya, agak sulit untuk mengatakan bahwa suatu penyakit hanya ada di Indonesia, karena penyebaran penyakit bisa sangat dinamis dan kompleks. Namun, ada beberapa penyakit yang lebih sering ditemukan atau memiliki karakteristik unik di Indonesia dibandingkan negara lain. Penyakit-penyakit ini seringkali terkait dengan faktor lingkungan, gaya hidup, atau bahkan genetika populasi tertentu di Indonesia.\n\n" .
+                    "Berikut adalah beberapa contoh penyakit atau kondisi kesehatan yang memiliki karakteristik khusus di Indonesia:\n\n" .
+                    "- Demam Berdarah Dengue (DBD): DBD adalah masalah kesehatan masyarakat yang signifikan di Indonesia. Vektor nyamuk Aedes aegypti sangat umum di daerah tropis dan sub-tropis seperti Indonesia, dan curah hujan yang tinggi serta sanitasi yang kurang baik dapat memperburuk penyebaran penyakit ini.\n\n" .
+                    "- Malaria: Meskipun malaria juga ditemukan di banyak negara tropis lainnya, Indonesia memiliki beban malaria yang cukup tinggi, terutama di wilayah timur seperti Papua. Berbagai program pengendalian malaria terus dilakukan untuk mengurangi kasus dan kematian akibat penyakit ini.\n\n" .
+                    "- Filariasis (Penyakit Kaki Gajah): Filariasis adalah penyakit parasit yang menyebabkan pembengkakan ekstrem pada anggota tubuh, terutama kaki. Indonesia masih memiliki beberapa daerah endemis filariasis, meskipun upaya eliminasi terus dilakukan.\n\n" .
+                    "- Penyakit Akibat Kurang Yodium (GAKI): Meskipun program fortifikasi yodium telah berjalan, beberapa daerah pegunungan dan pedalaman di Indonesia masih memiliki prevalensi GAKI yang cukup tinggi.\n\n" .
+                    "Apakah ada penyakit spesifik yang ingin Anda ketahui lebih detail? Saya bisa memberikan informasi lebih lanjut tentang pencegahan, gejala, atau penanganan penyakit-penyakit tersebut!";
             } else {
                 $aiResponse = 'Hai! Terima kasih atas pertanyaan Anda. Sebagai HealsAI, saya sangat senang dan siap membantu dengan informasi kesehatan yang Anda butuhkan! 😊
 
