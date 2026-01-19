@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     default-mysql-client \
-    netcat-openbsd \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -54,47 +53,69 @@ RUN php artisan storage:link || true
 # Set permissions
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
-# Create startup script with database wait
+# Create startup script with robust PHP-based database wait
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-echo "Waiting for database connection..."\n\
+echo "Creating wait-for-db script..."\n\
+cat << "EOF" > /tmp/wait_for_db.php\n\
+<?php\n\
+$url = getenv("DATABASE_URL");\n\
+$host = "127.0.0.1";\n\
+$port = 3306;\n\
+$user = "root";\n\
+$pass = "";\n\
+$db   = "railway";\n\
 \n\
-# Extract host and port from DATABASE_URL or use DB_HOST/DB_PORT\n\
-if [ -n "$DATABASE_URL" ]; then\n\
-    DB_HOST=$(echo $DATABASE_URL | sed -e "s/mysql:\\/\\/[^@]*@\\([^:]*\\).*/\\1/")\n\
-    DB_PORT=$(echo $DATABASE_URL | sed -e "s/.*:\\([0-9]*\\)\\/.*/\\1/")\n\
-fi\n\
+if ($url) {\n\
+    $components = parse_url($url);\n\
+    $host = $components["host"] ?? $host;\n\
+    $port = $components["port"] ?? $port;\n\
+    $user = $components["user"] ?? $user;\n\
+    $pass = $components["pass"] ?? $pass;\n\
+    $db   = ltrim($components["path"] ?? "", "/") ?: $db;\n\
+} else {\n\
+    $host = getenv("DB_HOST") ?: $host;\n\
+    $port = getenv("DB_PORT") ?: $port;\n\
+    $user = getenv("DB_USERNAME") ?: $user;\n\
+    $pass = getenv("DB_PASSWORD") ?: $pass;\n\
+    $db   = getenv("DB_DATABASE") ?: $db;\n\
+}\n\
 \n\
-# Default port if not set\n\
-DB_PORT=${DB_PORT:-3306}\n\
+fwrite(STDERR, "Checking connection to $host:$port for DB: $db ...\n");\n\
 \n\
-# Wait for database to be ready (max 60 seconds)\n\
-attempt=0\n\
-max_attempts=30\n\
-while [ $attempt -lt $max_attempts ]; do\n\
-    if nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; then\n\
-        echo "Database is ready!"\n\
-        break\n\
-    fi\n\
-    attempt=$((attempt + 1))\n\
-    echo "Waiting for database... attempt $attempt/$max_attempts"\n\
-    sleep 2\n\
-done\n\
+$maxTries = 30;\n\
+for ($i = 1; $i <= $maxTries; $i++) {\n\
+    try {\n\
+        $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass);\n\
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);\n\
+        fwrite(STDERR, "Database connection successful!\n");\n\
+        exit(0);\n\
+    } catch (PDOException $e) {\n\
+        fwrite(STDERR, "Attempt $i/$maxTries: Connection failed. " . $e->getMessage() . "\n");\n\
+        sleep(2);\n\
+    }\n\
+}\n\
+fwrite(STDERR, "Could not connect to database after $maxTries attempts.\n");\n\
+exit(1);\n\
+?>\n\
+EOF\n\
 \n\
-if [ $attempt -eq $max_attempts ]; then\n\
-    echo "Database not available after $max_attempts attempts, starting anyway..."\n\
-fi\n\
+echo "Running wait-for-db check..."\n\
+php /tmp/wait_for_db.php\n\
 \n\
-# Run migrations\n\
-php artisan migrate --force || true\n\
+echo "Running migrations..."\n\
+php artisan migrate --force\n\
 \n\
-# Cache config\n\
-php artisan config:cache || true\n\
-php artisan route:cache || true\n\
-php artisan view:cache || true\n\
+echo "Running seeds..."\n\
+php artisan db:seed --force || echo "Seeding failed or skipped"\n\
 \n\
-# Start server\n\
+echo "Caching config..."\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
+\n\
+echo "Starting server..."\n\
 exec php artisan serve --host=0.0.0.0 --port=${PORT:-8000}\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
