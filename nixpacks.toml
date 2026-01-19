@@ -1,11 +1,16 @@
+# Providers for auto-detection
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.redis", "php82Extensions.pdo_mysql", "php82Extensions.bcmath", "php82Extensions.gd", "php82Extensions.zip", "php82Extensions.intl", "php82Extensions.opcache", "php82Packages.composer", "nodejs_20", "npm"]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+    "npm ci",
+    "composer install --optimize-autoloader --no-dev --no-interaction --no-progress"
+]
 
 [phases.build]
 cmds = [
-    "npm ci",
-    "npm run build",
-    "composer install --optimize-autoloader --no-dev --no-interaction --no-progress"
+    "npm run build"
 ]
 
 [start]
