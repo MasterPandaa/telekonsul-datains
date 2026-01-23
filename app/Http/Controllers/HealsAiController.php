@@ -19,16 +19,20 @@ class HealsAiController extends Controller
         try {
             $request->validate([
                 'message' => 'required|string',
-                'history' => 'nullable|array',
+                'session_id' => 'nullable|string', // UUID dari frontend untuk n8n Memory
+                'conversation_id' => 'nullable|string', // UUID untuk tracking topik di database
+                'history' => 'nullable|array', // Tetap terima untuk fallback internal
                 'is_new_conversation' => 'nullable|boolean',
             ]);
 
             $message = $request->message;
-            $history = $request->history ?? [];
+            $sessionId = $request->input('session_id'); // UUID unik per percakapan (untuk n8n Memory Node)
+            $conversationId = $request->input('conversation_id'); // UUID untuk tracking topik database
+            $history = $request->history ?? []; // Hanya untuk fallback internal (Gemini)
             $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
             // Coba kirim ke n8n terlebih dahulu
-            $n8nResult = $this->forwardToN8nAgent($request, $message, $history, $isNewConversation);
+            $n8nResult = $this->forwardToN8nAgent($request, $message, $sessionId, $conversationId, $isNewConversation);
 
             if ($n8nResult['success']) {
                 return response()->json([
@@ -87,8 +91,13 @@ class HealsAiController extends Controller
 
     /**
      * Kirim pesan ke workflow n8n (agent AI utama).
+     * 
+     * @param Request $request
+     * @param string $message Pesan dari user
+     * @param string|null $sessionId UUID unik per percakapan (untuk n8n Memory Node)
+     * @param bool $isNewConversation Flag percakapan baru
      */
-    private function forwardToN8nAgent(Request $request, string $message, array $history, bool $isNewConversation): array
+    private function forwardToN8nAgent(Request $request, string $message, ?string $sessionId, ?string $conversationId, bool $isNewConversation): array
     {
         $settings = ChatbotSetting::first();
 
@@ -151,22 +160,25 @@ class HealsAiController extends Controller
                     break;
             }
 
+            // === PAYLOAD untuk n8n ===
+            // PENTING: Tidak mengirim history array!
+            // n8n Memory Node akan handle history sendiri berdasarkan session_id
             $payload = [
                 'message' => $message,
-                'history' => $this->sanitizeHistory($history),
+                'session_id' => $sessionId, // UUID unik per percakapan (untuk n8n Memory Node)
+                'conversation_id' => $conversationId, // UUID untuk tracking topik di database
                 'is_new_conversation' => $isNewConversation,
-                'conversation_id' => $request->input('conversation_id') ?? $request->input('chat_id'),
                 'user' => [
                     'id' => optional(auth()->user())->id,
                     'name' => optional(auth()->user())->name,
                     'email' => optional(auth()->user())->email,
+                    'role' => optional(auth()->user())->role ?? 'pasien',
                 ],
                 'context' => [
-                    'source' => 'telekonsul-web',
                     'timestamp' => now()->toIso8601String(),
+                    'source' => 'web-telekonsul',
                     'execution_mode' => app()->environment('production') ? 'production' : 'test',
                 ],
-                'session' => $this->buildSessionMetadata($request),
             ];
 
             // === DEEP LOGGING: Log sebelum request ===
@@ -175,8 +187,9 @@ class HealsAiController extends Controller
                 'method' => $method,
                 'timeout' => $timeout,
                 'auth_type' => $authType,
-                'payload_message' => substr($message, 0, 100), // Truncate untuk keamanan
-                'payload_history_count' => count($payload['history']),
+                'session_id' => $sessionId, // Log session_id untuk debugging
+                'conversation_id' => $conversationId, // Log conversation_id
+                'payload_message' => substr($message, 0, 100),
                 'is_new_conversation' => $isNewConversation,
             ]);
 

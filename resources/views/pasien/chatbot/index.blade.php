@@ -431,14 +431,41 @@
         
         // Struktur data untuk riwayat percakapan
         let chatHistories = [];       // Array untuk menyimpan seluruh riwayat percakapan
-        let currentChatId = null;     // ID percakapan yang sedang aktif
+        let currentChatId = null;     // ID percakapan yang sedang aktif (untuk localStorage)
         let currentMessages = [];     // Pesan-pesan dalam percakapan aktif
+        let sessionId = null;         // UUID unik untuk n8n Memory Node (PENTING!)
+        let conversationId = null;    // UUID unik untuk tracking topik di database
 
         // Dapatkan ID user saat ini untuk menyimpan riwayat spesifik per user
         const currentUserId = {{ Auth::id() }};
         const currentUserName = "{{ Auth::user()->name }}";
         const chatHistoryKey = `healsai_chat_histories_user_${currentUserId}`;
         const popupKeyPrefix = `healsai_teleconsult_popup_shown_user_${currentUserId}_chat_`;
+
+        /**
+         * Generate UUID v4 yang robust untuk session_id dan conversation_id
+         * Menggunakan crypto API untuk keamanan yang lebih baik
+         * PENTING: Setiap percakapan baru WAJIB punya UUID baru
+         * agar n8n Memory Node me-reset history dan konteks terputus total
+         */
+        function generateUUID() {
+            // Gunakan crypto API jika tersedia (lebih aman dan random)
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return crypto.randomUUID();
+            }
+            // Fallback untuk browser lama menggunakan crypto.getRandomValues
+            if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+                return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+                    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+                );
+            }
+            // Fallback terakhir untuk browser sangat lama
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
 
         // Memuat riwayat percakapan dari localStorage
         function loadChatHistories() {
@@ -523,7 +550,19 @@
             // Simpan chat saat ini jika ada
             saveCurrentChat();
             
-            // Buat ID baru berdasarkan timestamp
+            // === PENTING: Generate UUID baru untuk session_id DAN conversation_id ===
+            // session_id: untuk n8n Memory Node agar reset history
+            // conversation_id: untuk tracking topik di database
+            // Kedua UUID ini WAJIB baru untuk memutus konteks percakapan lama
+            sessionId = generateUUID();
+            conversationId = generateUUID();
+            console.log('HealsAI: New conversation started', {
+                session_id: sessionId,
+                conversation_id: conversationId,
+                is_new_conversation: true
+            });
+            
+            // Buat ID baru berdasarkan timestamp (untuk localStorage)
             currentChatId = Date.now();
             currentMessages = [{
                 role: 'assistant',
@@ -533,7 +572,7 @@
             // Reset flag popup telekonsultasi untuk percakapan baru
             resetTeleconsultPopupFlag();
             
-            // Kosongkan chat container
+            // Kosongkan chat container (DOM clear)
             chatContainer.innerHTML = '';
             
             // Tampilkan pesan selamat datang
@@ -591,6 +630,8 @@
             const isFirstQuestion = currentMessages.length === 2 && currentMessages[0].role === 'assistant';
             
             // Kirim ke API HealsAI
+            // PENTING: Hanya kirim message + session_id, BUKAN history!
+            // n8n Memory Node akan handle history berdasarkan session_id
             fetch('/pasien/chatbot/healsai', {
                 method: 'POST',
                 headers: {
@@ -599,8 +640,10 @@
                 },
                 body: JSON.stringify({
                     message: message,
-                    history: currentMessages,
-                    is_new_conversation: isFirstQuestion
+                    session_id: sessionId,  // UUID unik untuk n8n Memory Node
+                    conversation_id: conversationId,  // UUID untuk tracking topik database
+                    is_new_conversation: isFirstQuestion  // Flag untuk sinyal percakapan baru ke backend
+                    // PENTING: Tidak mengirim history array - n8n handle sendiri via session_id
                 })
             })
             .then(response => response.json())
@@ -976,6 +1019,18 @@
                 // Set chat yang dipilih sebagai chat saat ini
                 currentChatId = chat.id;
                 currentMessages = [...chat.messages];
+                
+                // === Generate UUID baru untuk session_id DAN conversation_id ===
+                // Meskipun kita memuat chat lama dari localStorage,
+                // n8n akan mulai fresh karena kita tidak mengirim history array
+                // dan menggunakan session_id/conversation_id yang baru
+                sessionId = generateUUID();
+                conversationId = generateUUID();
+                console.log('HealsAI: Chat loaded with new session', {
+                    session_id: sessionId,
+                    conversation_id: conversationId,
+                    loaded_chat_id: chatId
+                });
                 
                 // Reset flag popup telekonsultasi saat memuat percakapan berbeda
                 resetTeleconsultPopupFlag();
