@@ -19,4 +19,11 @@ use App\Http\Controllers\API\KonsultasiController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-}); 
+});
+
+// Chatbot Tools Locations
+Route::prefix('chatbot/tools')->group(function () {
+    Route::get('/doctors', [App\Http\Controllers\API\ChatbotToolController::class, 'searchDoctors']);
+    Route::get('/history', [App\Http\Controllers\API\ChatbotToolController::class, 'getPatientHistory']);
+    Route::get('/schedule', [App\Http\Controllers\API\ChatbotToolController::class, 'checkSchedule']);
+});
