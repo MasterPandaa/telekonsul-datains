@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,16 +47,17 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        
+
         input {
             font-family: 'Inter', sans-serif;
         }
-        
+
         .smooth-transition {
             transition: all 0.3s ease;
         }
     </style>
 </head>
+
 <body class="font-sans bg-gray-50">
     <div id="app">
         @yield('body')
@@ -74,20 +76,26 @@
                 return;
             }
 
-            Swal.fire({
-                title: 'Upload foto profil?',
-                text: file.name,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Upload',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    input.form.submit();
-                } else {
-                    input.value = '';
-                }
-            });
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                Swal.fire({
+                    title: 'Upload foto profil?',
+                    text: file.name,
+                    imageUrl: e.target.result,
+                    imageAlt: 'Preview Foto',
+                    imageHeight: 200,
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        input.form.submit();
+                    } else {
+                        input.value = '';
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
         };
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -112,8 +120,9 @@
             @endif
         });
     </script>
-    
+
     @stack('scripts')
     <!-- Scripts -->
 </body>
-</html> 
+
+</html>
