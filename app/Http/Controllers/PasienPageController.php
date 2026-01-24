@@ -16,7 +16,7 @@ use App\Services\NotificationService;
 class PasienPageController extends Controller
 {
     protected $konsultasiService;
-    
+
     public function __construct(KonsultasiService $konsultasiService)
     {
         $this->konsultasiService = $konsultasiService;
@@ -27,7 +27,7 @@ class PasienPageController extends Controller
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien) {
             return view('pasien.dashboard', [
                 'title' => 'Dashboard Pasien',
@@ -43,66 +43,66 @@ class PasienPageController extends Controller
                 'keteranganKepuasan' => 'Belum ada rating'
             ]);
         }
-        
+
         // Jalankan update status konsultasi terlebih dahulu
         $this->konsultasiService->updateStatus();
-        
+
         // Tanggal untuk perhitungan perbandingan
         $today = Carbon::today();
         $oneMonthAgo = $today->copy()->subMonth();
         $twoMonthsAgo = $today->copy()->subMonths(2);
         $oneWeekAgo = $today->copy()->subWeek();
         $twoWeeksAgo = $today->copy()->subWeeks(2);
-        
+
         // Hitung jumlah konsultasi selesai bulan ini
         $konsultasiSelesaiBulanIni = Konsultasi::where('pasien_id', $pasien->id)
             ->where('status', 'Selesai')
             ->whereDate('tanggal', '>=', $oneMonthAgo)
             ->count();
-        
+
         // Hitung jumlah konsultasi selesai bulan sebelumnya
         $konsultasiSelesaiBulanLalu = Konsultasi::where('pasien_id', $pasien->id)
             ->where('status', 'Selesai')
             ->whereDate('tanggal', '>=', $twoMonthsAgo)
             ->whereDate('tanggal', '<', $oneMonthAgo)
             ->count();
-        
+
         // Hitung persentase perubahan konsultasi selesai
         $persenKonsultasi = 0;
         if ($konsultasiSelesaiBulanLalu > 0) {
             $persenKonsultasi = round((($konsultasiSelesaiBulanIni - $konsultasiSelesaiBulanLalu) / $konsultasiSelesaiBulanLalu) * 100);
         }
-        
+
         // Total konsultasi selesai (untuk tampilan)
         $konsultasiSelesai = Konsultasi::where('pasien_id', $pasien->id)
             ->where('status', 'Selesai')
             ->count();
-        
+
         // Hitung jumlah jadwal mendatang minggu ini
         $jadwalMendatangMingguIni = Konsultasi::where('pasien_id', $pasien->id)
             ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
             ->whereDate('tanggal', '>=', $today)
             ->whereDate('tanggal', '<=', $today->copy()->addDays(7))
             ->count();
-        
+
         // Hitung jumlah jadwal mendatang minggu lalu
         $jadwalMendatangMingguLalu = Konsultasi::where('pasien_id', $pasien->id)
             ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
             ->whereDate('tanggal', '>=', $oneWeekAgo)
             ->whereDate('tanggal', '<', $today)
             ->count();
-        
+
         // Hitung persentase perubahan jadwal mendatang
         $persenJadwal = 0;
         if ($jadwalMendatangMingguLalu > 0) {
             $persenJadwal = round((($jadwalMendatangMingguIni - $jadwalMendatangMingguLalu) / $jadwalMendatangMingguLalu) * 100);
         }
-        
+
         // Total jadwal mendatang (untuk tampilan)
         $jadwalMendatang = Konsultasi::where('pasien_id', $pasien->id)
             ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
             ->count();
-        
+
         // Ambil data jadwal konsultasi mendatang untuk ditampilkan di tabel
         $konsultasiMendatang = Konsultasi::where('pasien_id', $pasien->id)
             ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
@@ -111,13 +111,13 @@ class PasienPageController extends Controller
             ->with('dokter')
             ->take(3) // Ambil 3 jadwal terdekat
             ->get();
-        
+
         // Hitung rata-rata rating (tingkat kepuasan)
         $avgRating = Konsultasi::where('pasien_id', $pasien->id)
             ->whereNotNull('rating')
             ->avg('rating') ?? 0;
         $tingkatKepuasan = number_format($avgRating, 1);
-        
+
         // Tentukan keterangan tingkat kepuasan
         $keteranganKepuasan = 'Belum ada rating';
         if ($avgRating > 0) {
@@ -131,10 +131,10 @@ class PasienPageController extends Controller
                 $keteranganKepuasan = 'Perlu Ditingkatkan';
             }
         }
-        
+
         // Default interaksi chatbot (akan diperbarui oleh JavaScript)
         $interaksiChatbot = 0;
-        
+
         // Coba hitung interaksi dari ChatMessage jika ada
         try {
             $interaksiChatbot = \App\Models\ChatMessage::where('user_id', $user->id)->count();
@@ -142,10 +142,10 @@ class PasienPageController extends Controller
             // Jika error, gunakan nilai default
             $interaksiChatbot = 0;
         }
-        
+
         // Default persentase perubahan interaksi chatbot
         $persenChatbot = 25;
-        
+
         return view('pasien.dashboard', [
             'title' => 'Dashboard Pasien',
             'konsultasiSelesai' => $konsultasiSelesai,
@@ -165,16 +165,16 @@ class PasienPageController extends Controller
     {
         // Jalankan update status konsultasi terlebih dahulu
         $this->konsultasiService->updateStatus();
-        
+
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien) {
             return redirect()->route('pasien.profil.index')
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu');
         }
-        
+
         // Ambil data konsultasi aktif (menunggu, terkonfirmasi, dan berlangsung)
         $konsultasiAktif = Konsultasi::where('pasien_id', $pasien->id)
             ->whereIn('status', ['Menunggu', 'Terkonfirmasi', 'Berlangsung'])
@@ -182,7 +182,7 @@ class PasienPageController extends Controller
             ->orderBy('jam_mulai', 'asc')
             ->with('dokter')
             ->get();
-            
+
         // Ambil data riwayat konsultasi (selesai, dibatalkan, ditolak, dan terlambat)
         $riwayatKonsultasi = Konsultasi::where('pasien_id', $pasien->id)
             ->whereIn('status', ['Selesai', 'Dibatalkan', 'Ditolak', 'Terlambat'])
@@ -191,7 +191,7 @@ class PasienPageController extends Controller
             ->with('dokter')
             ->take(5)
             ->get();
-        
+
         return view('pasien.konsultasi.index', [
             'title' => 'Konsultasi Saya',
             'konsultasiAktif' => $konsultasiAktif,
@@ -204,27 +204,27 @@ class PasienPageController extends Controller
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien) {
             return redirect()->route('pasien.profil.index')
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu');
         }
-        
+
         // Daftar dokter untuk dipilih
         $dokter = User::where('role', 'dokter')
             ->with('dokter')
-            ->whereHas('dokter', function($query) {
+            ->whereHas('dokter', function ($query) {
                 // Ensure the doctor has the required fields
                 $query->whereNotNull('no_sip')
-                      ->whereNotNull('spesialisasi');
+                    ->whereNotNull('spesialisasi');
             })
             ->get();
 
         $ratingCollection = Konsultasi::select(
-                'dokter_id',
-                DB::raw('AVG(rating) as avg_rating'),
-                DB::raw('COUNT(rating) as rating_count')
-            )
+            'dokter_id',
+            DB::raw('AVG(rating) as avg_rating'),
+            DB::raw('COUNT(rating) as rating_count')
+        )
             ->whereNotNull('rating')
             ->groupBy('dokter_id')
             ->get();
@@ -236,7 +236,7 @@ class PasienPageController extends Controller
                 'count' => (int) $row->rating_count,
             ];
         }
-        
+
         // Semua slot jam konsultasi
         $semua_jam = [
             '08:00' => '08:00 - 08:15',
@@ -284,31 +284,31 @@ class PasienPageController extends Controller
             '19:30' => '19:30 - 19:45',
             '19:45' => '19:45 - 20:00',
         ];
-        
+
         // Inisialisasi tanggal mulai bisa memilih konsultasi (default: hari ini)
         $today = Carbon::today();
         $tanggal_mulai = $today->format('Y-m-d');
         $jam_tersedia = $semua_jam;
-        
+
         // Cek waktu saat ini
         $now = Carbon::now();
-        
+
         // Jam kerja klinik
         $jamBuka = '08:00';
         $jamTutup = '20:00';
-        
+
         // Jam pertama hari ini
         $firstSlotToday = $today->copy()->setTimeFromTimeString($jamBuka . ':00');
-        
+
         // Jam terakhir hari ini
         $lastSlotToday = $today->copy()->setTimeFromTimeString($jamTutup . ':00');
-        
+
         // Jika waktu saat ini sebelum jam buka klinik (sebelum jam 8 pagi),
         // tampilkan semua slot hari ini karena klinik belum buka
         if ($now->lt($firstSlotToday)) {
             // Klinik belum buka, semua slot tersedia untuk hari ini
             $jam_tersedia = $semua_jam;
-        } 
+        }
         // Jika waktu saat ini setelah jam tutup klinik (setelah jam 4 sore),
         // jadwal hanya tersedia mulai besok
         else if ($now->gt($lastSlotToday)) {
@@ -317,18 +317,18 @@ class PasienPageController extends Controller
             $tanggal_mulai = $tomorrow->format('Y-m-d');
             $jam_tersedia = $semua_jam;
             session()->flash('warning', 'Klinik sudah tutup hari ini. Jadwal konsultasi hanya tersedia mulai besok.');
-        } 
+        }
         // Jika dalam jam operasional klinik, filter slot yang sudah lewat
         else {
             // Tambahkan buffer 15 menit
             $currentTime = $now->copy()->addMinutes(15);
             $currentHour = $currentTime->format('H:i');
-            
+
             // Filter jam tersedia yang belum lewat
-            $jam_tersedia = array_filter($semua_jam, function($key) use ($currentHour) {
+            $jam_tersedia = array_filter($semua_jam, function ($key) use ($currentHour) {
                 return $key >= $currentHour;
             }, ARRAY_FILTER_USE_KEY);
-            
+
             // Jika semua slot waktu terfilter habis, jadwal hanya tersedia besok
             if (empty($jam_tersedia)) {
                 $tomorrow = $today->copy()->addDay();
@@ -337,28 +337,28 @@ class PasienPageController extends Controller
                 session()->flash('warning', 'Semua slot waktu hari ini sudah lewat. Jadwal konsultasi hanya tersedia mulai besok.');
             }
         }
-        
+
         // Ambil data jadwal yang sudah terisi (status Menunggu atau Terkonfirmasi)
         // untuk dokter yang tersedia selama 7 hari ke depan
         $startDate = $today->format('Y-m-d');
         $endDate = $today->copy()->addDays(7)->format('Y-m-d');
-        
+
         $bookedSlots = Konsultasi::whereIn('status', ['Menunggu', 'Terkonfirmasi'])
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->get(['tanggal', 'jam_mulai', 'dokter_id'])
-            ->groupBy(function($item) {
+            ->groupBy(function ($item) {
                 return $item->tanggal->format('Y-m-d');
             });
-        
+
         // Informasi slot yang sudah dibooking untuk tampilan
         $jadwalTerisi = [];
-        
+
         foreach ($bookedSlots as $date => $slots) {
             foreach ($slots as $slot) {
                 $jadwalTerisi[$date][$slot->jam_mulai][] = $slot->dokter_id;
             }
         }
-        
+
         return view('pasien.konsultasi.create', [
             'title' => 'Buat Permintaan Konsultasi',
             'dokter' => $dokter,
@@ -378,12 +378,12 @@ class PasienPageController extends Controller
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien) {
             return redirect()->route('pasien.profil.index')
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu');
         }
-        
+
         // Validasi request
         $validated = $request->validate([
             'dokter_id' => [
@@ -393,12 +393,12 @@ class PasienPageController extends Controller
                     // Check if the selected doctor has a valid entry in the dokters table
                     $dokter = User::where('id', $value)
                         ->where('role', 'dokter')
-                        ->whereHas('dokter', function($query) {
-                            $query->whereNotNull('no_sip')
-                                  ->whereNotNull('spesialisasi');
-                        })
+                        ->whereHas('dokter', function ($query) {
+                        $query->whereNotNull('no_sip')
+                            ->whereNotNull('spesialisasi');
+                    })
                         ->exists();
-                    
+
                     if (!$dokter) {
                         $fail('Dokter yang dipilih tidak valid atau tidak tersedia.');
                     }
@@ -409,67 +409,67 @@ class PasienPageController extends Controller
             'keluhan' => 'required|string|max:255',
             'keterangan' => 'nullable|string'
         ]);
-        
+
         // Jam kerja klinik
         $jamBuka = '08:00';
         $jamTutup = '20:00';
-        
+
         // Validasi waktu konsultasi tidak boleh di masa lalu
         $now = Carbon::now();
         $today = Carbon::today();
         $tomorrow = $today->copy()->addDay();
-        
+
         // Cek apakah tanggal yang dipilih adalah hari ini
         $selectedDate = Carbon::parse($validated['tanggal']);
         $isToday = $selectedDate->isSameDay($today);
-        
+
         // Jika hari ini, dan waktu sekarang sudah lewat jam tutup klinik,
         // tolak pemesanan untuk hari ini
         if ($isToday) {
             $lastSlotToday = $today->copy()->setTimeFromTimeString($jamTutup . ':00');
-            
+
             if ($now->gt($lastSlotToday)) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors(['tanggal' => 'Klinik sudah tutup hari ini. Silakan pilih tanggal besok atau setelahnya.']);
             }
-            
+
             // Jika waktu konsultasi untuk hari ini sudah lewat
             $konsultasiDateTime = Carbon::parse($validated['tanggal'] . ' ' . $validated['jam_mulai'] . ':00');
-            
+
             if ($konsultasiDateTime->isPast()) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors(['jam_mulai' => 'Waktu konsultasi tidak boleh sudah lewat. Silakan pilih waktu minimal 15 menit dari sekarang.']);
             }
-            
+
             // Validasi minimal 15 menit dari sekarang
             $currentTimePlus15 = $now->copy()->addMinutes(15);
-            
+
             if ($konsultasiDateTime->lt($currentTimePlus15)) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors(['jam_mulai' => 'Waktu konsultasi minimal 15 menit dari sekarang.']);
             }
         }
-        
+
         // Cek apakah jadwal sudah terisi untuk dokter dan waktu yang sama
         $existingConsultation = Konsultasi::where('dokter_id', $validated['dokter_id'])
             ->where('tanggal', $validated['tanggal'])
             ->where('jam_mulai', $validated['jam_mulai'] . ':00')
             ->whereIn('status', ['Menunggu', 'Terkonfirmasi'])
             ->first();
-            
+
         if ($existingConsultation) {
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['jam_mulai' => 'Jadwal konsultasi pada waktu tersebut sudah terisi. Silakan pilih waktu lain.']);
         }
-        
+
         // Tentukan jam selesai (15 menit setelah jam mulai)
         $jam_mulai_obj = Carbon::createFromFormat('H:i', $validated['jam_mulai']);
         $jam_selesai = $jam_mulai_obj->copy()->addMinutes(15)->format('H:i:s');
-        
+
         // Simpan data konsultasi ke database
         $konsultasi = new Konsultasi();
         $konsultasi->pasien_id = $pasien->id;
@@ -484,7 +484,7 @@ class PasienPageController extends Controller
 
         $notificationService = app(NotificationService::class);
         $notificationService->createKonsultasiBaruNotification($konsultasi);
-        
+
         return redirect()->route('pasien.konsultasi.index')
             ->with('success', 'Permintaan konsultasi berhasil dibuat dan menunggu konfirmasi.');
     }
@@ -493,16 +493,16 @@ class PasienPageController extends Controller
     {
         // Jalankan update status konsultasi terlebih dahulu
         $this->konsultasiService->updateStatus();
-        
+
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien) {
             return redirect()->route('pasien.profil.index')
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu');
         }
-        
+
         // Ambil data riwayat konsultasi (hanya status selesai)
         $riwayatKonsultasi = Konsultasi::where('pasien_id', $pasien->id)
             ->where('status', 'Selesai')
@@ -510,10 +510,10 @@ class PasienPageController extends Controller
             ->orderBy('jam_mulai', 'desc')
             ->with('dokter')
             ->paginate(10);
-        
+
         // Ambil daftar dokter untuk filter
         $dokters = User::where('role', 'dokter')
-            ->whereIn('id', function($query) use ($pasien) {
+            ->whereIn('id', function ($query) use ($pasien) {
                 $query->select('dokter_id')
                     ->from('konsultasis')
                     ->where('pasien_id', $pasien->id)
@@ -521,7 +521,7 @@ class PasienPageController extends Controller
                     ->distinct();
             })
             ->get();
-        
+
         return view('pasien.riwayat.index', [
             'title' => 'Riwayat Konsultasi',
             'riwayatKonsultasi' => $riwayatKonsultasi,
@@ -548,16 +548,16 @@ class PasienPageController extends Controller
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien || $konsultasi->pasien_id !== $pasien->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke konsultasi ini');
         }
-        
+
         // Cek apakah status masih menunggu
         if ($konsultasi->status !== 'Menunggu') {
             return redirect()->back()->with('error', 'Konsultasi tidak dapat dibatalkan');
         }
-        
+
         // Update status menjadi dibatalkan dan simpan alasan pembatalan
         $konsultasi->update([
             'status' => 'Dibatalkan',
@@ -566,25 +566,25 @@ class PasienPageController extends Controller
 
         $notificationService = app(NotificationService::class);
         $notificationService->createKonsultasiDibatalkanOlehPasienNotification($konsultasi);
-        
+
         return redirect()->back()->with('success', 'Konsultasi berhasil dibatalkan');
     }
-    
+
     public function terimaGantiSesi(Konsultasi $konsultasi)
     {
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien || $konsultasi->pasien_id !== $pasien->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke konsultasi ini');
         }
-        
+
         // Cek apakah status pergantian sesi
         if ($konsultasi->status !== 'Pergantian Sesi') {
             return redirect()->back()->with('error', 'Status konsultasi tidak valid');
         }
-        
+
         // Update konsultasi dengan jadwal baru dan status terkonfirmasi
         $konsultasi->update([
             'status' => 'Terkonfirmasi',
@@ -592,31 +592,31 @@ class PasienPageController extends Controller
             'jam_mulai' => $konsultasi->jam_mulai_baru,
             'jam_selesai' => $konsultasi->jam_selesai_baru
         ]);
-        
+
         return redirect()->back()->with('success', 'Pergantian sesi konsultasi berhasil diterima');
     }
-    
+
     public function tolakGantiSesi(Konsultasi $konsultasi)
     {
         // Ambil data pasien berdasarkan user yang login
         $user = Auth::user();
         $pasien = Pasien::where('email', $user->email)->first();
-        
+
         if (!$pasien || $konsultasi->pasien_id !== $pasien->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke konsultasi ini');
         }
-            
+
         // Cek apakah status pergantian sesi
         if ($konsultasi->status !== 'Pergantian Sesi') {
             return redirect()->back()->with('error', 'Status konsultasi tidak valid');
         }
-        
+
         // Update status menjadi dibatalkan
         $konsultasi->update([
             'status' => 'Dibatalkan',
             'alasan_batal' => 'Permintaan pergantian sesi ditolak oleh pasien'
         ]);
-        
+
         return redirect()->back()->with('success', 'Pergantian sesi konsultasi berhasil ditolak');
     }
 
@@ -626,28 +626,48 @@ class PasienPageController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'komentar_rating' => 'nullable|string|max:255'
         ]);
-        
+
         $konsultasi = Konsultasi::findOrFail($id);
-        
+
         // Pastikan konsultasi milik pasien yang login
         if ($konsultasi->pasien_id !== Auth::user()->pasien->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke konsultasi ini');
         }
-        
+
         // Pastikan konsultasi sudah selesai
         if ($konsultasi->status !== 'Selesai') {
             return redirect()->back()->with('error', 'Anda hanya dapat memberikan rating untuk konsultasi yang sudah selesai');
         }
-        
+
         // Update rating
         $konsultasi->rating = $request->rating;
         $konsultasi->komentar_rating = $request->komentar_rating;
         $konsultasi->save();
-        
+
         // Buat notifikasi untuk dokter
         $notificationService = app(NotificationService::class);
         $notificationService->createRatingBaruNotification($konsultasi);
-        
+
         return redirect()->route('pasien.konsultasi.index')->with('success', 'Rating berhasil diberikan');
     }
-} 
+
+    public function destroy(Konsultasi $konsultasi)
+    {
+        // Ambil data pasien berdasarkan user yang login
+        $user = Auth::user();
+        $pasien = Pasien::where('email', $user->email)->first();
+
+        if (!$pasien || $konsultasi->pasien_id !== $pasien->id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke konsultasi ini');
+        }
+
+        // Cek status konsultasi
+        if (!in_array($konsultasi->status, ['Dibatalkan', 'Ditolak', 'Terlambat'])) {
+            return redirect()->back()->with('error', 'Hanya konsultasi tidak aktif yang dapat dihapus');
+        }
+
+        $konsultasi->delete();
+
+        return redirect()->route('pasien.konsultasi.index')->with('success', 'Konsultasi berhasil dihapus');
+    }
+}

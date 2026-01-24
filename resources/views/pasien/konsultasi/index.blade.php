@@ -193,14 +193,14 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                        @if($item->status === 'Terkonfirmasi')
-                                                            bg-green-100 text-green-800
-                                                        @elseif($item->status === 'Berlangsung')
-                                                            bg-purple-100 text-purple-800
-                                                        @elseif($item->status === 'Menunggu')
-                                                            bg-yellow-100 text-yellow-800
-                                                        @endif
-                                                    ">
+                                                                    @if($item->status === 'Terkonfirmasi')
+                                                                        bg-green-100 text-green-800
+                                                                    @elseif($item->status === 'Berlangsung')
+                                                                        bg-purple-100 text-purple-800
+                                                                    @elseif($item->status === 'Menunggu')
+                                                                        bg-yellow-100 text-yellow-800
+                                                                    @endif
+                                                                ">
                                             {{ $item->status }}
                                         </span>
                                     </td>
@@ -337,14 +337,14 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                        @if($item->status === 'Dibatalkan')
-                                                            bg-gray-100 text-gray-800
-                                                        @elseif($item->status === 'Terlambat')
-                                                            bg-orange-100 text-orange-800
-                                                        @elseif($item->status === 'Ditolak')
-                                                            bg-red-100 text-red-800
-                                                        @endif
-                                                    ">
+                                                                    @if($item->status === 'Dibatalkan')
+                                                                        bg-gray-100 text-gray-800
+                                                                    @elseif($item->status === 'Terlambat')
+                                                                        bg-orange-100 text-orange-800
+                                                                    @elseif($item->status === 'Ditolak')
+                                                                        bg-red-100 text-red-800
+                                                                    @endif
+                                                                ">
                                             {{ $item->status }}
                                         </span>
                                     </td>
@@ -455,7 +455,7 @@
             @if(session('info'))
                 showNotification("{{ session('info') }}", 'info');
             @endif
-        });
+            });
 
         // Fungsi untuk menampilkan notifikasi menarik
         function showNotification(message, type = 'success') {
@@ -486,14 +486,14 @@
             notification.id = 'healsai-notification';
             notification.className = 'fixed top-4 right-4 z-50 flex items-center p-4 mb-4 rounded-xl shadow-lg text-white bg-gradient-to-r ' + bgColor + ' transition-all duration-500 transform translate-x-full opacity-0';
             notification.innerHTML = `
-                <div class="inline-flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/25 mr-3">
-                    ${iconSvg}
-                </div>
-                <div class="text-sm font-medium">${message}</div>
-                <button type="button" class="ml-4 -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 bg-white/10 hover:bg-white/20" onclick="this.parentElement.remove()">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            `;
+                    <div class="inline-flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-white/25 mr-3">
+                        ${iconSvg}
+                    </div>
+                    <div class="text-sm font-medium">${message}</div>
+                    <button type="button" class="ml-4 -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 bg-white/10 hover:bg-white/20" onclick="this.parentElement.remove()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
 
             // Tambahkan ke DOM
             document.body.appendChild(notification);
@@ -592,46 +592,59 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Implementasi penghapusan konsultasi
-                    Swal.fire({
-                        title: 'Fitur Dalam Pengembangan',
-                        text: 'Fitur penghapusan konsultasi belum diimplementasikan.',
-                        icon: 'info',
-                        confirmButtonColor: '#3085d6',
-                        confirmButtonText: 'OK'
-                    });
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/pasien/konsultasi/' + id;
+
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = csrfToken;
+
+                    const methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    methodInput.value = 'DELETE';
+
+                    form.appendChild(csrfInput);
+                    form.appendChild(methodInput);
+                    document.body.appendChild(form);
+
+                    form.submit();
                 }
             });
         }
 
         // Tambahkan style kustom untuk SweetAlert
         document.head.insertAdjacentHTML('beforeend', `
-            <style>
-                .swal2-popup {
-                    font-family: 'Inter', sans-serif;
-                }
-                .swal2-title {
-                    font-weight: 600 !important;
-                }
-                .swal2-html-container {
-                    font-size: 0.95rem !important;
-                }
-                .swal2-confirm, .swal2-cancel {
-                    font-weight: 500 !important;
-                    padding: 0.5rem 1.5rem !important;
-                }
-                .swal2-textarea {
-                    border-radius: 0.375rem !important;
-                    border-color: #e2e8f0 !important;
-                    padding: 0.5rem !important;
-                    font-size: 0.875rem !important;
-                }
-                .swal2-textarea:focus {
-                    border-color: #3b82f6 !important;
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
-                }
-            </style>
-        `);
+                <style>
+                    .swal2-popup {
+                        font-family: 'Inter', sans-serif;
+                    }
+                    .swal2-title {
+                        font-weight: 600 !important;
+                    }
+                    .swal2-html-container {
+                        font-size: 0.95rem !important;
+                    }
+                    .swal2-confirm, .swal2-cancel {
+                        font-weight: 500 !important;
+                        padding: 0.5rem 1.5rem !important;
+                    }
+                    .swal2-textarea {
+                        border-radius: 0.375rem !important;
+                        border-color: #e2e8f0 !important;
+                        padding: 0.5rem !important;
+                        font-size: 0.875rem !important;
+                    }
+                    .swal2-textarea:focus {
+                        border-color: #3b82f6 !important;
+                        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+                    }
+                </style>
+            `);
     </script>
 
 @endsection

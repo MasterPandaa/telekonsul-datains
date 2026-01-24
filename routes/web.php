@@ -185,6 +185,7 @@ Route::middleware(['auth', 'can:isPasien'])->prefix('pasien')->name('pasien.')->
         Route::post('/{konsultasi}/terima-ganti-sesi', [PasienPageController::class, 'terimaGantiSesi'])->name('terimaGantiSesi');
         Route::post('/{konsultasi}/tolak-ganti-sesi', [PasienPageController::class, 'tolakGantiSesi'])->name('tolakGantiSesi');
         Route::post('/{konsultasi}/rating', [PasienPageController::class, 'berikanRating'])->name('rating');
+        Route::delete('/{konsultasi}', [PasienPageController::class, 'destroy'])->name('destroy');
     });
 
     // Riwayat
