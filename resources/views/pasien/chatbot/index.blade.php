@@ -477,7 +477,7 @@
                     // Load from SERVER
                     async fetchAll() {
                         try {
-                            const response = await fetch("{{ route('chatbot.history') }}");
+                            const response = await fetch("{{ route('pasien.chatbot.history') }}");
                             if (!response.ok) throw new Error('Failed to fetch history');
                             this.histories = await response.json();
                             renderHistoryList();
@@ -489,7 +489,9 @@
                     // Get messages for a session from SERVER
                     async fetchChat(id) {
                          try {
-                            const response = await fetch(`{{ url('/chatbot/history') }}/${id}`);
+                            // URL construction: /pasien/chatbot/history/{id}
+                            const baseUrl = "{{ route('pasien.chatbot.history') }}";
+                            const response = await fetch(`${baseUrl}/${id}`);
                             if (!response.ok) throw new Error('Failed to fetch chat');
                             return await response.json();
                         } catch (e) {
@@ -501,7 +503,8 @@
                     // Delete from SERVER
                     async delete(id) {
                          try {
-                            const response = await fetch(`{{ url('/chatbot/history') }}/${id}`, {
+                            const baseUrl = "{{ route('pasien.chatbot.history') }}";
+                            const response = await fetch(`${baseUrl}/${id}`, {
                                 method: 'DELETE',
                                 headers: {
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
