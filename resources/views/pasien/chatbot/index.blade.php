@@ -725,6 +725,7 @@
                 function startNewChat() {
                     activeChatState = {
                         id: Date.now(), // Generate ID baru
+                        timestamp: Date.now(), // FIXED: Add timestamp
                         sessionId: generateUUID(),
                         conversationId: generateUUID(),
                         messages: [],
@@ -751,6 +752,7 @@
                     // Restore State
                     activeChatState = {
                         id: chat.id,
+                        timestamp: chat.timestamp || Date.now(), // FIXED: Restore timestamp
                         sessionId: chat.sessionId || generateUUID(),
                         conversationId: chat.conversationId || generateUUID(),
                         messages: [...chat.messages], // Deep copy?
@@ -788,6 +790,7 @@
                     }
 
                     // 3. Save State IMMEDIATELY
+                    activeChatState.timestamp = Date.now(); // FIXED: Update timestamp
                     historyManager.upsert(activeChatState);
                     renderHistoryList();
 

@@ -185,4 +185,104 @@ class ChatbotToolController extends Controller
             'status' => 'Available'
         ]);
     }
+    /**
+     * Tool: Book Consultation
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bookConsultation(Request $request)
+    {
+        if (!$this->validateSecret($request)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $userId = $request->input('user_id');
+        $doctorQuery = $request->input('doctor_name'); // e.g. "Dokter PSTI" or "PSTI"
+        $date = $request->input('date');
+        $time = $request->input('time'); // "HH:mm"
+        $complaint = $request->input('complaint', 'Keluhan via Chatbot');
+
+        // 1. Validate User
+        $user = User::find($userId);
+        if (!$user || !$user->pasien) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User pasien tidak ditemukan. Pastikan Anda sudah login.'
+            ]);
+        }
+        $pasienId = $user->pasien->id;
+
+        // 2. Find Doctor
+        $doctorUser = User::where('role', 'dokter')
+            ->where('name', 'like', "%{$doctorQuery}%")
+            ->first();
+
+        if (!$doctorUser) {
+            // Try searching in dokters table (e.g. spesialisasi)
+            $doctorUser = User::where('role', 'dokter')
+                ->whereHas('dokter', function ($q) use ($doctorQuery) {
+                    $q->where('spesialisasi', 'like', "%{$doctorQuery}%");
+                })
+                ->first();
+        }
+
+        if (!$doctorUser) {
+            return response()->json([
+                'success' => false,
+                'message' => "Maaf, saya tidak menemukan dokter dengan nama atau spesialisasi '{$doctorQuery}'. Mohon sebutkan nama dokter yang lebih spesifik."
+            ]);
+        }
+
+        // 3. Validate Slot
+        // Basic check: is there already a booking for this doctor at this time?
+        $exists = Konsultasi::where('dokter_id', $doctorUser->id)
+            ->where('tanggal', $date)
+            ->where('jam_mulai', $time . ':00')
+            ->whereIn('status', ['Menunggu', 'Terkonfirmasi', 'Berlangsung'])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => "Mohon maaf, jadwal dr. {$doctorUser->name} pada tanggal {$date} jam {$time} sudah terisi. Silakan pilih jam lain."
+            ]);
+        }
+
+        // 4. Create Booking
+        try {
+            $konsultasi = new Konsultasi();
+            $konsultasi->pasien_id = $pasienId;
+            $konsultasi->dokter_id = $doctorUser->id;
+            $konsultasi->tanggal = $date;
+            $konsultasi->jam_mulai = $time . ':00';
+            $konsultasi->jam_selesai = date('H:i:s', strtotime($time) + 15 * 60); // +15 mins
+            $konsultasi->keluhan = $complaint;
+            $konsultasi->status = 'Menunggu';
+            $konsultasi->keterangan = 'Dibuat otomatis via HealsAI Chatbot';
+            $konsultasi->save();
+
+            // Notify Doctor (Optional, assume NotificationService is handled elsewhere or manual trigger)
+            // app(\App\Services\NotificationService::class)->createKonsultasiBaruNotification($konsultasi);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Jadwal konsultasi berhasil dibuat!",
+                'data' => [
+                    'id' => $konsultasi->id,
+                    'doctor_name' => $doctorUser->name,
+                    'date' => $konsultasi->tanggal_indonesia,
+                    'time' => $time,
+                    'status' => 'Menunggu'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Chatbot Booking Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => "Terjadi kesalahan sistem saat membuat jadwal. Silakan coba lagi nanti."
+            ]);
+        }
+    }
 }

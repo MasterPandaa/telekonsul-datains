@@ -26,4 +26,5 @@ Route::prefix('chatbot/tools')->group(function () {
     Route::get('/doctors', [App\Http\Controllers\API\ChatbotToolController::class, 'searchDoctors']);
     Route::get('/history', [App\Http\Controllers\API\ChatbotToolController::class, 'getPatientHistory']);
     Route::get('/schedule', [App\Http\Controllers\API\ChatbotToolController::class, 'checkSchedule']);
+    Route::post('/book', [App\Http\Controllers\API\ChatbotToolController::class, 'bookConsultation']); // New Route
 });
