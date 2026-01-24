@@ -10,7 +10,10 @@ class ChatbotSession extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $guarded = ['id'];
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected $guarded = []; // Allow mass assignment including ID
 
     public function messages()
     {

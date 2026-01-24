@@ -731,7 +731,12 @@
                 }
 
                 async function loadChat(id) {
-                    setLoading(true); // Opsional: indikator loading seluruh chat
+                    // Don't use setLoading(true) here as it shows typing indicator which confuses the user
+                    // setLoading(true); 
+                    
+                    // Optional: Visual feedback without "Typing"
+                    chatContainer.style.opacity = '0.5';
+                    
                     try {
                         const chatData = await historyManager.fetchChat(id);
                         if (!chatData) {
@@ -744,7 +749,7 @@
                         activeChatState = {
                             id: chatData.id,
                             timestamp: chatData.timestamp,
-                            sessionId: chatData.id, // Reuse ID, as we don't store n8n session separately now
+                            sessionId: chatData.id, // Reuse ID
                             conversationId: chatData.id,
                             messages: chatData.messages,
                             title: chatData.title
@@ -755,7 +760,8 @@
                     } catch (e) {
                          alert('Terjadi kesalahan saat memuat chat.');
                     } finally {
-                        setLoading(false);
+                        // setLoading(false);
+                        chatContainer.style.opacity = '1';
                     }
                 }
 
