@@ -6,6 +6,10 @@ use App\Models\ChatbotSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\ChatbotSession;
+use App\Models\ChatbotMessage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class HealsAiController extends Controller
 {
@@ -31,13 +35,48 @@ class HealsAiController extends Controller
             $history = $request->history ?? []; // Hanya untuk fallback internal (Gemini)
             $isNewConversation = (bool) ($request->is_new_conversation ?? false);
 
+            // === DB STORAGE: Save User Message ===
+            $userId = Auth::id();
+            if ($userId && $conversationId) {
+                // Find or Create Session
+                $session = ChatbotSession::firstOrCreate(
+                    ['id' => $conversationId],
+                    [
+                        'user_id' => $userId,
+                        'title' => Str::limit($message, 50)
+                    ]
+                );
+
+                // Update timestamp for sorting
+                $session->touch();
+
+                // Save User Message
+                ChatbotMessage::create([
+                    'chatbot_session_id' => $session->id,
+                    'role' => 'user',
+                    'content' => $message
+                ]);
+            }
+
+
             // Coba kirim ke n8n terlebih dahulu
             $n8nResult = $this->forwardToN8nAgent($request, $message, $sessionId, $conversationId, $isNewConversation);
 
             if ($n8nResult['success']) {
+                $responseText = $n8nResult['response'];
+
+                // === DB STORAGE: Save Chatbot Message ===
+                if (isset($session)) {
+                    ChatbotMessage::create([
+                        'chatbot_session_id' => $session->id,
+                        'role' => 'assistant',
+                        'content' => $responseText
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
-                    'response' => $n8nResult['response'],
+                    'response' => $responseText,
                     'source' => $n8nResult['source'] ?? 'n8n',
                 ], 200);
             }
@@ -51,9 +90,20 @@ class HealsAiController extends Controller
             $fallbackResult = $this->generateHealsAiResponse($message, $history, $isNewConversation);
 
             if ($fallbackResult['success']) {
+                $responseText = $fallbackResult['response'];
+
+                // === DB STORAGE: Save Chatbot Message ===
+                if (isset($session)) {
+                    ChatbotMessage::create([
+                        'chatbot_session_id' => $session->id,
+                        'role' => 'assistant',
+                        'content' => $responseText
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
-                    'response' => $fallbackResult['response'],
+                    'response' => $responseText,
                     'source' => $fallbackResult['source'] ?? 'healsai',
                     'fallback_used' => true,
                 ], 200);

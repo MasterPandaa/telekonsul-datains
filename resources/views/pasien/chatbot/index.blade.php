@@ -467,79 +467,64 @@
 
                 /**
                  * CLASS: ChatHistoryManager
-                 * Single source of truth untuk manajemen data riwayat
+                 * Single source of truth untuk manajemen data riwayat (via Server)
                  */
                 class ChatHistoryManager {
                     constructor() {
-                        this.histories = this.load();
-                    }
-
-                    // Load dari localStorage dengan validasi
-                    load() {
-                        try {
-                            const raw = localStorage.getItem(storageKey);
-                            if (!raw) return [];
-                            const parsed = JSON.parse(raw);
-                            if (!Array.isArray(parsed)) return [];
-                            
-                            // Filter data yang valid (minimal punya ID dan messages)
-                            return parsed.filter(item => 
-                                item && item.id && Array.isArray(item.messages)
-                            );
-                        } catch (e) {
-                            console.error('HealsAI: Corrupt history data, resetting.', e);
-                            return [];
-                        }
-                    }
-
-                    // Simpan state saat ini ke localStorage
-                    save() {
-                        try {
-                            // Sort by timestamp desc (terbaru diatas)
-                            this.histories.sort((a, b) => b.timestamp - a.timestamp);
-                            
-                            // Limit 20
-                            if (this.histories.length > 20) {
-                                this.histories = this.histories.slice(0, 20);
-                            }
-
-                            localStorage.setItem(storageKey, JSON.stringify(this.histories));
-                        } catch (e) {
-                            console.error('HealsAI: Failed to save history.', e);
-                        }
-                    }
-
-                    // Tambah chat baru atau update yang ada
-                    upsert(chatData) {
-                        const index = this.histories.findIndex(c => c.id === chatData.id);
-                        if (index !== -1) {
-                            this.histories[index] = chatData;
-                        } else {
-                            this.histories.unshift(chatData);
-                        }
-                        this.save();
-                    }
-
-                    // Hapus spesifik chat
-                    delete(chatId) {
-                        const initialLength = this.histories.length;
-                        this.histories = this.histories.filter(c => c.id !== chatId);
-                        this.save();
-                        return this.histories.length < initialLength; // Return true jika ada yang dihapus
-                    }
-
-                    // Hapus semua
-                    clearAll() {
                         this.histories = [];
-                        localStorage.removeItem(storageKey);
                     }
 
-                    // Get by ID
-                    get(chatId) {
-                        return this.histories.find(c => c.id === chatId);
+                    // Load from SERVER
+                    async fetchAll() {
+                        try {
+                            const response = await fetch("{{ route('chatbot.history') }}");
+                            if (!response.ok) throw new Error('Failed to fetch history');
+                            this.histories = await response.json();
+                            renderHistoryList();
+                        } catch (e) {
+                            console.error('HealsAI: Failed to load history.', e);
+                        }
                     }
 
-                    // Get All
+                    // Get messages for a session from SERVER
+                    async fetchChat(id) {
+                         try {
+                            const response = await fetch(`{{ url('/chatbot/history') }}/${id}`);
+                            if (!response.ok) throw new Error('Failed to fetch chat');
+                            return await response.json();
+                        } catch (e) {
+                            console.error('HealsAI: Failed to load chat.', e);
+                            return null;
+                        }
+                    }
+
+                    // Delete from SERVER
+                    async delete(id) {
+                         try {
+                            const response = await fetch(`{{ url('/chatbot/history') }}/${id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            });
+                            if (!response.ok) throw new Error('Failed to delete');
+                            
+                            // Remove locally
+                            this.histories = this.histories.filter(c => c.id !== id);
+                            renderHistoryList();
+                            return true;
+                        } catch (e) {
+                            console.error('HealsAI: Failed to delete.', e);
+                            alert('Gagal menghapus riwayat.');
+                            return false;
+                        }
+                    }
+                    
+                    // Helper to get local summary info
+                    get(id) {
+                        return this.histories.find(c => c.id === id);
+                    }
+
                     getAll() {
                         return this.histories;
                     }
@@ -723,11 +708,12 @@
                 // --- ACTIONS ---
 
                 function startNewChat() {
+                    const uuid = generateUUID();
                     activeChatState = {
-                        id: Date.now(), // Generate ID baru
-                        timestamp: Date.now(), // FIXED: Add timestamp
-                        sessionId: generateUUID(),
-                        conversationId: generateUUID(),
+                        id: uuid, 
+                        timestamp: Date.now(), 
+                        sessionId: generateUUID(), // n8n session
+                        conversationId: uuid, // DB session (matches ID)
                         messages: [],
                         title: 'Percakapan Baru'
                     };
@@ -741,37 +727,43 @@
                     renderHistoryList(); // Cuma update highlighting
                 }
 
-                function loadChat(id) {
-                    const chat = historyManager.get(id);
-                    if (!chat) {
-                        alert('Percakapan tidak ditemukan (mungkin telah dihapus).');
-                        renderHistoryList(); // Refresh list to remove stale item
-                        return;
+                async function loadChat(id) {
+                    setLoading(true); // Opsional: indikator loading seluruh chat
+                    try {
+                        const chatData = await historyManager.fetchChat(id);
+                        if (!chatData) {
+                            alert('Gagal memuat percakapan.');
+                            startNewChat();
+                            return;
+                        }
+
+                        // Restore State
+                        activeChatState = {
+                            id: chatData.id,
+                            timestamp: chatData.timestamp,
+                            sessionId: chatData.id, // Reuse ID, as we don't store n8n session separately now
+                            conversationId: chatData.id,
+                            messages: chatData.messages,
+                            title: chatData.title
+                        };
+
+                        renderMessages(activeChatState.messages);
+                        renderHistoryList(); // highlight active
+                    } catch (e) {
+                         alert('Terjadi kesalahan saat memuat chat.');
+                    } finally {
+                        setLoading(false);
                     }
-
-                    // Restore State
-                    activeChatState = {
-                        id: chat.id,
-                        timestamp: chat.timestamp || Date.now(), // FIXED: Restore timestamp
-                        sessionId: chat.sessionId || generateUUID(),
-                        conversationId: chat.conversationId || generateUUID(),
-                        messages: [...chat.messages], // Deep copy?
-                        title: chat.title
-                    };
-
-                    renderMessages(activeChatState.messages);
-                    renderHistoryList(); // highlight active
                 }
 
-                function confirmDelete(id) {
+                async function confirmDelete(id) {
                     if (confirm('Apakah Anda yakin ingin menghapus percakapan ini secara permanen?')) {
-                        historyManager.delete(id);
-                        
-                        // Jika yang dihapus sedang aktif, reset
-                        if (activeChatState.id === id) {
-                            startNewChat();
-                        } else {
-                            renderHistoryList();
+                        const success = await historyManager.delete(id);
+                        if (success) {
+                            // Jika yang dihapus sedang aktif, reset
+                            if (activeChatState.id === id) {
+                                startNewChat();
+                            }
                         }
                     }
                 }
@@ -784,17 +776,12 @@
                     activeChatState.messages.push({ role: 'user', content: text });
                     appendUserMessage(text);
                     
-                    // 2. Set Title if New
+                    // 2. Set Title if New (Local update, server updates automatically on create)
                     if (activeChatState.messages.filter(m => m.role === 'user').length === 1) {
                          activeChatState.title = text.substring(0, 50) + (text.length > 50 ? '...' : '');
                     }
 
-                    // 3. Save State IMMEDIATELY
-                    activeChatState.timestamp = Date.now(); // FIXED: Update timestamp
-                    historyManager.upsert(activeChatState);
-                    renderHistoryList();
-
-                    // 4. API Call
+                    // 3. API Call
                     setLoading(true);
                     
                     try {
@@ -818,7 +805,9 @@
                             const reply = data.response;
                             activeChatState.messages.push({ role: 'assistant', content: reply });
                             appendAIMessage(reply);
-                            historyManager.upsert(activeChatState); // Save reply
+                            
+                            // Re-fetch history to get potential title updates or new session creation confirmation
+                            historyManager.fetchAll(); 
                         } else {
                             throw new Error(data.message || 'System Error');
                         }
@@ -843,10 +832,7 @@
                 newChatBtn.addEventListener('click', startNewChat);
 
                 clearHistoryBtn.addEventListener('click', () => {
-                    if(confirm('Hapus SEMUA riwayat?')) {
-                        historyManager.clearAll();
-                        startNewChat();
-                    }
+                     alert('Fitur hapus semua riwayat dinonaktifkan sementara. Silakan hapus satu per satu.');
                 });
 
                 // Global exposes for suggested topics
@@ -856,7 +842,7 @@
 
                 // Boot
                 startNewChat();
-                renderHistoryList();
+                historyManager.fetchAll();
             });
         </script>
     @endpush

@@ -13,6 +13,7 @@ use App\Http\Controllers\PasienPageController;
 use App\Http\Controllers\PasienProfilController;
 use App\Http\Controllers\ChatRoomController;
 use App\Http\Controllers\HealsAiController;
+use App\Http\Controllers\ChatbotHistoryController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\API\KonsultasiController;
 use App\Http\Controllers\PasienPasswordController;
@@ -59,7 +60,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // API Routes
-Route::middleware('auth')->prefix('api')->group(function() {
+Route::middleware('auth')->prefix('api')->group(function () {
     Route::get('/konsultasi/{id}', [KonsultasiController::class, 'getDetail']);
 });
 
@@ -76,11 +77,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('dokter', DokterController::class);
         Route::resource('pasien', PasienController::class);
         Route::resource('dosen', AdminDosenController::class);
-        
+
         // Chatbot API settings
         Route::get('chatbot/settings', [ChatbotSettingController::class, 'index'])->name('chatbot.settings');
         Route::post('chatbot/settings', [ChatbotSettingController::class, 'update'])->name('chatbot.settings.update');
-        
+
         // Log routes
         Route::get('log/database', [LogController::class, 'database'])->name('log.database');
         Route::get('log/system', [LogController::class, 'system'])->name('log.system');
@@ -89,11 +90,11 @@ Route::middleware('auth')->group(function () {
         Route::get('log/activity-data', [LogController::class, 'getUserActivityData'])->name('log.activity-data');
         // Generate sample logs (for testing)
         Route::get('log/generate-samples', [LogController::class, 'generateSamples'])->name('log.generate-samples');
-        
+
         // Dokter utility routes
         Route::get('dokter/check-sip', [DokterController::class, 'checkSip'])->name('dokter.check-sip');
         Route::get('dokter/check-str', [DokterController::class, 'checkStr'])->name('dokter.check-str');
-        
+
         // Konsultasi status update
         Route::get('konsultasi/update-status', [AdminController::class, 'updateKonsultasiStatus'])->name('konsultasi.update-status');
     });
@@ -103,27 +104,27 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'can:isDokter'])->prefix('dokter')->name('dokter.')->group(function () {
     // Dashboard Dokter
     Route::get('/dashboard', [DokterPageController::class, 'dashboard'])->name('dashboard');
-    
+
     // Profil Dokter
     Route::get('/profil', [DokterPageController::class, 'profilIndex'])->name('profil.index');
     Route::post('/profil/update-informasi', [DokterPageController::class, 'updateInformasi'])->name('profil.update-informasi');
     Route::post('/profil/update-akademik', [DokterPageController::class, 'updateAkademik'])->name('profil.update-akademik');
     Route::post('/profil/update-keahlian', [DokterPageController::class, 'updateKeahlian'])->name('profil.update-keahlian');
     Route::post('/profil/update-prestasi', [DokterPageController::class, 'updatePrestasi'])->name('profil.update-prestasi');
-    
+
     // Konsultasi
-    Route::prefix('konsultasi')->name('konsultasi.')->group(function() {
+    Route::prefix('konsultasi')->name('konsultasi.')->group(function () {
         Route::get('/', [DokterPageController::class, 'konsultasiIndex'])->name('index');
         Route::post('/{konsultasi}/diagnosa', [DokterPageController::class, 'simpanDiagnosa'])->name('diagnosa');
     });
-    
+
     // Riwayat & Nilai
     Route::get('/riwayat', [DokterPageController::class, 'riwayatIndex'])->name('riwayat.index');
 
     Route::post('/konsultasi/{konsultasi}/konfirmasi', [DokterPageController::class, 'konfirmasiKonsultasi'])->name('konsultasi.konfirmasi');
     Route::post('/konsultasi/{konsultasi}/tolak', [DokterPageController::class, 'tolakKonsultasi'])->name('konsultasi.tolak');
     Route::post('/konsultasi/{konsultasi}/ganti-sesi', [DokterPageController::class, 'gantiSesiKonsultasi'])->name('konsultasi.gantiSesi');
-    
+
     // Rute untuk pengaturan password
     Route::get('/pengaturan', [DokterPasswordController::class, 'index'])->name('pengaturan.index');
     Route::post('/pengaturan', [DokterPasswordController::class, 'update'])->name('pengaturan.update');
@@ -133,26 +134,26 @@ Route::middleware(['auth', 'can:isDokter'])->prefix('dokter')->name('dokter.')->
 Route::middleware(['auth', 'can:isDosen'])->prefix('dosen')->name('dosen.')->group(function () {
     // Dashboard Dosen
     Route::get('/dashboard', [DosenController::class, 'dashboard'])->name('dashboard');
-    
+
     // Penilaian Konsultasi
-    Route::prefix('penilaian')->name('penilaian.')->group(function() {
+    Route::prefix('penilaian')->name('penilaian.')->group(function () {
         Route::get('/', [DosenController::class, 'penilaianIndex'])->name('index');
         Route::get('/{id}', [DosenController::class, 'penilaianShow'])->name('show');
         Route::post('/{id}', [DosenController::class, 'penilaianStore'])->name('store');
     });
-    
+
     // Rekap Data
-    Route::prefix('rekap')->name('rekap.')->group(function() {
+    Route::prefix('rekap')->name('rekap.')->group(function () {
         Route::get('/', [DosenController::class, 'rekapIndex'])->name('index');
         Route::get('/dokter/{id}', [DosenController::class, 'rekapDokter'])->name('dokter');
     });
-    
+
     // Profil Dosen
-    Route::prefix('profil')->name('profil.')->group(function() {
+    Route::prefix('profil')->name('profil.')->group(function () {
         Route::get('/', [DosenController::class, 'profilIndex'])->name('index');
         Route::post('/update-informasi', [DosenController::class, 'updateInformasi'])->name('update-informasi');
     });
-    
+
     // Pengaturan Password
     Route::get('/pengaturan', [DosenPasswordController::class, 'index'])->name('pengaturan.index');
     Route::post('/pengaturan', [DosenPasswordController::class, 'update'])->name('pengaturan.update');
@@ -162,16 +163,21 @@ Route::middleware(['auth', 'can:isDosen'])->prefix('dosen')->name('dosen.')->gro
 Route::middleware(['auth', 'can:isPasien'])->prefix('pasien')->name('pasien.')->group(function () {
     // Dashboard Pasien
     Route::get('/dashboard', [PasienPageController::class, 'dashboard'])->name('dashboard');
-    
+
     // Profil Pasien
     Route::get('/profil', [PasienPageController::class, 'profilIndex'])->name('profil.index');
-    
+
     // Chatbot AI
     Route::get('/chatbot', [PasienPageController::class, 'chatbotIndex'])->name('chatbot.index');
     Route::post('/chatbot/healsai', [HealsAiController::class, 'getResponse'])->name('chatbot.healsai');
-    
+
+    // Chatbot History
+    Route::get('/chatbot/history', [ChatbotHistoryController::class, 'index'])->name('chatbot.history');
+    Route::get('/chatbot/history/{id}', [ChatbotHistoryController::class, 'show'])->name('chatbot.history.show');
+    Route::delete('/chatbot/history/{id}', [ChatbotHistoryController::class, 'destroy'])->name('chatbot.history.destroy');
+
     // Konsultasi
-    Route::prefix('konsultasi')->name('konsultasi.')->group(function() {
+    Route::prefix('konsultasi')->name('konsultasi.')->group(function () {
         Route::get('/', [PasienPageController::class, 'konsultasiIndex'])->name('index');
         Route::get('/create', [PasienPageController::class, 'konsultasiCreate'])->name('create');
         Route::post('/', [PasienPageController::class, 'konsultasiStore'])->name('store');
@@ -180,7 +186,7 @@ Route::middleware(['auth', 'can:isPasien'])->prefix('pasien')->name('pasien.')->
         Route::post('/{konsultasi}/tolak-ganti-sesi', [PasienPageController::class, 'tolakGantiSesi'])->name('tolakGantiSesi');
         Route::post('/{konsultasi}/rating', [PasienPageController::class, 'berikanRating'])->name('rating');
     });
-    
+
     // Riwayat
     Route::get('/riwayat', [PasienPageController::class, 'riwayatIndex'])->name('riwayat.index');
 
@@ -223,4 +229,4 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
